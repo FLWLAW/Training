@@ -1,0 +1,64 @@
+﻿@page "/TrainingQuestionnaireAdministrator"
+@using Training.Website.Models
+@using Training.Website.Services
+
+<table width="100%">
+    <tr>
+        <td style="width: 100%; text-align: center;">
+            <label style="padding-right: 30px;">Session ID:</label>
+            <TelerikDropDownList
+                Data="@_sessions"
+                Value="_selectedSessionString"
+                ValueChanged="@(async (string newValue) => await SessionChanged(newValue) )"
+                Enabled="true"
+                Width="350px">
+                <DropDownListSettings>
+                    <DropDownListPopupSettings Height="180px" />
+                </DropDownListSettings>
+            </TelerikDropDownList>
+        </td>
+    </tr>
+</table>
+@if(_selectedSessionString != null)
+{
+    <!--
+    <table width="100%" style="border: 1px solid; border-color: black; width: 100%; position: absolute; bottom: 0; padding-left: 100px; padding-right: 100px; padding-bottom: 60px;">
+        -->
+    <table style="width: 100%; border: 1px solid; border-color: black; position: absolute; bottom: 0;">
+        <tr>
+            <td colspan="2" style="width: 100%; text-align: center;">
+                <h4><b><u>@_selectedSession?.DocTitle</u></b></h4>
+                <br />
+            </td>
+        </tr>
+        @if (_questions != null)
+        {
+            @foreach(QuestionsModel? question in _questions)
+            {
+                @*IEnumerable<AnswerChoicesModel>? answerChoices = CommonServiceMethods.GetAnswerChoicesByQuestionID(question.Question_ID!.Value, Database).Result;*@
+
+                <tr>
+                    <td style="width: 20%; text-align: right;">
+                        @question.QuestionNumber<label>.</label>
+                    </td>
+                    <td style="width: 80%; text-align: left; padding-left: 20px;">
+                        @question.Question
+                    </td>
+                </tr>
+                @*
+                @foreach(AnswerChoicesModel answerChoice in answerChoices!)
+                {
+                    <tr>
+                        <td style="text-align: right;">
+                            @answerChoice.AnswerLetter
+                        </td>
+                        <td style="text-align: left;">
+                            @answerChoice.AnswerText
+                        </td>
+                    </tr>
+                }
+                *@
+            }
+        }
+    </table>
+}
