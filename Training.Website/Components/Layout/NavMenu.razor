@@ -1,0 +1,46 @@
+﻿<div class="top-row ps-3 navbar navbar-dark" style="background-color: black">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Training</a>
+    </div>
+</div>
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <div class="nav-item px-1">
+        <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireUser">
+            Training Questionnaire
+        </NavLink>
+    </div>
+
+    <div class="nav-item px-1">
+        <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAdministrator">
+            Create Training Questionnaire and Answer Key
+        </NavLink>
+    </div>
+</div>
+
+<style>
+    .WSD_Header {
+        color: white;
+        padding-left: 10px;
+    }
+
+    .WSD_LinkSmallerText {
+        font-size: smaller;
+    }
+
+    .Dashboard-nav-link {
+        display: block;
+        color: lightblue;
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    }
+
+        .Dashboard-nav-link:hover {
+            background-color: lightblue; /*#0a58ca;  #0d6efd; /*blue;*/
+            color: black;
+        }
+
+    /* 6c757d is the muddy gray color, may also be called bs-gray, bs-secondard */
+</style>
+

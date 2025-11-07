@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["Training.Website.styles.css"]" />
+    <link href="_content/Telerik.UI.for.Blazor/css/kendo-theme-bootstrap/all.css" rel="stylesheet" />
+    <ImportMap />
+    <HeadOutlet @rendermode="InteractiveServer" />
+    <script src="_content/Telerik.UI.for.Blazor/js/telerik-blazor.js"></script>
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+
+</html>
+
+
+<!-- FOR PRINTING CHARTS: https://www.telerik.com/blazor-ui/documentation/knowledge-base/chart-print-chart-only -->
+
+<style media="print">
+    .top-row,
+    .sidebar,
+    .non-printable-element {
+        display: none;
+    }
+</style>
