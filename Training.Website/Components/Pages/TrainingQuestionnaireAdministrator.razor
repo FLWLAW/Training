@@ -4,7 +4,7 @@
 
 <table width="100%">
     <tr>
-        <td style="width: 100%; text-align: center;">
+        <td style="width: 100%; text-align: center; padding-bottom: 30px;">
             <label style="padding-right: 30px;">Session ID:</label>
             <TelerikDropDownList
                 Data="@_sessions"
@@ -21,10 +21,8 @@
 </table>
 @if(_selectedSessionString != null)
 {
-    <!--
-    <table width="100%" style="border: 1px solid; border-color: black; width: 100%; position: absolute; bottom: 0; padding-left: 100px; padding-right: 100px; padding-bottom: 60px;">
-        -->
-    <table style="width: 100%; border: 1px solid; border-color: black; position: absolute; bottom: 0;">
+    <!-- BOTTOM PORTION OF PAGE -->
+    <table style="width: 100%;">
         <tr>
             <td colspan="2" style="width: 100%; text-align: center;">
                 <h4><b><u>@_selectedSession?.DocTitle</u></b></h4>
@@ -35,7 +33,8 @@
         {
             @foreach(QuestionsModel? question in _questions)
             {
-                @*IEnumerable<AnswerChoicesModel>? answerChoices = CommonServiceMethods.GetAnswerChoicesByQuestionID(question.Question_ID!.Value, Database).Result;*@
+                string? answerFormat = _answerFormats?[question.AnswerFormat!.Value];
+                IEnumerable<AnswerChoicesModel>? answerChoices = CommonServiceMethods.GetAnswerChoicesByQuestionID(question.Question_ID!.Value, Database);
 
                 <tr>
                     <td style="width: 20%; text-align: right;">
@@ -45,19 +44,70 @@
                         @question.Question
                     </td>
                 </tr>
-                @*
-                @foreach(AnswerChoicesModel answerChoice in answerChoices!)
+
+                @if (AnswerFormatMatch(answerFormat, _multipleChoice) == true)
+                {
+                    @foreach(AnswerChoicesModel answerChoice in answerChoices!)
+                    {
+                        <tr>
+                            <td colspan="2">
+                                <table style="width: 100%">
+                                    <tr>
+                                        <td style="width: 25%; text-align: right;">
+                                            @answerChoice.AnswerLetter
+                                        </td>
+                                        <td style="width: 75%; text-align: left; padding-left: 30px;">
+                                            @answerChoice.AnswerText
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
                 {
                     <tr>
-                        <td style="text-align: right;">
-                            @answerChoice.AnswerLetter
-                        </td>
-                        <td style="text-align: left;">
-                            @answerChoice.AnswerText
+                        <td>&nbsp;</td>
+                        <td style="text-align: left; padding-left: 30px;">
+                            @if (AnswerFormatMatch(answerFormat, _trueFalse) == true)
+                            {
+                                <label>True or False?</label>
+                            }
+                            else if (AnswerFormatMatch(answerFormat, _yesNo) == true)
+                            {
+                                <label>Yes or No?</label>
+                            }
+                            else
+                            {
+                                throw new Exception("Invalid answer format.");
+                            }
                         </td>
                     </tr>
                 }
-                *@
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>
+                        <table>
+                            <tr>
+                                <td style="padding-top: 15px;">Answer</td>
+                                <td style="padding-top: 15px; padding-left: 15px;">
+                                    @if (question.CorrectAnswer?.Length == 1)
+                                    {
+                                        @question.CorrectAnswer?.ToLower()
+                                    }
+                                    else
+                                    {
+                                        @question.CorrectAnswer
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><br /><br /></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
             }
         }
     </table>

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Training.Website.Models;
 using Training.Website.Services;
@@ -19,6 +20,11 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
+        private const string _yesNo = "Yes/No";
+        private const string _trueFalse = "True/False";
+        private const string _multipleChoice = "Multiple Choice";
+
+        private Dictionary<int, string>? _answerFormats = null;
         private IEnumerable<string>? _sessions = null;
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
@@ -32,6 +38,8 @@ namespace Training.Website.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            _answerFormats = await CommonServiceMethods.GetAnswerFormats(Database);
+
             IEnumerable<SessionInformationModel>? sessionInfo = await CommonServiceMethods.GetSessionInformation(Database);
 
             if (sessionInfo != null && sessionInfo.Count() > 0)
@@ -48,6 +56,10 @@ namespace Training.Website.Components.Pages
         }
 
         // ================================================================================================================================================================================================================================================================================================
+
+        private bool AnswerFormatMatch(string? answerFormat, string answerType) =>
+            answerFormat?.Equals(answerType, StringComparison.InvariantCultureIgnoreCase) ?? false;
+
 
         private SessionInformationModel? ConvertSessionStringToClass(string newValue)
         {
@@ -81,11 +93,13 @@ namespace Training.Website.Components.Pages
 
                 foreach (QuestionsModel? question in _questions)
                 {
+                    /*
                     IEnumerable<AnswerChoicesModel>? answerChoicesOneQuestion =
-                        await CommonServiceMethods.GetAnswerChoicesByQuestionID(question!.Question_ID!.Value, Database);
+                        GetAnswerChoicesByQuestionID(question!.Question_ID!.Value, Database);
 
                     if (answerChoicesOneQuestion != null)
                         answerChoices.AddRange(answerChoicesOneQuestion);
+                    */
                 }
 
                 _answerChoices = answerChoices;
