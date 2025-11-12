@@ -6,7 +6,11 @@ namespace Training.Website.Services
     public class CommonServiceMethods
     {
         //TODO: SORT THESE METHODS
-        
+
+        public static async Task<IEnumerable<string>?> GetAnswerLettersByQuestionID(int questionID, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<string, object?>
+                ("usp_Training_Questionnaire_GetAnswerLettersByQuestionID", new { Question_ID = questionID });
+
         public static async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");
 

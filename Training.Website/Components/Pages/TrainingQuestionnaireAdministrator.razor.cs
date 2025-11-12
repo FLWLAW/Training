@@ -2,6 +2,7 @@
 using SqlServerDatabaseAccessLibrary;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -29,17 +30,25 @@ namespace Training.Website.Components.Pages
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
 
-        private IEnumerable<QuestionsModel>? _questions = null;
+        private bool _currentQuestionControlsEnabled = false;
+        private int? _currentQuestionIndex = null;
+        private string? _currentQuestionText = null;
+        private string? _currentAnswerFormat = null;
+        private List<QuestionsModel>? _questions = null;
 
-        private IEnumerable<AnswerChoicesModel>? _answerChoices = null;
-        
-        
+        private bool _addOrEditModeEnabled = false;
+
+        private IEnumerable<AnswerChoicesModel>? _currentAnswerChoices = null;
+        private IEnumerable<string>? _currentAnswerChoiceItems = null;
+        private string? _currentCorrectAnswerChoiceItem = null;
+
         #endregion
 
         protected override async Task OnInitializedAsync()
         {
             _answerFormats = await CommonServiceMethods.GetAnswerFormats(Database);
 
+            // GET ALL SESSIONS
             IEnumerable<SessionInformationModel>? sessionInfo = await CommonServiceMethods.GetSessionInformation(Database);
 
             if (sessionInfo != null && sessionInfo.Count() > 0)
@@ -57,9 +66,13 @@ namespace Training.Website.Components.Pages
 
         // ================================================================================================================================================================================================================================================================================================
 
+        private async Task AnswerFormatChanged(string newValue)
+        {
+            await Task.Run(() => _currentAnswerFormat = newValue);
+        }
+
         private bool AnswerFormatMatch(string? answerFormat, string answerType) =>
             answerFormat?.Equals(answerType, StringComparison.InvariantCultureIgnoreCase) ?? false;
-
 
         private SessionInformationModel? ConvertSessionStringToClass(string newValue)
         {
@@ -81,30 +94,79 @@ namespace Training.Website.Components.Pages
             return result;
         }
 
+        private async Task MoveDownButtonClicked()
+        {
+            if (_currentQuestionIndex < _questions?.Count - 1)
+                _currentQuestionIndex++;
+
+            await SetQuestionsControls();
+            StateHasChanged();
+        }
+
+        private async Task MoveUpButtonClicked()
+        {
+            if (_currentQuestionIndex > 0)
+                _currentQuestionIndex--;
+
+            await SetQuestionsControls();
+            StateHasChanged();
+        }
+
+        private async Task PopulateCorrectAnswerDropDown(int? questionID)
+        {
+            switch(_currentAnswerFormat)
+            {
+                case _multipleChoice:
+                    _currentAnswerChoiceItems = await CommonServiceMethods.GetAnswerLettersByQuestionID(questionID!.Value, Database);
+                    break;
+                case _yesNo:
+                    _currentAnswerChoiceItems = ["Yes", "No"];
+                    break;
+                case _trueFalse:
+                    _currentAnswerChoiceItems = ["True", "False"];
+                    break;
+            }
+
+            _currentCorrectAnswerChoiceItem = _questions?.FirstOrDefault(q => q.Question_ID == questionID)?.CorrectAnswer;
+            if (_currentCorrectAnswerChoiceItem != null && _currentAnswerFormat == _multipleChoice)
+                _currentCorrectAnswerChoiceItem = _currentCorrectAnswerChoiceItem.ToLower();
+        }
+
         private async Task SessionChanged(string newValue)
         {
             _selectedSessionString = newValue;
             _selectedSession = ConvertSessionStringToClass(newValue);
-            _questions = await CommonServiceMethods.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database);
+            _questions = (await CommonServiceMethods.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToList();
 
-            if (_questions != null)
+            if (_questions != null && _questions.Count > 0)
             {
-                List<AnswerChoicesModel> answerChoices = [];
-
-                foreach (QuestionsModel? question in _questions)
-                {
-                    /*
-                    IEnumerable<AnswerChoicesModel>? answerChoicesOneQuestion =
-                        GetAnswerChoicesByQuestionID(question!.Question_ID!.Value, Database);
-
-                    if (answerChoicesOneQuestion != null)
-                        answerChoices.AddRange(answerChoicesOneQuestion);
-                    */
-                }
-
-                _answerChoices = answerChoices;
+                _currentQuestionIndex = 0;
+                _currentQuestionText = _questions![_currentQuestionIndex.Value].Question;
+                SetCurrentAnswerFormat();
+                await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex.Value].Question_ID);
                 StateHasChanged();
             }
+            else
+            {
+                _currentQuestionIndex = null;
+                _currentQuestionText = null;
+                _currentAnswerFormat = null;
+            }
+        }
+
+        private void SetCurrentAnswerFormat()
+        {
+            int? answerFormatID = _questions![_currentQuestionIndex!.Value].AnswerFormat;
+            _currentAnswerFormat = (answerFormatID != null) ? _answerFormats?[answerFormatID.Value] : null;
+        }
+
+        private async Task SetQuestionsControls()
+        {
+            _currentQuestionText = _questions?[_currentQuestionIndex!.Value].Question;
+            SetCurrentAnswerFormat();
+            await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex.Value].Question_ID);
+            _currentAnswerChoices =
+                CommonServiceMethods.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database);
         }
     }
 }

@@ -21,94 +21,188 @@
 </table>
 @if(_selectedSessionString != null)
 {
-    <!-- BOTTOM PORTION OF PAGE -->
+    <!-- TOP PORTION OF PAGE -->
     <table style="width: 100%;">
+        <!-- QUESTION TEXTBOX -->
         <tr>
-            <td colspan="2" style="width: 100%; text-align: center;">
-                <h4><b><u>@_selectedSession?.DocTitle</u></b></h4>
-                <br />
+            <td class="QuestionsTopHalfHeader_Left">
+                Question #@_questions?[_currentQuestionIndex!.Value].QuestionNumber:
+            </td>
+            <td class="QuestionsTopHalfHeader_Center">
+                <TelerikTextBox @bind-value="@_currentQuestionText" Enabled="@_currentQuestionControlsEnabled" />
+            </td>
+            <td class="QuestionsTopHalfHeader_Right">
+                <TelerikButton Enabled="true" OnClick="@(async () => await MoveUpButtonClicked() )">Move Up</TelerikButton><br />
+                <TelerikButton Enabled="true" OnClick="@(async () => await MoveDownButtonClicked() )">Move Down</TelerikButton><br />
+                Add Question<br />
+                Remove Question<br />
+                Edit Question<br />
             </td>
         </tr>
-        @if (_questions != null)
+        <!-- FORMAT DROPDOWN -->
+        <tr>
+            <td class="QuestionsTopHalfHeader_Left">Format:</td>
+            <td class="QuestionsTopHalfHeader_Center">
+                <TelerikDropDownList
+                    Data="@_answerFormats?.Values"
+                    Value="@_currentAnswerFormat"
+                    ValueChanged="@(async (string newValue) => await AnswerFormatChanged(newValue) )"
+                    Width="210px"
+                    Enabled="@_currentQuestionControlsEnabled">
+                    <DropDownListSettings>
+                        <DropDownListPopupSettings Height="120px" />
+                    </DropDownListSettings>
+                </TelerikDropDownList>
+            </td>
+        </tr>
+        <!-- ANSWER CHOICES IF MULTIPLE CHOICE -->
+        @if(_currentAnswerFormat == _multipleChoice)
         {
-            @foreach(QuestionsModel? question in _questions)
+            _currentAnswerChoices = CommonServiceMethods.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database);
+            foreach(AnswerChoicesModel answerChoice in _currentAnswerChoices!)
             {
-                string? answerFormat = _answerFormats?[question.AnswerFormat!.Value];
-                IEnumerable<AnswerChoicesModel>? answerChoices = CommonServiceMethods.GetAnswerChoicesByQuestionID(question.Question_ID!.Value, Database);
-
+                string? answerText = answerChoice?.AnswerText;
                 <tr>
-                    <td style="width: 20%; text-align: right;">
-                        @question.QuestionNumber<label>.</label>
+                    <td class="QuestionsTopHalfHeader_Left">
+                        @if(answerChoice?.AnswerLetter.ToString()?.ToLower() == "a")
+                        {
+                            <label>Multiple choice options:</label>   
+                        }
+                        <label>@answerChoice?.AnswerLetter)</label>
                     </td>
-                    <td style="width: 80%; text-align: left; padding-left: 20px;">
-                        @question.Question
+                    <td class="QuestionsTopHalfHeader_Center">
+                        <TelerikTextBox @bind-value="@answerText" Enabled="@_addOrEditModeEnabled" />
                     </td>
                 </tr>
+            }
+        }
+        <!-- CORRECT ANSWER -->
+        <tr>
+            <td class="QuestionsTopHalfHeader_Left">Correct Answer:</td>
+            <td class="QuestionsTopHalfHeader_Center">
+                <TelerikDropDownList
+                    Data="@_currentAnswerChoiceItems"
+                    Value="@_currentCorrectAnswerChoiceItem"
+                    Width="90px"
+                    Enabled="@_currentQuestionControlsEnabled">
+                    <DropDownListSettings>
+                        <DropDownListPopupSettings Height="120px" />
+                    </DropDownListSettings>
+                </TelerikDropDownList>
+            </td>
+            <td class="QuestionsTopHalfHeader_Right">&nbsp;</td>
+        </tr>
+    </table>
 
-                @if (AnswerFormatMatch(answerFormat, _multipleChoice) == true)
+    <!-- BOTTOM PORTION OF PAGE -->
+    <TelerikWindow Modal="false" Visible="true" Width="60%" Height="50%" Top="50%" Left="20%">
+        <WindowContent>
+            <table style="width: 100%; border: 2px solid; border-color: black;">
+                <tr>
+                    <td colspan="2" style="width: 100%; text-align: center;">
+                        <h4><b><u>@_selectedSession?.DocTitle</u></b></h4>
+                        <br />
+                    </td>
+                </tr>
+                @if (_questions != null)
                 {
-                    @foreach(AnswerChoicesModel answerChoice in answerChoices!)
+                    @foreach(QuestionsModel? question in _questions)
                     {
+                        string? answerFormat = _answerFormats?[question.AnswerFormat!.Value];
+                        IEnumerable<AnswerChoicesModel>? answerChoices = CommonServiceMethods.GetAnswerChoicesByQuestionID(question.Question_ID!.Value, Database);
+
                         <tr>
-                            <td colspan="2">
-                                <table style="width: 100%">
+                            <td style="width: 20%; text-align: right;">
+                                @question.QuestionNumber<label>.</label>
+                            </td>
+                            <td style="width: 80%; text-align: left; padding-left: 20px;">
+                                @question.Question
+                            </td>
+                        </tr>
+
+                        @if (AnswerFormatMatch(answerFormat, _multipleChoice) == true)
+                        {
+                            @foreach(AnswerChoicesModel answerChoice in answerChoices!)
+                            {
+                                <tr>
+                                    <td colspan="2">
+                                        <table style="width: 100%">
+                                            <tr>
+                                                <td style="width: 25%; text-align: right;">
+                                                    @answerChoice.AnswerLetter
+                                                </td>
+                                                <td style="width: 75%; text-align: left; padding-left: 30px;">
+                                                    @answerChoice.AnswerText
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td style="text-align: left; padding-left: 30px;">
+                                    @if (AnswerFormatMatch(answerFormat, _trueFalse) == true)
+                                    {
+                                        <label>True or False?</label>
+                                    }
+                                    else if (AnswerFormatMatch(answerFormat, _yesNo) == true)
+                                    {
+                                        <label>Yes or No?</label>
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("Invalid answer format.");
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>
+                                <table>
                                     <tr>
-                                        <td style="width: 25%; text-align: right;">
-                                            @answerChoice.AnswerLetter
+                                        <td style="padding-top: 15px;">Answer:</td>
+                                        <td style="padding-top: 15px; padding-left: 15px;">
+                                            @if (question.CorrectAnswer?.Length == 1)
+                                            {
+                                                @question.CorrectAnswer?.ToLower()
+                                            }
+                                            else
+                                            {
+                                                @question.CorrectAnswer
+                                            }
                                         </td>
-                                        <td style="width: 75%; text-align: left; padding-left: 30px;">
-                                            @answerChoice.AnswerText
-                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><br /><br /></td>
                                     </tr>
                                 </table>
                             </td>
                         </tr>
                     }
                 }
-                else
-                {
-                    <tr>
-                        <td>&nbsp;</td>
-                        <td style="text-align: left; padding-left: 30px;">
-                            @if (AnswerFormatMatch(answerFormat, _trueFalse) == true)
-                            {
-                                <label>True or False?</label>
-                            }
-                            else if (AnswerFormatMatch(answerFormat, _yesNo) == true)
-                            {
-                                <label>Yes or No?</label>
-                            }
-                            else
-                            {
-                                throw new Exception("Invalid answer format.");
-                            }
-                        </td>
-                    </tr>
-                }
-                <tr>
-                    <td>&nbsp;</td>
-                    <td>
-                        <table>
-                            <tr>
-                                <td style="padding-top: 15px;">Answer</td>
-                                <td style="padding-top: 15px; padding-left: 15px;">
-                                    @if (question.CorrectAnswer?.Length == 1)
-                                    {
-                                        @question.CorrectAnswer?.ToLower()
-                                    }
-                                    else
-                                    {
-                                        @question.CorrectAnswer
-                                    }
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2"><br /><br /></td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            }
-        }
-    </table>
+            </table>
+        </WindowContent>
+    </TelerikWindow>
 }
+<style>
+    .QuestionsTopHalfHeader_Left {
+        width: 35%;
+        text-align: right;
+        font-size: smaller;
+        padding-right: 15px;
+    }
+    .QuestionsTopHalfHeader_Center {
+        width: 45%;
+        text-align: left;
+        font-size: smaller;
+    }
+    .QuestionsTopHalfHeader_Right {
+        width: 20%;
+        padding-left: 20px;
+    }
+</style>
