@@ -2,6 +2,7 @@
 {
     public class AppState
     {
-        public int? SessionID { get; set; }
+        //public int? SessionID { get; set; }
+        public string? SessionID_String { get; set; }
     }
 }

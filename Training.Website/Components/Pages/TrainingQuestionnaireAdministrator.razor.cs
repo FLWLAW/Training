@@ -3,6 +3,7 @@ using SqlServerDatabaseAccessLibrary;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Telerik.Blazor.Components;
+using Telerik.SvgIcons;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -18,6 +19,9 @@ namespace Training.Website.Components.Pages
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
         private IDatabase? Database { get; set; }
+
+        [Inject]
+        private NavigationManager? NavigationManager { get; set; }
         #endregion
 
         #region PRIVATE FIELDS
@@ -30,17 +34,20 @@ namespace Training.Website.Components.Pages
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
 
-        private bool _currentQuestionControlsEnabled = false;
+        //ivate bool _currentQuestionControlsEnabled = false;
         private int? _currentQuestionIndex = null;
         private string? _currentQuestionText = null;
         private string? _currentAnswerFormat = null;
+        private bool _sessionHasQuestions;
         private List<QuestionsModel>? _questions = null;
 
-        private bool _addOrEditModeEnabled = false;
+        private bool _addMode = false;
+        private bool _editMode = false;
 
-        private IEnumerable<AnswerChoicesModel>? _currentAnswerChoices = null;
-        private IEnumerable<string>? _currentAnswerChoiceItems = null;
-        private string? _currentCorrectAnswerChoiceItem = null;
+        private List<AnswerChoicesModel>? _currentAnswerChoices = null;
+
+        private IEnumerable<string>? _currentCorrectAnswerPossibilities = null;
+        private string? _currentSelectedCorrectAnswer = null;
 
         #endregion
 
@@ -61,18 +68,55 @@ namespace Training.Website.Components.Pages
                     sessions.Add(item);
                 }
                 _sessions = sessions;
+                _selectedSessionString = ApplicationState!.SessionID_String;
             }
         }
 
         // ================================================================================================================================================================================================================================================================================================
 
+        private void AddAnswerChoiceClicked()
+        {
+            char letter = (char)('a' + (_currentAnswerChoices?.Count ?? 0));
+
+            _currentAnswerChoices!.Add(new AnswerChoicesModel { AnswerLetter = letter, AnswerText = "" });
+            StateHasChanged();
+        }
+
+        private bool AddOrEditMode() => _addMode == true || _editMode == true;
+
+        private void AddQuestionClicked()
+        {
+            _addMode = true;
+            _editMode = false;
+            _currentQuestionIndex = null;
+            _currentQuestionText = null;
+            _currentAnswerFormat = null;
+            _currentAnswerChoices = [];
+            _currentCorrectAnswerPossibilities = [];
+            _currentSelectedCorrectAnswer = null;
+            _sessionHasQuestions = false;
+
+            StateHasChanged();
+        }
+
         private async Task AnswerFormatChanged(string newValue)
         {
-            await Task.Run(() => _currentAnswerFormat = newValue);
+            int? questionID = _addMode == false ? _questions?[_currentQuestionIndex!.Value].Question_ID : null;
+
+            _currentAnswerFormat = newValue;
+            _currentSelectedCorrectAnswer = string.Empty;
+            await PopulateCorrectAnswerDropDown(questionID);
+            StateHasChanged();
         }
 
         private bool AnswerFormatMatch(string? answerFormat, string answerType) =>
             answerFormat?.Equals(answerType, StringComparison.InvariantCultureIgnoreCase) ?? false;
+
+        private async Task CancelButtonClicked()
+        {
+            string sessionID_String = ApplicationState!.SessionID_String ?? string.Empty;   // should never be null
+            await SessionChanged(sessionID_String); // this is just a roundabout way of refreshing the page, since NavManager wasn't working ocrrectly.
+        }
 
         private SessionInformationModel? ConvertSessionStringToClass(string newValue)
         {
@@ -94,6 +138,12 @@ namespace Training.Website.Components.Pages
             return result;
         }
 
+        private void CorrectAnswerChanged(string newValue)
+        {
+            _currentSelectedCorrectAnswer = newValue;
+            StateHasChanged();
+        }
+
         private async Task MoveDownButtonClicked()
         {
             if (_currentQuestionIndex < _questions?.Count - 1)
@@ -112,39 +162,60 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
+        private bool OkToSave() =>
+            string.IsNullOrWhiteSpace(_currentQuestionText) == false &&
+            string.IsNullOrWhiteSpace(_currentAnswerFormat) == false &&
+            string.IsNullOrWhiteSpace(_currentSelectedCorrectAnswer) == false;
+
         private async Task PopulateCorrectAnswerDropDown(int? questionID)
         {
+            _currentCorrectAnswerPossibilities = [];
+
             switch(_currentAnswerFormat)
             {
                 case _multipleChoice:
-                    _currentAnswerChoiceItems = await CommonServiceMethods.GetAnswerLettersByQuestionID(questionID!.Value, Database);
+                    _currentCorrectAnswerPossibilities = await CommonServiceMethods.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
                     break;
                 case _yesNo:
-                    _currentAnswerChoiceItems = ["Yes", "No"];
+                    _currentCorrectAnswerPossibilities = ["Yes", "No"];
                     break;
                 case _trueFalse:
-                    _currentAnswerChoiceItems = ["True", "False"];
+                    _currentCorrectAnswerPossibilities = ["True", "False"];
                     break;
+                case null:
+                    _currentCorrectAnswerPossibilities = null;
+                    break;
+                default:
+                    throw new Exception("Invalid current answer format in PopulateCorrectAnswerDropDown()");
             }
 
-            _currentCorrectAnswerChoiceItem = _questions?.FirstOrDefault(q => q.Question_ID == questionID)?.CorrectAnswer;
-            if (_currentCorrectAnswerChoiceItem != null && _currentAnswerFormat == _multipleChoice)
-                _currentCorrectAnswerChoiceItem = _currentCorrectAnswerChoiceItem.ToLower();
+            _currentSelectedCorrectAnswer = (_addMode == false)
+                ? _questions?.FirstOrDefault(q => q.Question_ID == questionID)?.CorrectAnswer
+                : null;
+        }
+
+        private async Task SaveButtonClicked()
+        {
+            await Task.Delay(1);
+            throw new NotImplementedException();
         }
 
         private async Task SessionChanged(string newValue)
         {
+            ApplicationState!.SessionID_String = newValue;
+            _addMode = false;
+            _editMode = false;
             _selectedSessionString = newValue;
             _selectedSession = ConvertSessionStringToClass(newValue);
             _questions = (await CommonServiceMethods.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToList();
+            _sessionHasQuestions = (_questions != null && _questions.Count > 0);
 
-            if (_questions != null && _questions.Count > 0)
+            if (_sessionHasQuestions == true)
             {
                 _currentQuestionIndex = 0;
                 _currentQuestionText = _questions![_currentQuestionIndex.Value].Question;
                 SetCurrentAnswerFormat();
                 await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex.Value].Question_ID);
-                StateHasChanged();
             }
             else
             {
@@ -152,6 +223,7 @@ namespace Training.Website.Components.Pages
                 _currentQuestionText = null;
                 _currentAnswerFormat = null;
             }
+            StateHasChanged();
         }
 
         private void SetCurrentAnswerFormat()
@@ -164,9 +236,9 @@ namespace Training.Website.Components.Pages
         {
             _currentQuestionText = _questions?[_currentQuestionIndex!.Value].Question;
             SetCurrentAnswerFormat();
-            await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex.Value].Question_ID);
+            await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex!.Value].Question_ID);
             _currentAnswerChoices =
-                CommonServiceMethods.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database);
+                CommonServiceMethods.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToList();
         }
     }
 }

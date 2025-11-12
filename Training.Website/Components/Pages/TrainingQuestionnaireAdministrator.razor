@@ -10,7 +10,7 @@
                 Data="@_sessions"
                 Value="_selectedSessionString"
                 ValueChanged="@(async (string newValue) => await SessionChanged(newValue) )"
-                Enabled="true"
+                Enabled="@(! AddOrEditMode())"
                 Width="350px">
                 <DropDownListSettings>
                     <DropDownListPopupSettings Height="180px" />
@@ -23,79 +23,143 @@
 {
     <!-- TOP PORTION OF PAGE -->
     <table style="width: 100%;">
-        <!-- QUESTION TEXTBOX -->
-        <tr>
-            <td class="QuestionsTopHalfHeader_Left">
-                Question #@_questions?[_currentQuestionIndex!.Value].QuestionNumber:
-            </td>
-            <td class="QuestionsTopHalfHeader_Center">
-                <TelerikTextBox @bind-value="@_currentQuestionText" Enabled="@_currentQuestionControlsEnabled" />
-            </td>
-            <td class="QuestionsTopHalfHeader_Right">
-                <TelerikButton Enabled="true" OnClick="@(async () => await MoveUpButtonClicked() )">Move Up</TelerikButton><br />
-                <TelerikButton Enabled="true" OnClick="@(async () => await MoveDownButtonClicked() )">Move Down</TelerikButton><br />
-                Add Question<br />
-                Remove Question<br />
-                Edit Question<br />
-            </td>
-        </tr>
-        <!-- FORMAT DROPDOWN -->
-        <tr>
-            <td class="QuestionsTopHalfHeader_Left">Format:</td>
-            <td class="QuestionsTopHalfHeader_Center">
-                <TelerikDropDownList
-                    Data="@_answerFormats?.Values"
-                    Value="@_currentAnswerFormat"
-                    ValueChanged="@(async (string newValue) => await AnswerFormatChanged(newValue) )"
-                    Width="210px"
-                    Enabled="@_currentQuestionControlsEnabled">
-                    <DropDownListSettings>
-                        <DropDownListPopupSettings Height="120px" />
-                    </DropDownListSettings>
-                </TelerikDropDownList>
-            </td>
-        </tr>
-        <!-- ANSWER CHOICES IF MULTIPLE CHOICE -->
-        @if(_currentAnswerFormat == _multipleChoice)
+        @if (_sessionHasQuestions == true || AddOrEditMode() == true)
         {
-            _currentAnswerChoices = CommonServiceMethods.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database);
-            foreach(AnswerChoicesModel answerChoice in _currentAnswerChoices!)
+            <!-- QUESTION TEXTBOX -->
+            <tr>
+                <td class="QuestionsTopHalfHeader_Left">
+                    @if (_sessionHasQuestions == true)
+                    {
+                        <label>Question #@_questions?[_currentQuestionIndex!.Value].QuestionNumber:</label>
+                    }
+                    else
+                    {
+                        <label>Question #@(_questions?.Count + 1)</label>
+                    }
+                </td>
+                <td class="QuestionsTopHalfHeader_Center">
+                    <TelerikTextBox @bind-value="@_currentQuestionText" Enabled="@AddOrEditMode()" />
+                </td>
+                <td class="QuestionsTopHalfHeader_Right">
+                    @if (AddOrEditMode() == false)
+                    {
+                        <TelerikButton Enabled="true" OnClick="@(async () => await MoveUpButtonClicked() )">Move Up</TelerikButton><br />
+                        <TelerikButton Enabled="true" OnClick="@(async () => await MoveDownButtonClicked() )">Move Down</TelerikButton><br />
+                        <TelerikButton Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton><br />
+                        <label>Remove Question</label><br />
+                        <label>Edit Question</label><br />
+                    }
+                    else
+                    {
+                        <TelerikButton Enabled="@OkToSave()" OnClick="@(async () => await SaveButtonClicked())">Save</TelerikButton><br />
+                        <TelerikButton Enabled="true" OnClick="@(async () => await CancelButtonClicked())">Cancel</TelerikButton>
+                    }
+                </td>
+            </tr>
+            <!-- FORMAT DROPDOWN -->
+            <tr>
+                <td class="QuestionsTopHalfHeader_Left">Format:</td>
+                <td class="QuestionsTopHalfHeader_Center">
+                    <TelerikDropDownList
+                        Data="@_answerFormats?.Values"
+                        Value="@_currentAnswerFormat"
+                        ValueChanged="@((string newValue) => AnswerFormatChanged(newValue) )"
+                        Width="210px"
+                        Enabled="@AddOrEditMode()">
+                        <DropDownListSettings>
+                            <DropDownListPopupSettings Height="120px" />
+                        </DropDownListSettings>
+                    </TelerikDropDownList>
+                    @if (AddOrEditMode() == true && _currentAnswerFormat == _multipleChoice)
+                    {
+                        <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                        <TelerikButton Enabled="true" OnClick="@(() => AddAnswerChoiceClicked())">Add Answer Choice</TelerikButton>
+                    }
+                </td>
+            </tr>
+            <!-- ANSWER CHOICES IF MULTIPLE CHOICE -->
+            @if(_currentAnswerFormat == _multipleChoice)
             {
-                string? answerText = answerChoice?.AnswerText;
-                <tr>
-                    <td class="QuestionsTopHalfHeader_Left">
-                        @if(answerChoice?.AnswerLetter.ToString()?.ToLower() == "a")
-                        {
-                            <label>Multiple choice options:</label>   
-                        }
-                        <label>@answerChoice?.AnswerLetter)</label>
-                    </td>
-                    <td class="QuestionsTopHalfHeader_Center">
-                        <TelerikTextBox @bind-value="@answerText" Enabled="@_addOrEditModeEnabled" />
-                    </td>
-                </tr>
+                if (_addMode == false)
+                {
+                    _currentAnswerChoices =
+                        CommonServiceMethods.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToList();
+                }
+                else if (_currentAnswerChoices == null)
+                {
+                    _currentAnswerChoices = new List<AnswerChoicesModel>();
+                }
+                foreach(AnswerChoicesModel answerChoice in _currentAnswerChoices!)
+                {
+                    string? answerText = answerChoice?.AnswerText;
+                    <tr>
+                        <td class="QuestionsTopHalfHeader_Left">
+                            @if(answerChoice?.AnswerLetter.ToString()?.ToLower() == "a")
+                            {
+                                <label>Multiple choice options:</label>   
+                            }
+                            <label>@answerChoice?.AnswerLetter)</label>
+                        </td>
+                        <td class="QuestionsTopHalfHeader_Center">
+                            <TelerikTextBox @bind-value="@answerText" Enabled="@AddOrEditMode()" />
+                        </td>
+                    </tr>
+                }
             }
+            <!-- CORRECT ANSWER -->
+            <tr>
+                <td class="QuestionsTopHalfHeader_Left">Correct Answer:</td>
+                <td class="QuestionsTopHalfHeader_Center">
+                    <TelerikDropDownList
+                        Data="@_currentCorrectAnswerPossibilities"
+                        Value="@_currentSelectedCorrectAnswer"
+                        ValueChanged="@((string newValue) => CorrectAnswerChanged(newValue) )"
+                        Width="90px"
+                        Enabled="@AddOrEditMode()">
+                        <DropDownListSettings>
+                            <DropDownListPopupSettings Height="120px" />
+                        </DropDownListSettings>
+                    </TelerikDropDownList>
+                </td>
+                <td class="QuestionsTopHalfHeader_Right">&nbsp;</td>
+            </tr>
         }
-        <!-- CORRECT ANSWER -->
-        <tr>
-            <td class="QuestionsTopHalfHeader_Left">Correct Answer:</td>
-            <td class="QuestionsTopHalfHeader_Center">
-                <TelerikDropDownList
-                    Data="@_currentAnswerChoiceItems"
-                    Value="@_currentCorrectAnswerChoiceItem"
-                    Width="90px"
-                    Enabled="@_currentQuestionControlsEnabled">
-                    <DropDownListSettings>
-                        <DropDownListPopupSettings Height="120px" />
-                    </DropDownListSettings>
-                </TelerikDropDownList>
-            </td>
-            <td class="QuestionsTopHalfHeader_Right">&nbsp;</td>
-        </tr>
+        else
+        {
+            <tr>
+                <td class="NoQuestionsTopHalfHeader_Left">
+                    ** THERE ARE NO QUESTIONS FOR THIS SESSION **
+                </td>
+                <td class="NoQuestionsTopHalfHeader_Right">
+                    <TelerikButton Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton>
+                </td>
+            </tr>
+        }
     </table>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
+
     <!-- BOTTOM PORTION OF PAGE -->
-    <TelerikWindow Modal="false" Visible="true" Width="60%" Height="50%" Top="50%" Left="20%">
+    <TelerikWindow Modal="false" Visible="true" Width="60%" Height="48%" Top="52%" Left="20%">
         <WindowContent>
             <table style="width: 100%; border: 2px solid; border-color: black;">
                 <tr>
@@ -204,5 +268,15 @@
     .QuestionsTopHalfHeader_Right {
         width: 20%;
         padding-left: 20px;
+    }
+    .NoQuestionsTopHalfHeader_Left {
+        width: 80%;
+        text-align: center;
+        font-size: larger;
+        color: red;
+    }
+    .NoQuestionsTopHalfHeader_Right {
+        width: 20%;
+        text-align: center;
     }
 </style>
