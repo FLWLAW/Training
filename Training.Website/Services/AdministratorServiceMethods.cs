@@ -1,0 +1,83 @@
+﻿using Dapper;
+using SqlServerDatabaseAccessLibrary;
+using System.Data;
+using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
+using Training.Website.Models;
+
+namespace Training.Website.Services
+{
+    public class AdministratorServiceMethods
+    {
+        //NOTE: LEAVE AS SYNCHRONOUS
+        public IEnumerable<AnswerChoicesModel>? GetAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
+            database!.QueryByStoredProcedure<AnswerChoicesModel, object?>
+                ("usp_Training_Questionnaire_GetAnswerChoicesByQuestionID", new { Question_ID = questionID });
+
+        public async Task<Dictionary<int, string>?> GetAnswerFormats(IDatabase? database)
+        {
+            IEnumerable<AnswerFormatsModel>? data =
+                await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Training_Questionnaire_GetAnswerFormats");
+
+            if (data == null)
+                return null;
+            else
+            {
+                Dictionary<int, string> answerFormats = [];
+
+                foreach (AnswerFormatsModel? row in data)
+                    answerFormats.Add(row.Format_ID, row.Name!);
+
+                return answerFormats;
+            }
+        }
+
+        public async Task<IEnumerable<string>?> GetAnswerLettersByQuestionID(int questionID, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<string, object?>
+                ("usp_Training_Questionnaire_GetAnswerLettersByQuestionID", new { Question_ID = questionID });
+
+        public async Task<QuestionsModel?> GetQuestionByQuestionID(int questionID, IDatabase? database) =>
+            (
+                await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
+                    ("usp_Training_Questionnaire_GetQuestionByQuestionID", new { Question_ID = questionID })
+            ).FirstOrDefault()!;
+
+        public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionID(int sessionID, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
+                ("usp_Training_Questionnaire_GetQuestionsBySessionID", new { Session_ID = sessionID });
+
+        public async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");
+
+        public async Task<int> InsertQuestion
+            (
+                int sessionID, int questionNumber, string question, int answerFormatID, string? correctAnswer, int createdByID,
+                IDatabase? database
+            )
+        {
+            DynamicParameters parameters = new();
+
+            parameters.Add("@Training_SESSION_ID", value: sessionID, dbType: DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@QuestionNumber", value: questionNumber, dbType: DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@Question", value: question, dbType: DbType.AnsiString, direction: ParameterDirection.Input);
+            parameters.Add("@AnswerFormat_ID", value: answerFormatID, dbType: DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@CorrectAnswer", value: correctAnswer, dbType: DbType.String, direction: ParameterDirection.Input);
+            parameters.Add("@CreatedBy_ID", value: createdByID, dbType: DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@Active", value: 1, dbType: DbType.Boolean, direction: ParameterDirection.Input);
+            parameters.Add("@Current_ID", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+            int questionID = await database!.NonQueryByStoredProcedureOutputParameterAsync<int>
+                ("usp_Training_Questionnaire_InsertQuestion", "@Current_ID", parameters);
+
+            return questionID;
+        }
+
+
+
+        /*
+        public async Task<IEnumerable<AnswerFormatsModel>?> GetAnswerFormats(IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Training_Questionnaire_GetAnswerFormats");
+        */
+
+
+    }
+}

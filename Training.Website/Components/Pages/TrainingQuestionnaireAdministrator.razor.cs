@@ -1,9 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
-using System.Runtime.CompilerServices;
-using System.Text;
-using Telerik.Blazor.Components;
-using Telerik.SvgIcons;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -19,9 +15,6 @@ namespace Training.Website.Components.Pages
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
         private IDatabase? Database { get; set; }
-
-        [Inject]
-        private NavigationManager? NavigationManager { get; set; }
         #endregion
 
         #region PRIVATE FIELDS
@@ -29,12 +22,18 @@ namespace Training.Website.Components.Pages
         private const string _trueFalse = "True/False";
         private const string _multipleChoice = "Multiple Choice";
 
+        private const string _windowWidth = "60%";
+        private const string _windowLeft = "20%";
+        private const string _topWindowTop = "10%";
+        private const string _bottomWindowTop = "55%";
+        private const string _windowHeight = "43%";
+
         private Dictionary<int, string>? _answerFormats = null;
         private IEnumerable<string>? _sessions = null;
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
 
-        //ivate bool _currentQuestionControlsEnabled = false;
+        private int? _newQuestionNumber = null;
         private int? _currentQuestionIndex = null;
         private string? _currentQuestionText = null;
         private string? _currentAnswerFormat = null;
@@ -46,17 +45,19 @@ namespace Training.Website.Components.Pages
 
         private List<AnswerChoicesModel>? _currentAnswerChoices = null;
 
-        private IEnumerable<string>? _currentCorrectAnswerPossibilities = null;
+        private IEnumerable<string?>? _currentCorrectAnswerPossibilities = null;
         private string? _currentSelectedCorrectAnswer = null;
+
+        private readonly AdministratorServiceMethods _service = new();
 
         #endregion
 
         protected override async Task OnInitializedAsync()
         {
-            _answerFormats = await CommonServiceMethods.GetAnswerFormats(Database);
+            _answerFormats = await _service.GetAnswerFormats(Database);
 
             // GET ALL SESSIONS
-            IEnumerable<SessionInformationModel>? sessionInfo = await CommonServiceMethods.GetSessionInformation(Database);
+            IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database);
 
             if (sessionInfo != null && sessionInfo.Count() > 0)
             {
@@ -79,6 +80,7 @@ namespace Training.Website.Components.Pages
             char letter = (char)('a' + (_currentAnswerChoices?.Count ?? 0));
 
             _currentAnswerChoices!.Add(new AnswerChoicesModel { AnswerLetter = letter, AnswerText = "" });
+            _currentCorrectAnswerPossibilities = _currentAnswerChoices.Select(x => x.AnswerLetter.ToString()) ?? [];
             StateHasChanged();
         }
 
@@ -88,13 +90,13 @@ namespace Training.Website.Components.Pages
         {
             _addMode = true;
             _editMode = false;
+            _newQuestionNumber = (_sessionHasQuestions == true) ? _questions?.Count + 1 : 1;
             _currentQuestionIndex = null;
             _currentQuestionText = null;
             _currentAnswerFormat = null;
             _currentAnswerChoices = [];
             _currentCorrectAnswerPossibilities = [];
             _currentSelectedCorrectAnswer = null;
-            _sessionHasQuestions = false;
 
             StateHasChanged();
         }
@@ -174,7 +176,7 @@ namespace Training.Website.Components.Pages
             switch(_currentAnswerFormat)
             {
                 case _multipleChoice:
-                    _currentCorrectAnswerPossibilities = await CommonServiceMethods.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
+                    _currentCorrectAnswerPossibilities = await _service.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
                     break;
                 case _yesNo:
                     _currentCorrectAnswerPossibilities = ["Yes", "No"];
@@ -196,8 +198,40 @@ namespace Training.Website.Components.Pages
 
         private async Task SaveButtonClicked()
         {
-            await Task.Delay(1);
-            throw new NotImplementedException();
+            KeyValuePair<int, string> selectedAnswerFormat =
+                _answerFormats!.FirstOrDefault(x => x.Value == _currentAnswerFormat);
+
+            int questionID = await _service.InsertQuestion
+                (   _selectedSession!.Session_ID!.Value,
+                    _newQuestionNumber!.Value,
+                    _currentQuestionText!,
+                    selectedAnswerFormat.Key,
+                    _currentSelectedCorrectAnswer,
+                    ApplicationState!.LoggedOnUser?.AppUserID!.Value! ?? 0,
+                    Database
+                );
+
+            QuestionsModel? newestQuestion = await _service.GetQuestionByQuestionID(questionID, Database);
+
+            if (newestQuestion != null)
+            {
+                _questions!.Add(newestQuestion!);
+                _sessionHasQuestions = true;
+                _newQuestionNumber = newestQuestion.QuestionNumber + 1;
+                if (selectedAnswerFormat.Value == _multipleChoice)
+                {
+
+                }
+
+
+                //TODO: ADD MULTIPLE ANSWER CHOICES INSERTION HERE
+            }
+            _currentQuestionText = null;
+            _currentAnswerFormat = null;
+            _currentCorrectAnswerPossibilities = [];
+            _currentSelectedCorrectAnswer = null;
+
+            StateHasChanged();
         }
 
         private async Task SessionChanged(string newValue)
@@ -207,7 +241,8 @@ namespace Training.Website.Components.Pages
             _editMode = false;
             _selectedSessionString = newValue;
             _selectedSession = ConvertSessionStringToClass(newValue);
-            _questions = (await CommonServiceMethods.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToList();
+            _sessionHasQuestions = false;   // THIS WILL PREVENT ERRORS IN THE NEXT STATEMENT, BECAUSE THE SCREEN WILL RENDER BEFORE THE AWAIT COMPLETES.
+            _questions = (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToList();
             _sessionHasQuestions = (_questions != null && _questions.Count > 0);
 
             if (_sessionHasQuestions == true)
@@ -238,7 +273,7 @@ namespace Training.Website.Components.Pages
             SetCurrentAnswerFormat();
             await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex!.Value].Question_ID);
             _currentAnswerChoices =
-                CommonServiceMethods.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToList();
+                _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToList();
         }
     }
 }

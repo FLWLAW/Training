@@ -7,7 +7,7 @@
             </label>
         </td>
         <td style="width:25%; font-size: small; text-align: right;">
-            User: [not yet implemented]
+            User:  @(ApplicationState?.LoggedOnUser?.UserName ?? ApplicationState?.LoggedOnUser?.LoginID)
         </td>
     </tr>
 </table>

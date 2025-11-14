@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using SqlServerDatabaseAccessLibrary;
-using System.Net.NetworkInformation;
 
 namespace Training.Website.Components.Layout
 {
@@ -15,15 +13,26 @@ namespace Training.Website.Components.Layout
         private AuthenticationStateProvider? GetAuthenticationStateAsync { get; set; }
 */
         public AppState? ApplicationState { get; set; } = new();
-/*
+
         protected async override Task OnInitializedAsync()
         {
-            await GetLoggedOnUser();
+            // TODO: CHANGE TO ACTUAL METHOD TO GET LOGGED ON USER
+            ApplicationState!.LoggedOnUser = new()
+            {
+                AppUserID = 1000000,
+                Domain = "EFWLAW",
+                LoginID = "DRosenblum",
+                UserName = "David Rosenblum"
+            };
+
+            await base.OnInitializedAsync();
+
+            //await GetLoggedOnUser();
         }
 
         // ================================================================================================================================================================================================================================================================================================
 
-        private async Task GetLoggedOnUser()
+        /*private async Task GetLoggedOnUser()
         {
             AuthenticationState? authstate = await GetAuthenticationStateAsync!.GetAuthenticationStateAsync();
             MainLayoutDataService service = new();
