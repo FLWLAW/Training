@@ -74,11 +74,6 @@
                                     <DropDownListPopupSettings Height="120px" />
                                 </DropDownListSettings>
                             </TelerikDropDownList>
-                            @if (AddOrEditMode() == true && _currentAnswerFormat == _multipleChoice)
-                            {
-                                <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                                <TelerikButton Enabled="true" OnClick="@(() => AddAnswerChoiceClicked())">Add Answer Choice</TelerikButton>
-                            }
                         </td>
                     </tr>
                     <!-- ANSWER CHOICES IF MULTIPLE CHOICE -->
@@ -87,11 +82,11 @@
                         if (_addMode == false)
                         {
                             _currentAnswerChoices =
-                                _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToList();
+                                _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToArray();
                         }
-                        else if (_currentAnswerChoices == null)
+                        else if (_currentAnswerChoices == null || _currentAnswerChoices.Length != _maxAnswerChoices)
                         {
-                            _currentAnswerChoices = new List<AnswerChoicesModel>();
+                            InitializeCurrentAnswerTextAndLetters();
                         }
                         foreach(AnswerChoicesModel answerChoice in _currentAnswerChoices!)
                         {

@@ -43,7 +43,8 @@ namespace Training.Website.Components.Pages
         private bool _addMode = false;
         private bool _editMode = false;
 
-        private List<AnswerChoicesModel>? _currentAnswerChoices = null;
+        private const int _maxAnswerChoices = 4;
+        private AnswerChoicesModel?[]? _currentAnswerChoices = null;
 
         private IEnumerable<string?>? _currentCorrectAnswerPossibilities = null;
         private string? _currentSelectedCorrectAnswer = null;
@@ -74,7 +75,7 @@ namespace Training.Website.Components.Pages
         }
 
         // ================================================================================================================================================================================================================================================================================================
-
+        /*
         private void AddAnswerChoiceClicked()
         {
             char letter = (char)('a' + (_currentAnswerChoices?.Count ?? 0));
@@ -83,7 +84,7 @@ namespace Training.Website.Components.Pages
             _currentCorrectAnswerPossibilities = _currentAnswerChoices.Select(x => x.AnswerLetter.ToString()) ?? [];
             StateHasChanged();
         }
-
+        */
         private bool AddOrEditMode() => _addMode == true || _editMode == true;
 
         private void AddQuestionClicked()
@@ -144,6 +145,24 @@ namespace Training.Website.Components.Pages
         {
             _currentSelectedCorrectAnswer = newValue;
             StateHasChanged();
+        }
+
+        private void InitializeCurrentAnswerTextAndLetters()
+        {
+            _currentAnswerChoices = new AnswerChoicesModel?[_maxAnswerChoices];
+            _currentCorrectAnswerPossibilities = [];
+
+            for (int index = 0; index < _maxAnswerChoices; index++)
+            {
+                char letter = (char)('a' + index);
+
+                _currentAnswerChoices[index] = new AnswerChoicesModel
+                {
+                    AnswerLetter = letter,
+                    AnswerText = string.Empty
+                };
+                _currentCorrectAnswerPossibilities = _currentCorrectAnswerPossibilities!.Append(letter.ToString());
+            }
         }
 
         private async Task MoveDownButtonClicked()
@@ -273,7 +292,7 @@ namespace Training.Website.Components.Pages
             SetCurrentAnswerFormat();
             await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex!.Value].Question_ID);
             _currentAnswerChoices =
-                _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToList();
+                _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToArray();
         }
     }
 }
