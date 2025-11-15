@@ -237,13 +237,25 @@ namespace Training.Website.Components.Pages
                 _questions!.Add(newestQuestion!);
                 _sessionHasQuestions = true;
                 _newQuestionNumber = newestQuestion.QuestionNumber + 1;
+
                 if (selectedAnswerFormat.Value == _multipleChoice)
                 {
-
+                    for (int index = 0; index < _maxAnswerChoices; index++)
+                    {
+                        AnswerChoicesModel? currentChoice = _currentAnswerChoices![index];
+                        if (currentChoice != null && string.IsNullOrWhiteSpace(currentChoice?.AnswerText) == false)
+                        {
+                            await _service.InsertAnswerChoice
+                            (
+                                newestQuestion.Question_ID!.Value,
+                                currentChoice.AnswerLetter!.Value,
+                                currentChoice.AnswerText!,
+                                ApplicationState!.LoggedOnUser?.AppUserID!.Value! ?? 0,
+                                Database
+                            );
+                        }
+                    }
                 }
-
-
-                //TODO: ADD MULTIPLE ANSWER CHOICES INSERTION HERE
             }
             _currentQuestionText = null;
             _currentAnswerFormat = null;

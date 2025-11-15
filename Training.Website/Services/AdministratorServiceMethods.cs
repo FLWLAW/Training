@@ -48,6 +48,19 @@ namespace Training.Website.Services
         public async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");
 
+        public async Task InsertAnswerChoice(int questionID, char answerLetter, string answerText, int createdByID, IDatabase? database)
+        {
+            InsertAnswerChoice_Parameters parameters = new()
+            {
+                Question_ID = questionID,
+                AnswerLetter = answerLetter,
+                AnswerText = answerText,
+                CreatedBy_ID = createdByID
+            };
+
+            await database!.NonQueryByStoredProcedureAsync<InsertAnswerChoice_Parameters>("usp_Training_Questionnaire_InsertAnswerChoice", parameters);
+        }
+
         public async Task<int> InsertQuestion
             (
                 int sessionID, int questionNumber, string question, int answerFormatID, string? correctAnswer, int createdByID,
