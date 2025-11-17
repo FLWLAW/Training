@@ -43,10 +43,9 @@ namespace Training.Website.Components.Pages
         private bool _addMode = false;
         private bool _editMode = false;
 
-        private const int _maxAnswerChoices = 4;
-        private AnswerChoicesModel?[]? _currentAnswerChoices = null;
-
-        private IEnumerable<string?>? _currentCorrectAnswerPossibilities = null;
+        private const int _maxMultipleChoices = 4;
+        private AnswerChoicesModel?[]? _currentAnswerChoices_DB = null;
+        private IEnumerable<string?>? _currentAnswerChoices_DropDown = null;
         private string? _currentSelectedCorrectAnswer = null;
 
         private readonly AdministratorServiceMethods _service = new();
@@ -75,16 +74,7 @@ namespace Training.Website.Components.Pages
         }
 
         // ================================================================================================================================================================================================================================================================================================
-        /*
-        private void AddAnswerChoiceClicked()
-        {
-            char letter = (char)('a' + (_currentAnswerChoices?.Count ?? 0));
 
-            _currentAnswerChoices!.Add(new AnswerChoicesModel { AnswerLetter = letter, AnswerText = "" });
-            _currentCorrectAnswerPossibilities = _currentAnswerChoices.Select(x => x.AnswerLetter.ToString()) ?? [];
-            StateHasChanged();
-        }
-        */
         private bool AddOrEditMode() => _addMode == true || _editMode == true;
 
         private void AddQuestionClicked()
@@ -95,8 +85,8 @@ namespace Training.Website.Components.Pages
             _currentQuestionIndex = null;
             _currentQuestionText = null;
             _currentAnswerFormat = null;
-            _currentAnswerChoices = [];
-            _currentCorrectAnswerPossibilities = [];
+            _currentAnswerChoices_DB = [];
+            _currentAnswerChoices_DropDown = [];
             _currentSelectedCorrectAnswer = null;
 
             StateHasChanged();
@@ -149,19 +139,19 @@ namespace Training.Website.Components.Pages
 
         private void InitializeCurrentAnswerTextAndLetters()
         {
-            _currentAnswerChoices = new AnswerChoicesModel?[_maxAnswerChoices];
-            _currentCorrectAnswerPossibilities = [];
+            _currentAnswerChoices_DB = new AnswerChoicesModel?[_maxMultipleChoices];
+            _currentAnswerChoices_DropDown = [];
 
-            for (int index = 0; index < _maxAnswerChoices; index++)
+            for (int index = 0; index < _maxMultipleChoices; index++)
             {
                 char letter = (char)('a' + index);
 
-                _currentAnswerChoices[index] = new AnswerChoicesModel
+                _currentAnswerChoices_DB[index] = new AnswerChoicesModel
                 {
                     AnswerLetter = letter,
                     AnswerText = string.Empty
                 };
-                _currentCorrectAnswerPossibilities = _currentCorrectAnswerPossibilities!.Append(letter.ToString());
+                _currentAnswerChoices_DropDown = _currentAnswerChoices_DropDown!.Append(letter.ToString());
             }
         }
 
@@ -183,28 +173,35 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private bool OkToSave() =>
-            string.IsNullOrWhiteSpace(_currentQuestionText) == false &&
-            string.IsNullOrWhiteSpace(_currentAnswerFormat) == false &&
-            string.IsNullOrWhiteSpace(_currentSelectedCorrectAnswer) == false;
+        private bool OkToSave()
+        {
+            bool ok = string.IsNullOrWhiteSpace(_currentQuestionText) == false &&
+                      string.IsNullOrWhiteSpace(_currentAnswerFormat) == false &&
+                      string.IsNullOrWhiteSpace(_currentSelectedCorrectAnswer) == false;
+
+            if (ok == true && _currentAnswerFormat == _multipleChoice)
+                ok = _currentAnswerChoices_DB != null && _currentAnswerChoices_DB.All(q => string.IsNullOrWhiteSpace(q?.AnswerText) == false);
+
+            return ok;
+        }
 
         private async Task PopulateCorrectAnswerDropDown(int? questionID)
         {
-            _currentCorrectAnswerPossibilities = [];
+            _currentAnswerChoices_DropDown = [];
 
             switch(_currentAnswerFormat)
             {
                 case _multipleChoice:
-                    _currentCorrectAnswerPossibilities = await _service.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
+                    _currentAnswerChoices_DropDown = await _service.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
                     break;
                 case _yesNo:
-                    _currentCorrectAnswerPossibilities = ["Yes", "No"];
+                    _currentAnswerChoices_DropDown = ["Yes", "No"];
                     break;
                 case _trueFalse:
-                    _currentCorrectAnswerPossibilities = ["True", "False"];
+                    _currentAnswerChoices_DropDown = ["True", "False"];
                     break;
                 case null:
-                    _currentCorrectAnswerPossibilities = null;
+                    _currentAnswerChoices_DropDown = null;
                     break;
                 default:
                     throw new Exception("Invalid current answer format in PopulateCorrectAnswerDropDown()");
@@ -240,9 +237,9 @@ namespace Training.Website.Components.Pages
 
                 if (selectedAnswerFormat.Value == _multipleChoice)
                 {
-                    for (int index = 0; index < _maxAnswerChoices; index++)
+                    for (int index = 0; index < _maxMultipleChoices; index++)
                     {
-                        AnswerChoicesModel? currentChoice = _currentAnswerChoices![index];
+                        AnswerChoicesModel? currentChoice = _currentAnswerChoices_DB![index];
                         if (currentChoice != null && string.IsNullOrWhiteSpace(currentChoice?.AnswerText) == false)
                         {
                             await _service.InsertAnswerChoice
@@ -259,7 +256,7 @@ namespace Training.Website.Components.Pages
             }
             _currentQuestionText = null;
             _currentAnswerFormat = null;
-            _currentCorrectAnswerPossibilities = [];
+            _currentAnswerChoices_DropDown = [];
             _currentSelectedCorrectAnswer = null;
 
             StateHasChanged();
@@ -303,7 +300,7 @@ namespace Training.Website.Components.Pages
             _currentQuestionText = _questions?[_currentQuestionIndex!.Value].Question;
             SetCurrentAnswerFormat();
             await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex!.Value].Question_ID);
-            _currentAnswerChoices =
+            _currentAnswerChoices_DB =
                 _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToArray();
         }
     }

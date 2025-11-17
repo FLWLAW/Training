@@ -48,7 +48,6 @@
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await MoveUpButtonClicked() )">Move Up</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await MoveDownButtonClicked() )">Move Down</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton>
-
                                 <br />
                                 <label>Remove Question</label><br />
                                 <label>Edit Question</label><br />
@@ -81,14 +80,14 @@
                     {
                         if (_addMode == false)
                         {
-                            _currentAnswerChoices =
+                            _currentAnswerChoices_DB =
                                 _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToArray();
                         }
-                        else if (_currentAnswerChoices == null || _currentAnswerChoices.Length != _maxAnswerChoices)
+                        else if (_currentAnswerChoices_DB == null || _currentAnswerChoices_DB.Length != _maxMultipleChoices)
                         {
                             InitializeCurrentAnswerTextAndLetters();
                         }
-                        foreach(AnswerChoicesModel answerChoice in _currentAnswerChoices!)
+                        foreach(AnswerChoicesModel answerChoice in _currentAnswerChoices_DB!)
                         {
                             <tr>
                                 <td class="QuestionsTopHalfHeader_Left">
@@ -109,7 +108,7 @@
                         <td class="QuestionsTopHalfHeader_Left">Correct Answer:</td>
                         <td class="QuestionsTopHalfHeader_Center">
                             <TelerikDropDownList
-                                Data="@_currentCorrectAnswerPossibilities"
+                                Data="@_currentAnswerChoices_DropDown"
                                 Value="@_currentSelectedCorrectAnswer"
                                 ValueChanged="@((string newValue) => CorrectAnswerChanged(newValue) )"
                                 Width="90px"
