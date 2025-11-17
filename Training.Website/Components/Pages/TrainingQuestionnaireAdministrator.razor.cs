@@ -137,6 +137,14 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
+        private void EditQuestionClicked()
+        {
+            _addMode = false;
+            _editMode = true;
+         
+            StateHasChanged();
+        }
+
         private void InitializeCurrentAnswerTextAndLetters()
         {
             _currentAnswerChoices_DB = new AnswerChoicesModel?[_maxMultipleChoices];
