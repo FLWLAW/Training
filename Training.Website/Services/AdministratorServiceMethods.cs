@@ -58,7 +58,7 @@ namespace Training.Website.Services
         public async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");
 
-        public async Task InsertAnswerChoice(int questionID, char answerLetter, string answerText, int createdByID, IDatabase? database)
+        public async Task InsertMultipleChoiceAnswer(int questionID, char answerLetter, string answerText, int createdByID, IDatabase? database)
         {
             InsertAnswerChoice_Parameters parameters = new()
             {

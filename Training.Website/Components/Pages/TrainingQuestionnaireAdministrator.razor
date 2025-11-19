@@ -87,20 +87,23 @@
                         {
                             InitializeCurrentAnswerTextAndLetters();
                         }
-                        foreach(AnswerChoicesModel answerChoice in _currentAnswerChoices_DB!)
+                        @if (_addMode == true)
                         {
-                            <tr>
-                                <td class="QuestionsTopHalfHeader_Left">
-                                    @if(answerChoice?.AnswerLetter.ToString()?.ToLower() == "a")
-                                    {
-                                        <label style="padding-right: 15px;">Multiple choice options:</label>   
-                                    }
-                                    <label>@answerChoice?.AnswerLetter)</label>
-                                </td>
-                                <td class="QuestionsTopHalfHeader_Center">
-                                    <TelerikTextBox @bind-value="@answerChoice!.AnswerText" Enabled="@AddOrEditMode()" />
-                                </td>
-                            </tr>
+                            foreach (AnswerChoicesModel answerChoice in _currentAnswerChoices_DB!)
+                            {
+                                <tr>
+                                    <td class="QuestionsTopHalfHeader_Left">
+                                        @if (answerChoice?.AnswerLetter.ToString()?.ToLower() == "a")
+                                        {
+                                            <label style="padding-right: 15px;">Multiple choice options:</label>
+                                        }
+                                        <label>@answerChoice?.AnswerLetter)</label>
+                                    </td>
+                                    <td class="QuestionsTopHalfHeader_Center">
+                                        <TelerikTextBox @bind-value="@answerChoice!.AnswerText" Enabled="@AddOrEditMode()" />
+                                    </td>
+                                </tr>
+                            }
                         }
                     }
                     <!-- CORRECT ANSWER -->

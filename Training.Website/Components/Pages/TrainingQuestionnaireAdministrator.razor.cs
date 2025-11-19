@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
+using System.Linq.Expressions;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -36,6 +37,7 @@ namespace Training.Website.Components.Pages
         private int? _newQuestionNumber = null;
         private int? _currentQuestionIndex = null;
         private string? _currentQuestionText = null;
+        private string? _previousAnswerFormat = null;
         private string? _currentAnswerFormat = null;
         private bool _sessionHasQuestions;
         private List<QuestionsModel>? _questions = null;
@@ -96,6 +98,7 @@ namespace Training.Website.Components.Pages
         {
             int? questionID = _addMode == false ? _questions?[_currentQuestionIndex!.Value].Question_ID : null;
 
+            _previousAnswerFormat = _currentAnswerFormat;
             _currentAnswerFormat = newValue;
             _currentSelectedCorrectAnswer = string.Empty;
             await PopulateCorrectAnswerDropDown(questionID);
@@ -209,7 +212,7 @@ namespace Training.Website.Components.Pages
                     _currentAnswerChoices_DropDown = ["True", "False"];
                     break;
                 case null:
-                    _currentAnswerChoices_DropDown = null;
+                    _currentAnswerChoices_DropDown = [];
                     break;
                 default:
                     throw new Exception("Invalid current answer format in PopulateCorrectAnswerDropDown()");
@@ -220,47 +223,64 @@ namespace Training.Website.Components.Pages
                 : null;
         }
 
+        private async Task<int> InsertNewQuestion(int answerFormatKey)
+        {
+            int questionID = await _service.InsertQuestion
+            (
+                _selectedSession!.Session_ID!.Value,
+                _newQuestionNumber!.Value,
+                _currentQuestionText!,
+                answerFormatKey,
+                _currentSelectedCorrectAnswer,
+                Globals.UserID(ApplicationState),
+                Database
+            );
+
+            return questionID;
+        }
+
+        private async Task InsertMultipleChoiceAnswers(QuestionsModel? question)
+        {
+            for (int index = 0; index < _maxMultipleChoices; index++)
+            {
+                AnswerChoicesModel? currentChoice = _currentAnswerChoices_DB![index];
+                if (currentChoice != null && string.IsNullOrWhiteSpace(currentChoice?.AnswerText) == false)
+                {
+                    await _service.InsertMultipleChoiceAnswer
+                    (
+                        question!.Question_ID!.Value,
+                        currentChoice.AnswerLetter!.Value,
+                        currentChoice.AnswerText!,
+                        Globals.UserID(ApplicationState),
+                        Database
+                    );
+                }
+            }
+        }
+
         private async Task SaveButtonClicked()
         {
             KeyValuePair<int, string> selectedAnswerFormat =
                 _answerFormats!.FirstOrDefault(x => x.Value == _currentAnswerFormat);
 
-            int questionID = await _service.InsertQuestion
-                (   _selectedSession!.Session_ID!.Value,
-                    _newQuestionNumber!.Value,
-                    _currentQuestionText!,
-                    selectedAnswerFormat.Key,
-                    _currentSelectedCorrectAnswer,
-                    ApplicationState!.LoggedOnUser?.AppUserID!.Value! ?? 0,
-                    Database
-                );
-
-            QuestionsModel? newestQuestion = await _service.GetQuestionByQuestionID(questionID, Database);
-
-            if (newestQuestion != null)
+            if (_addMode == true)
             {
-                _questions!.Add(newestQuestion!);
-                _sessionHasQuestions = true;
-                _newQuestionNumber = newestQuestion.QuestionNumber + 1;
+                int questionID = await InsertNewQuestion(selectedAnswerFormat.Key);
+                QuestionsModel? newestQuestion = await _service.GetQuestionByQuestionID(questionID, Database);
 
-                if (selectedAnswerFormat.Value == _multipleChoice)
+                if (newestQuestion != null)
                 {
-                    for (int index = 0; index < _maxMultipleChoices; index++)
-                    {
-                        AnswerChoicesModel? currentChoice = _currentAnswerChoices_DB![index];
-                        if (currentChoice != null && string.IsNullOrWhiteSpace(currentChoice?.AnswerText) == false)
-                        {
-                            await _service.InsertAnswerChoice
-                            (
-                                newestQuestion.Question_ID!.Value,
-                                currentChoice.AnswerLetter!.Value,
-                                currentChoice.AnswerText!,
-                                ApplicationState!.LoggedOnUser?.AppUserID!.Value! ?? 0,
-                                Database
-                            );
-                        }
-                    }
+                    _questions!.Add(newestQuestion!);
+                    _sessionHasQuestions = true;
+                    _newQuestionNumber = newestQuestion.QuestionNumber + 1;
+
+                    if (selectedAnswerFormat.Value == _multipleChoice)
+                        await InsertMultipleChoiceAnswers(newestQuestion);
                 }
+            }
+            else if (_editMode == true)
+            {
+                throw new NotImplementedException();
             }
             _currentQuestionText = null;
             _currentAnswerFormat = null;
