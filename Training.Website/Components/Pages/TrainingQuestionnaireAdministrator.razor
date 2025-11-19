@@ -48,8 +48,8 @@
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await MoveUpButtonClicked() )">Move Up</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await MoveDownButtonClicked() )">Move Down</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton><br />
-                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => EditQuestionClicked())">Edit Question</TelerikButton>
-                                <label>Remove Question</label><br />
+                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => EditQuestionClicked())">Edit Question</TelerikButton><br />
+                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await RemoveQuestionClicked())">Remove Question</TelerikButton>
                                 
                             }
                             else
@@ -338,6 +338,6 @@
         text-align: center;
     }
     .UniformButton {
-        width: 120px;
+        width: 150px;
     }
 </style>

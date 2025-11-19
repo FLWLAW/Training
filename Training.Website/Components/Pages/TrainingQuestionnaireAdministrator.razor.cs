@@ -110,11 +110,7 @@ namespace Training.Website.Components.Pages
         private bool AnswerFormatMatch(string? answerFormat, string answerType) =>
             answerFormat?.Equals(answerType, StringComparison.InvariantCultureIgnoreCase) ?? false;
 
-        private async Task CancelButtonClicked()
-        {
-            string sessionID_String = ApplicationState!.SessionID_String ?? string.Empty;   // should never be null
-            await SessionChanged(sessionID_String); // this is just a roundabout way of refreshing the page, since NavManager wasn't working ocrrectly.
-        }
+        private async Task CancelButtonClicked() => await RefreshPageFromBeginning();
 
         private async Task ChangedMultipleChoiceAnswerChanged()
         {
@@ -184,23 +180,8 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private void InitializeMultipleChoiceCurrentAnswerTextAndLetters()
-        {
-            _currentMultipleChoiceAnswers_DB = new AnswerChoicesModel?[_maxMultipleChoices];
-            _currentAnswerChoices_DropDown = [];
-
-            for (int index = 0; index < _maxMultipleChoices; index++)
-            {
-                char letter = (char)('a' + index);
-
-                _currentMultipleChoiceAnswers_DB[index] = new AnswerChoicesModel
-                {
-                    AnswerLetter = letter,
-                    AnswerText = string.Empty
-                };
-                _currentAnswerChoices_DropDown = _currentAnswerChoices_DropDown!.Append(letter.ToString());
-            }
-        }
+        private async Task<List<QuestionsModel>?> GetQuestionsBySessionID_Main() =>
+            (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToList();
 
         private async Task InsertMultipleChoiceAnswers(QuestionsModel? question)
         {
@@ -219,6 +200,24 @@ namespace Training.Website.Components.Pages
                         Database
                     );
                 }
+            }
+        }
+
+        private void InitializeMultipleChoiceCurrentAnswerTextAndLetters()
+        {
+            _currentMultipleChoiceAnswers_DB = new AnswerChoicesModel?[_maxMultipleChoices];
+            _currentAnswerChoices_DropDown = [];
+
+            for (int index = 0; index < _maxMultipleChoices; index++)
+            {
+                char letter = (char)('a' + index);
+
+                _currentMultipleChoiceAnswers_DB[index] = new AnswerChoicesModel
+                {
+                    AnswerLetter = letter,
+                    AnswerText = string.Empty
+                };
+                _currentAnswerChoices_DropDown = _currentAnswerChoices_DropDown!.Append(letter.ToString());
             }
         }
 
@@ -295,6 +294,44 @@ namespace Training.Website.Components.Pages
                 : null;
         }
 
+        private async Task RefreshPageFromBeginning()
+        {
+            string sessionID_String = ApplicationState!.SessionID_String ?? string.Empty;   // should never be null
+            await SessionChanged(sessionID_String); // this is just a roundabout way of refreshing the page, since NavManager wasn't working ocrrectly.
+        }
+
+        private async Task RemoveQuestionClicked()
+        {
+            int? id = _questions?[_currentQuestionIndex!.Value].Question_ID;
+
+            if (id != null)
+            {
+                await _service.DeleteQuestionByQuestionID(id.Value, Database);
+                await RenumberQuestions();
+                await RefreshPageFromBeginning();
+            }
+        }
+
+        private async Task RenumberQuestions()
+        {
+            IEnumerable<QuestionsModel>? questions = await GetQuestionsBySessionID_Main();
+
+            if (questions != null)
+            {
+                int correctQuestionNumber = 1;
+
+                foreach (QuestionsModel? question in questions)
+                {
+                    if (question?.QuestionNumber != correctQuestionNumber)
+                        await _service.UpdateQuestion_QuestionNumberOnly(question!.Question_ID!.Value, correctQuestionNumber, Database);
+
+                    correctQuestionNumber++;
+                }
+
+                _questions = await GetQuestionsBySessionID_Main();
+            }
+        }
+
         private async Task SaveButtonClicked()
         {
             KeyValuePair<int, string> selectedAnswerFormat =
@@ -338,7 +375,7 @@ namespace Training.Website.Components.Pages
                                 (question.Question_ID!.Value, _currentQuestionText!, selectedAnswerFormat.Key, _currentSelectedCorrectAnswer!, Globals.UserID(ApplicationState), Database);
 
                         if (formerlyMultipleChoice == true)
-                            await _service.DeleteAnswerChoiceByQuestionID(question.Question_ID!.Value, Database);
+                            await _service.DeleteAnswerChoicesByQuestionID(question.Question_ID!.Value, Database);
                         else if (multipleChoiceAnswersChanged == true)
                             foreach (AnswerChoicesModel? newAnswer in _changedMultipleChoiceAnswers)
                                 if (newAnswer != null)
@@ -371,7 +408,7 @@ namespace Training.Website.Components.Pages
             _selectedSessionString = newValue;
             _selectedSession = ConvertSessionStringToClass(newValue);
             _sessionHasQuestions = false;   // THIS WILL PREVENT ERRORS IN THE NEXT STATEMENT, BECAUSE THE SCREEN WILL RENDER BEFORE THE AWAIT COMPLETES.
-            _questions = (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToList();
+            _questions = await GetQuestionsBySessionID_Main();
             _sessionHasQuestions = (_questions != null && _questions.Count > 0);
 
             if (_sessionHasQuestions == true)

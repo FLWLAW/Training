@@ -14,9 +14,17 @@ namespace Training.Website.Services
                     ("usp_Training_Questionnaire_CountOfAnswerChoicesByQuestionID", new { Question_ID = questionID })
             ).FirstOrDefault();
 
-        public async Task DeleteAnswerChoiceByQuestionID(int questionID, IDatabase? database) =>
+        public async Task DeleteAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
             await database!.NonQueryByStoredProcedureAsync<object?>
                 ("usp_Training_Questionnaire_DeleteAnswerChoicesByQuestionID", new { Question_ID = questionID });
+
+        public async Task DeleteQuestionByQuestionID(int questionID, IDatabase? database)
+        {
+            await DeleteAnswerChoicesByQuestionID(questionID, database);    // DELETE LINKED ANSWER CHOICES (IF ANY) FIRST
+
+            await database!.NonQueryByStoredProcedureAsync<object?>
+                ("usp_Training_Questionnaire_DeleteQuestionByQuestionID", new { Question_ID = questionID });
+        }
 
         //NOTE: LEAVE AS SYNCHRONOUS
         public IEnumerable<AnswerChoicesModel>? GetAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
@@ -120,6 +128,10 @@ namespace Training.Website.Services
 
             await database!.NonQueryByStoredProcedureAsync<UpdateQuestion_Parameters>("usp_Training_Questionnaire_UpdateQuestion", parameters);
         }
+
+        public async Task UpdateQuestion_QuestionNumberOnly(int questionID, int questionNumber, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync<object?>
+                ("usp_Training_Questionnaire_UpdateQuestion_QuestionNumberOnly", new { Question_ID = questionID, QuestionNumber = questionNumber });
 
 
 
