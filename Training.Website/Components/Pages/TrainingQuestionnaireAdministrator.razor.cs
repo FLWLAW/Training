@@ -146,7 +146,11 @@ namespace Training.Website.Components.Pages
             });
         }
 
-        private void ChangedMultipleChoiceLetterChanged(object newValue) => _changedMultipleChoiceLetter = newValue.ToString();
+        private void ChangedMultipleChoiceLetterChanged(object newValue)
+        {
+            _changedMultipleChoiceLetter = newValue.ToString();
+            _changedMultipleChoiceAnswer = null;
+        }
 
         private SessionInformationModel? ConvertSessionStringToClass(string newValue)
         {
