@@ -6,5 +6,6 @@
         public int? Question_ID { get; set; }
         public char? AnswerLetter { get; set; }
         public string? AnswerText { get; set; }
+        //public bool Updated { get; set; } = false;
     }
 }

@@ -8,6 +8,16 @@ namespace Training.Website.Services
 {
     public class AdministratorServiceMethods
     {
+        public async Task<int> CountOfAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
+            (
+                await database!.QueryByStoredProcedureAsync<int, object?>
+                    ("usp_Training_Questionnaire_CountOfAnswerChoicesByQuestionID", new { Question_ID = questionID })
+            ).FirstOrDefault();
+
+        public async Task DeleteAnswerChoiceByQuestionID(int questionID, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync<object?>
+                ("usp_Training_Questionnaire_DeleteAnswerChoicesByQuestionID", new { Question_ID = questionID });
+
         //NOTE: LEAVE AS SYNCHRONOUS
         public IEnumerable<AnswerChoicesModel>? GetAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
             database!.QueryByStoredProcedure<AnswerChoicesModel, object?>
@@ -82,6 +92,33 @@ namespace Training.Website.Services
                 ("usp_Training_Questionnaire_InsertQuestion", "@Current_ID", parameters);
 
             return questionID;
+        }
+
+        public async Task UpdateAnswerChoice(int answerID, char answerLetter, string answerText, int updatedByID, IDatabase? database)
+        {
+            UpdateAnswerChoice_Parameters parameters = new()
+            {
+                Answer_ID = answerID!,
+                AnswerLetter = answerLetter,
+                AnswerText = answerText,
+                LastUpdatedBy_ID = updatedByID
+            };
+
+            await database!.NonQueryByStoredProcedureAsync<UpdateAnswerChoice_Parameters>("usp_Training_Questionnaire_UpdateAnswerChoice", parameters);
+        }
+
+        public async Task UpdateQuestion(int questionID, string question, int answerFormat, string correctAnswer, int updatedByID, IDatabase? database)
+        {
+            UpdateQuestion_Parameters parameters = new()
+            {
+                Question_ID = questionID!,
+                Question = question,
+                AnswerFormat = answerFormat,
+                CorrectAnswer = correctAnswer,
+                UpdatedBy_ID = updatedByID
+            };
+
+            await database!.NonQueryByStoredProcedureAsync<UpdateQuestion_Parameters>("usp_Training_Questionnaire_UpdateQuestion", parameters);
         }
 
 
