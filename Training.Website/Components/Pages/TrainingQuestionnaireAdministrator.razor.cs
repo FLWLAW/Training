@@ -37,7 +37,7 @@ namespace Training.Website.Components.Pages
         private int? _newQuestionNumber = null;
         private int? _currentQuestionIndex = null;
         private string? _currentQuestionText = null;
-        private string? _previousAnswerFormat = null;
+        private string? _originalAnswerFormat = null;
         private string? _currentAnswerFormat = null;
         private bool _sessionHasQuestions;
         private List<QuestionsModel>? _questions = null;
@@ -101,7 +101,6 @@ namespace Training.Website.Components.Pages
         {
             int? questionID = _addMode == false ? _questions?[_currentQuestionIndex!.Value].Question_ID : null;
 
-            _previousAnswerFormat = _currentAnswerFormat;
             _currentAnswerFormat = newValue;
             _currentSelectedCorrectAnswer = string.Empty;
             await PopulateCorrectAnswerDropDown(questionID);
@@ -127,7 +126,7 @@ namespace Training.Website.Components.Pages
                 {
                     char? changedMultipleChoiceLetter = _changedMultipleChoiceLetter?[0];
 
-                    AnswerChoicesModel? remove = _changedMultipleChoiceAnswers.FirstOrDefault(q => q.AnswerLetter == changedMultipleChoiceLetter);
+                    AnswerChoicesModel? remove = _changedMultipleChoiceAnswers.FirstOrDefault(q => q?.AnswerLetter == changedMultipleChoiceLetter);
 
                     if (remove != null)
                         _changedMultipleChoiceAnswers.Remove(remove);
@@ -344,6 +343,7 @@ namespace Training.Website.Components.Pages
                 _currentQuestionIndex = 0;
                 _currentQuestionText = _questions![_currentQuestionIndex.Value].Question;
                 SetCurrentAnswerFormat();
+                _originalAnswerFormat = _currentAnswerFormat;
                 await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex.Value].Question_ID);
             }
             else
@@ -363,9 +363,7 @@ namespace Training.Website.Components.Pages
         private void SetCurrentAnswerFormat()
         {
             int? answerFormatID = _questions![_currentQuestionIndex!.Value].AnswerFormat;
-
             _currentAnswerFormat = (answerFormatID != null) ? _answerFormats?[answerFormatID.Value] : null;
-            _previousAnswerFormat = _currentAnswerFormat;
         }
 
         private async Task SetQuestionsControls()
