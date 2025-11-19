@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
 using System.Linq.Expressions;
+using Telerik.Blazor.Components.Common.Upload;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -64,7 +65,7 @@ namespace Training.Website.Components.Pages
             // GET ALL SESSIONS
             IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database);
 
-            if (sessionInfo != null && sessionInfo.Count() > 0)
+            if (sessionInfo != null && sessionInfo.Any() == true)
             {
                 List<string>? sessions = [];
 

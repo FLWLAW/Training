@@ -1,12 +1,11 @@
 ﻿using Dapper;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
-using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
 using Training.Website.Models;
 
 namespace Training.Website.Services
 {
-    public class AdministratorServiceMethods
+    public class AdministratorServiceMethods : CommonServiceMethods
     {
         public async Task<int> CountOfAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
             (
@@ -62,9 +61,6 @@ namespace Training.Website.Services
         public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionID(int sessionID, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
                 ("usp_Training_Questionnaire_GetQuestionsBySessionID", new { Session_ID = sessionID });
-
-        public async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
-            await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");
 
         public async Task InsertMultipleChoiceAnswer(int questionID, char answerLetter, string answerText, int createdByID, IDatabase? database)
         {

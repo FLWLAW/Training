@@ -1,0 +1,26 @@
+﻿@page "/TrainingQuestionnaireUser"
+
+@using Training.Website.Models
+@using Training.Website.Services
+
+<table width="100%">
+    <tr>
+        <td style="width: 100%; text-align: center;">
+            Administrator Page
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center; padding-bottom: 30px;">
+            <label style="padding-right: 30px;">Session ID:</label>
+            <TelerikDropDownList Data="@_sessions"
+                                 Value="_selectedSessionString"
+                                 ValueChanged="@(async (string newValue) => await SessionChanged(newValue))"
+                                 Enabled="true"
+                                 Width="350px">
+                <DropDownListSettings>
+                    <DropDownListPopupSettings Height="180px" />
+                </DropDownListSettings>
+            </TelerikDropDownList>
+        </td>
+    </tr>
+</table>
