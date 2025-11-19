@@ -94,7 +94,7 @@ namespace Training.Website.Services
             return questionID;
         }
 
-        public async Task UpdateAnswerChoice(int answerID, char answerLetter, string answerText, int updatedByID, IDatabase? database)
+        public async Task UpdateMultipleChoiceAnswer(int answerID, char answerLetter, string answerText, int updatedByID, IDatabase? database)
         {
             UpdateAnswerChoice_Parameters parameters = new()
             {
