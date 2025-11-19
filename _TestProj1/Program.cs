@@ -42,9 +42,11 @@ namespace _TestProj1
             DynamicParameters parameters = new();
 
             parameters.Add("@Training_SESSION_ID", 1, dbType: DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@QuestionNumber", 1000000, dbType: DbType.Int32, direction: ParameterDirection.Input);
             parameters.Add("@Question", "What is your favorite color?", dbType: DbType.String, direction: ParameterDirection.Input);
             parameters.Add("@AnswerFormat_ID", 3, dbType: DbType.Int32, direction: ParameterDirection.Input);
             parameters.Add("@CreatedBy_ID", 4, dbType: DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@Active", true, dbType: DbType.Boolean, direction: ParameterDirection.Input);
             parameters.Add("@Current_ID", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
             int currentID = await db.NonQueryByStoredProcedureOutputParameterAsync<int>
