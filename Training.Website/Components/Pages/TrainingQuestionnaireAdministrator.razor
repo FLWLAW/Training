@@ -80,30 +80,87 @@
                     {
                         if (_addMode == false)
                         {
-                            _currentAnswerChoices_DB =
+                            _currentMultipleChoiceAnswers_DB =
                                 _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToArray();
                         }
-                        else if (_currentAnswerChoices_DB == null || _currentAnswerChoices_DB.Length != _maxMultipleChoices)
+                        else if (_currentMultipleChoiceAnswers_DB == null || _currentMultipleChoiceAnswers_DB.Length != _maxMultipleChoices)
                         {
                             InitializeCurrentAnswerTextAndLetters();
                         }
-                        @if (_addMode == true)
+                        foreach (AnswerChoicesModel answerChoice in _currentMultipleChoiceAnswers_DB!)
                         {
-                            foreach (AnswerChoicesModel answerChoice in _currentAnswerChoices_DB!)
+                            <tr>
+                                <td class="QuestionsTopHalfHeader_Left">
+                                    @if (answerChoice?.AnswerLetter.ToString()?.ToLower() == "a")
+                                    {
+                                        <label style="padding-right: 15px;">Multiple choice options:</label>
+                                    }
+                                    <label>@answerChoice?.AnswerLetter)</label>
+                                </td>
+                                <td class="QuestionsTopHalfHeader_Center">
+                                    <TelerikTextBox @bind-value="@answerChoice!.AnswerText" Enabled="@_addMode" />
+                                </td>
+                            </tr>
+                        }
+                        if (_editMode == true)
+                        {
+                            if (_changedMultipleChoiceAnswers.Count > 0)
                             {
                                 <tr>
-                                    <td class="QuestionsTopHalfHeader_Left">
-                                        @if (answerChoice?.AnswerLetter.ToString()?.ToLower() == "a")
-                                        {
-                                            <label style="padding-right: 15px;">Multiple choice options:</label>
-                                        }
-                                        <label>@answerChoice?.AnswerLetter)</label>
-                                    </td>
-                                    <td class="QuestionsTopHalfHeader_Center">
-                                        <TelerikTextBox @bind-value="@answerChoice!.AnswerText" Enabled="@AddOrEditMode()" />
+                                    <td colspan="3" style="text-align: center;">
+                                        Unsaved changes
                                     </td>
                                 </tr>
+                                <tr>
+                                    <td class="QuestionsTopHalfHeader_Left">
+                                        Letter
+                                    </td>
+                                    <td class="QuestionsTopHalfHeader_Center">
+                                        Text
+                                    </td>
+                                </tr>
+                                foreach(AnswerChoicesModel? multipleChoiceAnswer in _changedMultipleChoiceAnswers)
+                                {
+                                    <tr>
+                                        <td class="QuestionsTopHalfHeader_Left">
+                                            @multipleChoiceAnswer?.AnswerLetter
+                                        </td>
+                                        <td class="QuestionsTopHalfHeader_Center">
+                                            @multipleChoiceAnswer?.AnswerText
+                                        </td>
+                                    </tr>
+                                }
                             }
+                            <tr>
+                                <td colspan="3" style="text-align: center;">
+                                    Enter multiple choice change
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="QuestionsTopHalfHeader_Left">
+                                    <label style="padding-right: 15px;">Question Letter To Change:</label>
+                                </td>
+                                <td class="QuestionsTopHalfHeader_Center">
+                                    <TelerikDropDownList
+                                        Data="@_currentAnswerChoices_DropDown"
+                                        Value="@_changedMultipleChoiceLetter"
+                                        OnChange="@ChangedMultipleChoiceLetterChanged"
+                                        Width="90px"
+                                        Enabled="true">
+                                        <DropDownListSettings>
+                                            <DropDownListPopupSettings Height="120px" />
+                                        </DropDownListSettings>
+                                    </TelerikDropDownList>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="QuestionsTopHalfHeader_Left">
+                                    <label style="padding-right: 15px;">Question Text To Change:</label>
+                                </td>
+                                <td class="QuestionsTopHalfHeader_Center">
+                                    <TelerikTextBox @bind-Value="@_changedMultipleChoiceAnswer" Enabled="@(string.IsNullOrWhiteSpace(_changedMultipleChoiceLetter) == false)" OnBlur="@ChangedMultipleChoiceAnswerChanged" />
+                                </td>
+                            </tr>
                         }
                     }
                     <!-- CORRECT ANSWER -->

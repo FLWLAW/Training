@@ -46,8 +46,11 @@ namespace Training.Website.Components.Pages
         private bool _editMode = false;
 
         private const int _maxMultipleChoices = 4;
-        private AnswerChoicesModel?[]? _currentAnswerChoices_DB = null;
+        private AnswerChoicesModel?[]? _currentMultipleChoiceAnswers_DB = null;
         private IEnumerable<string?>? _currentAnswerChoices_DropDown = null;
+        private string? _changedMultipleChoiceLetter = null;
+        private string? _changedMultipleChoiceAnswer = null;
+        private List<AnswerChoicesModel?> _changedMultipleChoiceAnswers = [];
         private string? _currentSelectedCorrectAnswer = null;
 
         private readonly AdministratorServiceMethods _service = new();
@@ -87,7 +90,7 @@ namespace Training.Website.Components.Pages
             _currentQuestionIndex = null;
             _currentQuestionText = null;
             _currentAnswerFormat = null;
-            _currentAnswerChoices_DB = [];
+            _currentMultipleChoiceAnswers_DB = [];
             _currentAnswerChoices_DropDown = [];
             _currentSelectedCorrectAnswer = null;
 
@@ -113,6 +116,37 @@ namespace Training.Website.Components.Pages
             string sessionID_String = ApplicationState!.SessionID_String ?? string.Empty;   // should never be null
             await SessionChanged(sessionID_String); // this is just a roundabout way of refreshing the page, since NavManager wasn't working ocrrectly.
         }
+
+        private async Task ChangedMultipleChoiceAnswerChanged()
+        {
+            await Task.Run(() =>
+            {
+                AnswerChoicesModel? changedQuestion = _currentMultipleChoiceAnswers_DB?.FirstOrDefault(q => q?.AnswerLetter.ToString() == _changedMultipleChoiceLetter);
+
+                if (changedQuestion != null)
+                {
+                    char? changedMultipleChoiceLetter = _changedMultipleChoiceLetter?[0];
+
+                    AnswerChoicesModel? remove = _changedMultipleChoiceAnswers.FirstOrDefault(q => q.AnswerLetter == changedMultipleChoiceLetter);
+
+                    if (remove != null)
+                        _changedMultipleChoiceAnswers.Remove(remove);
+
+                    AnswerChoicesModel multipleAnswerChoice = new()
+                    {
+                        Answer_ID = changedQuestion?.Answer_ID,
+                        AnswerLetter = changedMultipleChoiceLetter,
+                        AnswerText = _changedMultipleChoiceAnswer,
+                        Question_ID = changedQuestion?.Question_ID
+                    };
+
+                    //_changedMultipleChoiceAnswers = _changedMultipleChoiceAnswers.Where(q => q.AnswerLetter != changedMultipleChoiceLetter)?.ToList()!;
+                    _changedMultipleChoiceAnswers.Add(multipleAnswerChoice);
+                }
+            });
+        }
+
+        private void ChangedMultipleChoiceLetterChanged(object newValue) => _changedMultipleChoiceLetter = newValue.ToString();
 
         private SessionInformationModel? ConvertSessionStringToClass(string newValue)
         {
@@ -150,20 +184,55 @@ namespace Training.Website.Components.Pages
 
         private void InitializeCurrentAnswerTextAndLetters()
         {
-            _currentAnswerChoices_DB = new AnswerChoicesModel?[_maxMultipleChoices];
+            _currentMultipleChoiceAnswers_DB = new AnswerChoicesModel?[_maxMultipleChoices];
             _currentAnswerChoices_DropDown = [];
 
             for (int index = 0; index < _maxMultipleChoices; index++)
             {
                 char letter = (char)('a' + index);
 
-                _currentAnswerChoices_DB[index] = new AnswerChoicesModel
+                _currentMultipleChoiceAnswers_DB[index] = new AnswerChoicesModel
                 {
                     AnswerLetter = letter,
                     AnswerText = string.Empty
                 };
                 _currentAnswerChoices_DropDown = _currentAnswerChoices_DropDown!.Append(letter.ToString());
             }
+        }
+
+        private async Task InsertMultipleChoiceAnswers(QuestionsModel? question)
+        {
+            for (int index = 0; index < _maxMultipleChoices; index++)
+            {
+                AnswerChoicesModel? currentChoice = _currentMultipleChoiceAnswers_DB![index];
+                if (currentChoice != null && string.IsNullOrWhiteSpace(currentChoice?.AnswerText) == false)
+                {
+                    await _service.InsertMultipleChoiceAnswer
+                    (
+                        question!.Question_ID!.Value,
+                        currentChoice.AnswerLetter!.Value,
+                        currentChoice.AnswerText!,
+                        Globals.UserID(ApplicationState),
+                        Database
+                    );
+                }
+            }
+        }
+
+        private async Task<int> InsertNewQuestion(int answerFormatKey)
+        {
+            int questionID = await _service.InsertQuestion
+            (
+                _selectedSession!.Session_ID!.Value,
+                _newQuestionNumber!.Value,
+                _currentQuestionText!,
+                answerFormatKey,
+                _currentSelectedCorrectAnswer,
+                Globals.UserID(ApplicationState),
+                Database
+            );
+
+            return questionID;
         }
 
         private async Task MoveDownButtonClicked()
@@ -191,7 +260,7 @@ namespace Training.Website.Components.Pages
                       string.IsNullOrWhiteSpace(_currentSelectedCorrectAnswer) == false;
 
             if (ok == true && _currentAnswerFormat == _multipleChoice)
-                ok = _currentAnswerChoices_DB != null && _currentAnswerChoices_DB.All(q => string.IsNullOrWhiteSpace(q?.AnswerText) == false);
+                ok = _currentMultipleChoiceAnswers_DB != null && _currentMultipleChoiceAnswers_DB.All(q => string.IsNullOrWhiteSpace(q?.AnswerText) == false);
 
             return ok;
         }
@@ -221,41 +290,6 @@ namespace Training.Website.Components.Pages
             _currentSelectedCorrectAnswer = (_addMode == false)
                 ? _questions?.FirstOrDefault(q => q.Question_ID == questionID)?.CorrectAnswer
                 : null;
-        }
-
-        private async Task<int> InsertNewQuestion(int answerFormatKey)
-        {
-            int questionID = await _service.InsertQuestion
-            (
-                _selectedSession!.Session_ID!.Value,
-                _newQuestionNumber!.Value,
-                _currentQuestionText!,
-                answerFormatKey,
-                _currentSelectedCorrectAnswer,
-                Globals.UserID(ApplicationState),
-                Database
-            );
-
-            return questionID;
-        }
-
-        private async Task InsertMultipleChoiceAnswers(QuestionsModel? question)
-        {
-            for (int index = 0; index < _maxMultipleChoices; index++)
-            {
-                AnswerChoicesModel? currentChoice = _currentAnswerChoices_DB![index];
-                if (currentChoice != null && string.IsNullOrWhiteSpace(currentChoice?.AnswerText) == false)
-                {
-                    await _service.InsertMultipleChoiceAnswer
-                    (
-                        question!.Question_ID!.Value,
-                        currentChoice.AnswerLetter!.Value,
-                        currentChoice.AnswerText!,
-                        Globals.UserID(ApplicationState),
-                        Database
-                    );
-                }
-            }
         }
 
         private async Task SaveButtonClicked()
@@ -314,13 +348,20 @@ namespace Training.Website.Components.Pages
                 _currentQuestionText = null;
                 _currentAnswerFormat = null;
             }
+
+            _changedMultipleChoiceLetter = null;
+            _changedMultipleChoiceAnswer = null;
+            _changedMultipleChoiceAnswers = [];
+
             StateHasChanged();
         }
 
         private void SetCurrentAnswerFormat()
         {
             int? answerFormatID = _questions![_currentQuestionIndex!.Value].AnswerFormat;
+
             _currentAnswerFormat = (answerFormatID != null) ? _answerFormats?[answerFormatID.Value] : null;
+            _previousAnswerFormat = _currentAnswerFormat;
         }
 
         private async Task SetQuestionsControls()
@@ -328,7 +369,7 @@ namespace Training.Website.Components.Pages
             _currentQuestionText = _questions?[_currentQuestionIndex!.Value].Question;
             SetCurrentAnswerFormat();
             await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex!.Value].Question_ID);
-            _currentAnswerChoices_DB =
+            _currentMultipleChoiceAnswers_DB =
                 _service.GetAnswerChoicesByQuestionID(_questions![_currentQuestionIndex!.Value].Question_ID!.Value, Database)?.ToArray();
         }
     }
