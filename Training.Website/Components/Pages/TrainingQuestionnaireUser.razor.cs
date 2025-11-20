@@ -18,9 +18,15 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
+        private Dictionary<int, string>? _answerFormats = null;
         private IEnumerable<string>? _sessions = null;
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
+        private int _currentQuestionIndex;
+        private int _questionIndexLimit;
+        private QuestionsModel[]? _questions = null;
+        private string? _currentAnswerFormat = null;
+        private IEnumerable<AnswerChoicesModel?>? _currentMultipleChoiceAnswers = null;
 
         private readonly UserServiceMethods _service = new();
 
@@ -28,6 +34,8 @@ namespace Training.Website.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            _answerFormats = await _service.GetAnswerFormats(Database);
+
             // GET ALL SESSIONS
             IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database);
 
@@ -48,12 +56,61 @@ namespace Training.Website.Components.Pages
 
         // ================================================================================================================================================================================================================================================================================================
 
+        private bool AtFirstQuestion() => _currentQuestionIndex == 0;
+
+        private bool AtLastQuestion() => _currentQuestionIndex == _questionIndexLimit;
+
+        private void NextQuestionClicked()
+        {
+            if (AtLastQuestion() == false)
+            {
+                SetCurrentFields_Main(1);
+                StateHasChanged();
+            }
+        }
+
+        private void PreviousQuestionClicked()
+        {
+            if (AtFirstQuestion() == false)
+            {
+                SetCurrentFields_Main(-1);
+                StateHasChanged();
+            }
+        }
+
         private async Task SessionChanged(string newValue)
         {
             ApplicationState!.SessionID_String = newValue;
-            await Task.Delay(1);    // TODO: Remove when real async work is added
             _selectedSessionString = newValue;
+            _selectedSession = Globals.ConvertSessionStringToClass(newValue);
+            _questions = (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToArray();
+            _currentQuestionIndex = 0;
+            _questionIndexLimit = _questions?.GetUpperBound(0) ?? -1;
+            SetCurrentFields_Main(0);
             StateHasChanged();
+        }
+
+        private void SetCurrentAnswerFormat() => _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions?[_currentQuestionIndex]);
+
+        private void SetCurrentMultipleChoiceAnswers()
+        {
+            if (_currentAnswerFormat == Globals.MultipleChoice)
+            {
+                int? questionID = _questions?[_currentQuestionIndex]?.Question_ID;
+
+                _currentMultipleChoiceAnswers = (questionID != null)
+                    ? _service.GetAnswerChoicesByQuestionID(questionID.Value, Database)
+                    : null;
+            }
+            else
+                _currentMultipleChoiceAnswers = null;
+        }
+
+        private void SetCurrentFields_Main(int indexIncrement)
+        {
+            _currentQuestionIndex += indexIncrement;
+            SetCurrentAnswerFormat();
+            SetCurrentMultipleChoiceAnswers();
         }
     }
 }

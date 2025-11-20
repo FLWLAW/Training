@@ -6,7 +6,7 @@
 <table width="100%">
     <tr>
         <td style="width: 100%; text-align: center;">
-            Administrator Page
+            User Page
         </td>
     </tr>
     <tr>
@@ -24,3 +24,73 @@
         </td>
     </tr>
 </table>
+
+@if (_selectedSessionString != null)
+{
+    <table style="width: 100%;">
+        <tr>
+            <td class="LeftSide">
+                <TelerikButton Class="UniformButton" Enabled="@(! AtFirstQuestion())" OnClick="@(() => PreviousQuestionClicked())">Previous Question</TelerikButton>
+            </td>
+            <td class="RightSide">
+                <TelerikButton Class="UniformButton" Enabled="@(! AtLastQuestion())" OnClick="@(() => NextQuestionClicked())">Next Question</TelerikButton>
+            </td>
+        </tr>
+        <tr>
+            <td class="LeftSide">
+                Question #@_questions?[_currentQuestionIndex].QuestionNumber:
+            </td>
+            <td class="RightSide">
+                @_questions?[_currentQuestionIndex].Question
+            </td>
+        </tr>
+        @if (_currentAnswerFormat == Globals.MultipleChoice)
+        {
+            foreach(AnswerChoicesModel? answerChoice in _currentMultipleChoiceAnswers!)
+            {
+                <tr>
+                    <td class="LeftSide">
+                        @answerChoice?.AnswerLetter)
+                    </td>
+                    <td class="RightSide">
+                        @answerChoice?.AnswerText
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="2" class="SpanBoth">
+                    Yes/No, True/False Question
+                </td>
+            </tr>
+        }
+    </table>
+}
+
+<style>
+    .LeftSide {
+        width: 50%;
+        text-align: right;
+        padding-top: 45px;
+        padding-right: 15px;
+        font-size: larger;
+    }
+    .RightSide {
+        width: 50%;
+        text-align: left;
+        padding-top: 45px;
+        padding-left: 15px;
+        font-size: larger;
+    }
+    .SpanBoth {
+        text-align: center;
+        padding-top: 45px;
+        padding-left: 15px;
+        font-size: larger;
+    }
+    .UniformButton {
+        width: 150px;
+    }
+</style>

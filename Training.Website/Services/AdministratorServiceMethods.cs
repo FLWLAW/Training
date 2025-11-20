@@ -25,29 +25,6 @@ namespace Training.Website.Services
                 ("usp_Training_Questionnaire_DeleteQuestionByQuestionID", new { Question_ID = questionID });
         }
 
-        //NOTE: LEAVE AS SYNCHRONOUS
-        public IEnumerable<AnswerChoicesModel>? GetAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
-            database!.QueryByStoredProcedure<AnswerChoicesModel, object?>
-                ("usp_Training_Questionnaire_GetAnswerChoicesByQuestionID", new { Question_ID = questionID });
-
-        public async Task<Dictionary<int, string>?> GetAnswerFormats(IDatabase? database)
-        {
-            IEnumerable<AnswerFormatsModel>? data =
-                await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Training_Questionnaire_GetAnswerFormats");
-
-            if (data == null)
-                return null;
-            else
-            {
-                Dictionary<int, string> answerFormats = [];
-
-                foreach (AnswerFormatsModel? row in data)
-                    answerFormats.Add(row.Format_ID, row.Name!);
-
-                return answerFormats;
-            }
-        }
-
         public async Task<IEnumerable<string>?> GetAnswerLettersByQuestionID(int questionID, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<string, object?>
                 ("usp_Training_Questionnaire_GetAnswerLettersByQuestionID", new { Question_ID = questionID });
@@ -57,10 +34,6 @@ namespace Training.Website.Services
                 await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
                     ("usp_Training_Questionnaire_GetQuestionByQuestionID", new { Question_ID = questionID })
             ).FirstOrDefault()!;
-
-        public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionID(int sessionID, IDatabase? database) =>
-            await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
-                ("usp_Training_Questionnaire_GetQuestionsBySessionID", new { Session_ID = sessionID });
 
         public async Task InsertMultipleChoiceAnswer(int questionID, char answerLetter, string answerText, int createdByID, IDatabase? database)
         {
