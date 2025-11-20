@@ -80,7 +80,7 @@
         </tr>
         <tr>
             <td colspan="2" class="SpanBoth">
-                <TelerikButton Class="UniformButton Submit" Enabled="@(QuestionsAnswered() == _questions?.Length)">Submit Answers</TelerikButton>
+                <TelerikButton Class="UniformButton Submit" Enabled="@(QuestionsAnswered() == _questions?.Length)" OnClick="@(async () => await SubmitClicked())">Submit Answers</TelerikButton>
             </td>
         </tr>
     </table>

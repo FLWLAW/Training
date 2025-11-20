@@ -62,6 +62,17 @@ namespace Training.Website.Components.Pages
 
         private bool AtLastQuestion() => _currentQuestionIndex == _questionIndexLimit;
 
+        private int CorrectAnswerCount()
+        {
+            int correctAnswerCount = 0;
+
+            for (int index = 0; index <= _questionIndexLimit; index++)
+                if (_currentSelectedAnswers_DropDown?[index] == _questions?[index].CorrectAnswer)
+                    correctAnswerCount++;
+
+            return correctAnswerCount;
+        }
+
         private void CurrentAnswerChanged(string newValue)
         {
             _currentSelectedAnswer_DropDown = newValue;
@@ -110,13 +121,8 @@ namespace Training.Website.Components.Pages
                 _currentMultipleChoiceAnswers = (questionID != null)
                     ? _service.GetAnswerChoicesByQuestionID(questionID.Value, Database)
                     : null;
-/*
-                _currentAnswerChoices_DropDown = (_currentMultipleChoiceAnswers != null)
-                    ? _currentMultipleChoiceAnswers?.Select(q => q?.AnswerLetter.ToString()).Order()
-                    : null;
-*/
             }
-//          _currentMultipleChoiceAnswers = null;
+
             _currentAnswerChoices_DropDown = _currentAnswerFormat switch
             {
                 Globals.MultipleChoice => _currentMultipleChoiceAnswers?.Select(q => q?.AnswerLetter.ToString()).Order(),
@@ -132,6 +138,24 @@ namespace Training.Website.Components.Pages
             _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions?[_currentQuestionIndex]);
             _currentSelectedAnswer_DropDown = _currentSelectedAnswers_DropDown?[_currentQuestionIndex];
             SetCurrentAnswerDropDownItems();
+        }
+
+        private async Task SubmitClicked()
+        {
+            if (_questions == null)
+                throw new Exception("LOGIC ERROR IN SubmitClicked(): {_questions} == null, which should not be happening in this method.");
+            else if (_questions.Length == 0)
+                throw new Exception("LOGIC ERROR IN SubmitClicked(): {questionCount} should never be zero in SubmitClicked().");
+            else
+            {
+                double questionCount = Convert.ToDouble(_questions.Length);
+                double correctAnswerCount = Convert.ToDouble(CorrectAnswerCount());
+                double score = Math.Round(correctAnswerCount / questionCount, 1) * 100D;
+
+                // TODO: CHANGE "3" TO ACTUAL STATUS
+                await _service.InsertTestResult(_selectedSession!.Session_ID!.Value, Globals.UserID(ApplicationState), 3, score, Database);
+                //TODO: ADD ATTEMPT #
+            }
         }
     }
 }
