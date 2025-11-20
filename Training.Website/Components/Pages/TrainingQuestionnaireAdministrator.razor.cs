@@ -254,16 +254,16 @@ namespace Training.Website.Components.Pages
                     _currentAnswerChoices_DropDown = await _service.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
                     break;
                 case Globals.YesNo:
-                    _currentAnswerChoices_DropDown = ["Yes", "No"];
+                    _currentAnswerChoices_DropDown = Globals.YesNo_Choices;
                     break;
                 case Globals.TrueFalse:
-                    _currentAnswerChoices_DropDown = ["True", "False"];
+                    _currentAnswerChoices_DropDown = Globals.TrueFalse_Choices;
                     break;
                 case null:
                     _currentAnswerChoices_DropDown = [];
                     break;
                 default:
-                    throw new Exception("Invalid current answer format in PopulateCorrectAnswerDropDown()");
+                    throw new Exception(Globals.CurrentAnswerFormatError);
             }
 
             _currentSelectedCorrectAnswer = (_addMode == false)

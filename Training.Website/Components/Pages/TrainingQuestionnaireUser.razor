@@ -29,6 +29,16 @@
 {
     <table style="width: 100%;">
         <tr>
+            <td colspan="2" class="SpanBoth">
+                @_questions?.Length questions
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="SpanBoth">
+                @QuestionsAnswered() question(s) answered
+            </td>
+        </tr>
+        <tr>
             <td class="LeftSide">
                 <TelerikButton Class="UniformButton" Enabled="@(! AtFirstQuestion())" OnClick="@(() => PreviousQuestionClicked())">Previous Question</TelerikButton>
             </td>
@@ -49,23 +59,30 @@
             foreach(AnswerChoicesModel? answerChoice in _currentMultipleChoiceAnswers!)
             {
                 <tr>
-                    <td class="LeftSide">
-                        @answerChoice?.AnswerLetter)
-                    </td>
-                    <td class="RightSide">
-                        @answerChoice?.AnswerText
-                    </td>
+                    <td class="LeftSide">@answerChoice?.AnswerLetter)</td>
+                    <td class="RightSide">@answerChoice?.AnswerText</td>
                 </tr>
             }
         }
-        else
-        {
-            <tr>
-                <td colspan="2" class="SpanBoth">
-                    Yes/No, True/False Question
-                </td>
-            </tr>
-        }
+        <tr>
+            <td class="LeftSide">Answer:</td>
+            <td class="RightSide">
+                <TelerikDropDownList Data="@_currentAnswerChoices_DropDown"
+                                     Value="@_currentSelectedAnswer_DropDown"
+                                     ValueChanged="@((string newValue) => CurrentAnswerChanged(newValue))"
+                                     Enabled="true"
+                                     Width="150px">
+                    <DropDownListSettings>
+                        <DropDownListPopupSettings Height="180px" />
+                    </DropDownListSettings>
+                </TelerikDropDownList>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="SpanBoth">
+                <TelerikButton Class="UniformButton Submit" Enabled="@(QuestionsAnswered() == _questions?.Length)">Submit Answers</TelerikButton>
+            </td>
+        </tr>
     </table>
 }
 
@@ -89,6 +106,10 @@
         padding-top: 45px;
         padding-left: 15px;
         font-size: larger;
+    }
+    .Submit {
+        background-color: lightpink;
+        font-weight: 700;
     }
     .UniformButton {
         width: 150px;

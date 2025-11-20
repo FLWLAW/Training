@@ -27,9 +27,11 @@ namespace Training.Website.Components.Pages
         private QuestionsModel[]? _questions = null;
         private string? _currentAnswerFormat = null;
         private IEnumerable<AnswerChoicesModel?>? _currentMultipleChoiceAnswers = null;
+        private IEnumerable<string?>? _currentAnswerChoices_DropDown = null;
+        private string? _currentSelectedAnswer_DropDown = null;
+        private string?[]? _currentSelectedAnswers_DropDown = null;
 
         private readonly UserServiceMethods _service = new();
-
         #endregion
 
         protected override async Task OnInitializedAsync()
@@ -60,6 +62,12 @@ namespace Training.Website.Components.Pages
 
         private bool AtLastQuestion() => _currentQuestionIndex == _questionIndexLimit;
 
+        private void CurrentAnswerChanged(string newValue)
+        {
+            _currentSelectedAnswer_DropDown = newValue;
+            _currentSelectedAnswers_DropDown![_currentQuestionIndex] = newValue;
+        }
+
         private void NextQuestionClicked()
         {
             if (AtLastQuestion() == false)
@@ -78,21 +86,22 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private int QuestionsAnswered() => _currentSelectedAnswers_DropDown?.Count(q => string.IsNullOrWhiteSpace(q) == false) ?? 0;
+
         private async Task SessionChanged(string newValue)
         {
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _questions = (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToArray();
+            _currentSelectedAnswers_DropDown = new string[_questions?.Length ?? 0];
             _currentQuestionIndex = 0;
             _questionIndexLimit = _questions?.GetUpperBound(0) ?? -1;
             SetCurrentFields_Main(0);
             StateHasChanged();
         }
 
-        private void SetCurrentAnswerFormat() => _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions?[_currentQuestionIndex]);
-
-        private void SetCurrentMultipleChoiceAnswers()
+        private void SetCurrentAnswerDropDownItems()
         {
             if (_currentAnswerFormat == Globals.MultipleChoice)
             {
@@ -101,16 +110,28 @@ namespace Training.Website.Components.Pages
                 _currentMultipleChoiceAnswers = (questionID != null)
                     ? _service.GetAnswerChoicesByQuestionID(questionID.Value, Database)
                     : null;
+/*
+                _currentAnswerChoices_DropDown = (_currentMultipleChoiceAnswers != null)
+                    ? _currentMultipleChoiceAnswers?.Select(q => q?.AnswerLetter.ToString()).Order()
+                    : null;
+*/
             }
-            else
-                _currentMultipleChoiceAnswers = null;
+//          _currentMultipleChoiceAnswers = null;
+            _currentAnswerChoices_DropDown = _currentAnswerFormat switch
+            {
+                Globals.MultipleChoice => _currentMultipleChoiceAnswers?.Select(q => q?.AnswerLetter.ToString()).Order(),
+                Globals.TrueFalse => Globals.TrueFalse_Choices,
+                Globals.YesNo => Globals.YesNo_Choices,
+                _ => throw new Exception(Globals.CurrentAnswerFormatError)
+            };
         }
 
         private void SetCurrentFields_Main(int indexIncrement)
         {
             _currentQuestionIndex += indexIncrement;
-            SetCurrentAnswerFormat();
-            SetCurrentMultipleChoiceAnswers();
+            _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions?[_currentQuestionIndex]);
+            _currentSelectedAnswer_DropDown = _currentSelectedAnswers_DropDown?[_currentQuestionIndex];
+            SetCurrentAnswerDropDownItems();
         }
     }
 }
