@@ -72,6 +72,8 @@ namespace Training.Website.Components.Pages
                 }
                 _sessions = sessions;
                 _selectedSessionString = ApplicationState!.SessionID_String;
+                if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
+                    await SessionChanged(_selectedSessionString);
             }
         }
 
