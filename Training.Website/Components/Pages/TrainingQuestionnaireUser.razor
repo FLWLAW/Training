@@ -25,7 +25,25 @@
     </tr>
 </table>
 
-@if (_selectedSessionString != null)
+@if (_score != null)
+{
+    <table style="width: 100%;">
+        <tr>
+            <td colspan="2" style="font-size: x-large; text-align: center;">
+                YOU HAVE COMPLETED THE QUESTIONNAIRE.
+            </td>
+        </tr>
+        <tr>
+            <td style="font-size: x-large; width: 50%; text-align: right; padding-right: 30px;">
+                YOUR SCORE:
+            </td>
+            <td style="font-size: xx-large; width: 50%; text-align: left; padding-left: 30px;">
+                @_score%
+            </td>
+        </tr>
+    </table>
+}
+else if (_selectedSessionString != null)
 {
     <table style="width: 100%;">
         <tr>

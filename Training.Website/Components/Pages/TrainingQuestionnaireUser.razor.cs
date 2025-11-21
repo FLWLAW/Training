@@ -29,7 +29,9 @@ namespace Training.Website.Components.Pages
         private IEnumerable<AnswerChoicesModel?>? _currentMultipleChoiceAnswers = null;
         private IEnumerable<string?>? _currentAnswerChoices_DropDown = null;
         private string? _currentSelectedAnswer_DropDown = null;
-        private string?[]? _currentSelectedAnswers_DropDown = null;
+        //private string?[]? _currentSelectedAnswers_DropDown = null;
+        private UserAnswersModel?[]? _currentSelectedAnswers_DropDown = null;
+        private double? _score = null;
 
         private readonly UserServiceMethods _service = new();
         #endregion
@@ -69,7 +71,7 @@ namespace Training.Website.Components.Pages
             int correctAnswerCount = 0;
 
             for (int index = 0; index <= _questionIndexLimit; index++)
-                if (_currentSelectedAnswers_DropDown?[index] == _questions?[index].CorrectAnswer)
+                if (_currentSelectedAnswers_DropDown?[index]?.UserAnswer == _questions?[index].CorrectAnswer)
                     correctAnswerCount++;
 
             return correctAnswerCount;
@@ -78,7 +80,14 @@ namespace Training.Website.Components.Pages
         private void CurrentAnswerChanged(string newValue)
         {
             _currentSelectedAnswer_DropDown = newValue;
-            _currentSelectedAnswers_DropDown![_currentQuestionIndex] = newValue;
+
+            if (_currentSelectedAnswers_DropDown![_currentQuestionIndex] == null)
+            {
+                _currentSelectedAnswers_DropDown![_currentQuestionIndex] = new UserAnswersModel();
+                _currentSelectedAnswers_DropDown![_currentQuestionIndex]!.QuestionID = _questions![_currentQuestionIndex].Question_ID!.Value;
+            }
+
+            _currentSelectedAnswers_DropDown![_currentQuestionIndex]!.UserAnswer = newValue;
         }
 
         private void NextQuestionClicked()
@@ -99,7 +108,20 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private int QuestionsAnswered() => _currentSelectedAnswers_DropDown?.Count(q => string.IsNullOrWhiteSpace(q) == false) ?? 0;
+        private int QuestionsAnswered() => _currentSelectedAnswers_DropDown?.Count(q => string.IsNullOrWhiteSpace(q?.UserAnswer) == false) ?? 0;
+
+        private double? Score()
+        {
+            if (_questions != null)
+            {
+                double questionCount = Convert.ToDouble(_questions?.Length);
+                double correctAnswerCount = Convert.ToDouble(CorrectAnswerCount());
+
+                return Math.Round(correctAnswerCount / questionCount, 2) * 100D;
+            }
+            else
+                return null;
+        }
 
         private async Task SessionChanged(string newValue)
         {
@@ -107,9 +129,10 @@ namespace Training.Website.Components.Pages
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _questions = (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToArray();
-            _currentSelectedAnswers_DropDown = new string[_questions?.Length ?? 0];
+            _currentSelectedAnswers_DropDown = new UserAnswersModel[_questions?.Length ?? 0];
             _currentQuestionIndex = 0;
             _questionIndexLimit = _questions?.GetUpperBound(0) ?? -1;
+            _score = null;
             SetCurrentFields_Main(0);
             StateHasChanged();
         }
@@ -138,7 +161,7 @@ namespace Training.Website.Components.Pages
         {
             _currentQuestionIndex += indexIncrement;
             _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions?[_currentQuestionIndex]);
-            _currentSelectedAnswer_DropDown = _currentSelectedAnswers_DropDown?[_currentQuestionIndex];
+            _currentSelectedAnswer_DropDown = _currentSelectedAnswers_DropDown?[_currentQuestionIndex]?.UserAnswer ?? null;
             SetCurrentAnswerDropDownItems();
         }
 
@@ -150,13 +173,15 @@ namespace Training.Website.Components.Pages
                 throw new Exception("LOGIC ERROR IN SubmitClicked(): {questionCount} should never be zero in SubmitClicked().");
             else
             {
-                double questionCount = Convert.ToDouble(_questions.Length);
-                double correctAnswerCount = Convert.ToDouble(CorrectAnswerCount());
-                double score = Math.Round(correctAnswerCount / questionCount, 1) * 100D;
+                _score = Score();
+                if (_score != null)
+                {
+                    int testAttemptID = await _service.InsertTestResult
+                        (_selectedSession!.Session_ID!.Value, Globals.UserID(ApplicationState), _score.Value, Database);
 
-                // TODO: CHANGE "3" TO ACTUAL STATUS
-                await _service.InsertTestResult(_selectedSession!.Session_ID!.Value, Globals.UserID(ApplicationState), 3, score, Database);
-                //TODO: ADD ATTEMPT #
+                    foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
+                        await _service.InsertIndividualAnswer(testAttemptID, userAnswer, Database);
+                }
             }
         }
     }
