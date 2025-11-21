@@ -81,7 +81,7 @@
                         </td>
                     </tr>
                     <!-- ANSWER CHOICES IF MULTIPLE CHOICE -->
-                    @if(_currentAnswerFormat == _multipleChoice)
+                    @if(_currentAnswerFormat == Globals.MultipleChoice)
                     {
                         if (_addMode == false)
                         {
@@ -109,7 +109,7 @@
                         }
                         if (_editMode == true)
                         {
-                            @if(_originalAnswerFormat != _multipleChoice)
+                            @if(_originalAnswerFormat != Globals.MultipleChoice)
                             {
                                 <tr>
                                     <td colspan="3" style="text-align: center; color: red; font-size: larger; font-weight: 700;">
@@ -247,7 +247,7 @@
                             </td>
                         </tr>
 
-                        @if (AnswerFormatMatch(answerFormat, _multipleChoice) == true)
+                        @if (AnswerFormatMatch(answerFormat, Globals.MultipleChoice) == true)
                         {
                             @foreach(AnswerChoicesModel answerChoice in answerChoices!)
                             {
@@ -272,11 +272,11 @@
                             <tr>
                                 <td>&nbsp;</td>
                                 <td style="text-align: left; padding-left: 30px;">
-                                    @if (AnswerFormatMatch(answerFormat, _trueFalse) == true)
+                                    @if (AnswerFormatMatch(answerFormat, Globals.TrueFalse) == true)
                                     {
                                         <label>True or False?</label>
                                     }
-                                    else if (AnswerFormatMatch(answerFormat, _yesNo) == true)
+                                    else if (AnswerFormatMatch(answerFormat, Globals.YesNo) == true)
                                     {
                                         <label>Yes or No?</label>
                                     }

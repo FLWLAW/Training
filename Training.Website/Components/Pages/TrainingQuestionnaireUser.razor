@@ -1,0 +1,135 @@
+﻿@page "/TrainingQuestionnaireUser"
+
+@using Training.Website.Models
+@using Training.Website.Services
+
+<table width="100%">
+    <tr>
+        <td style="width: 100%; text-align: center;">
+            User Page
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center; padding-bottom: 30px;">
+            <label style="padding-right: 30px;">Session ID:</label>
+            <TelerikDropDownList Data="@_sessions"
+                                 Value="_selectedSessionString"
+                                 ValueChanged="@(async (string newValue) => await SessionChanged(newValue))"
+                                 Enabled="true"
+                                 Width="350px">
+                <DropDownListSettings>
+                    <DropDownListPopupSettings Height="180px" />
+                </DropDownListSettings>
+            </TelerikDropDownList>
+        </td>
+    </tr>
+</table>
+
+@if (_score != null)
+{
+    <table style="width: 100%;">
+        <tr>
+            <td colspan="2" style="font-size: x-large; text-align: center;">
+                YOU HAVE COMPLETED THE QUESTIONNAIRE.
+            </td>
+        </tr>
+        <tr>
+            <td style="font-size: x-large; width: 50%; text-align: right; padding-right: 30px;">
+                YOUR SCORE:
+            </td>
+            <td style="font-size: xx-large; width: 50%; text-align: left; padding-left: 30px;">
+                @_score%
+            </td>
+        </tr>
+    </table>
+}
+else if (_selectedSessionString != null)
+{
+    <table style="width: 100%;">
+        <tr>
+            <td colspan="2" class="SpanBoth">
+                @_questions?.Length questions
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="SpanBoth">
+                @QuestionsAnswered() question(s) answered
+            </td>
+        </tr>
+        <tr>
+            <td class="LeftSide">
+                <TelerikButton Class="UniformButton" Enabled="@(! AtFirstQuestion())" OnClick="@(() => PreviousQuestionClicked())">Previous Question</TelerikButton>
+            </td>
+            <td class="RightSide">
+                <TelerikButton Class="UniformButton" Enabled="@(! AtLastQuestion())" OnClick="@(() => NextQuestionClicked())">Next Question</TelerikButton>
+            </td>
+        </tr>
+        <tr>
+            <td class="LeftSide">
+                Question #@_questions?[_currentQuestionIndex].QuestionNumber:
+            </td>
+            <td class="RightSide">
+                @_questions?[_currentQuestionIndex].Question
+            </td>
+        </tr>
+        @if (_currentAnswerFormat == Globals.MultipleChoice)
+        {
+            foreach(AnswerChoicesModel? answerChoice in _currentMultipleChoiceAnswers!)
+            {
+                <tr>
+                    <td class="LeftSide">@answerChoice?.AnswerLetter)</td>
+                    <td class="RightSide">@answerChoice?.AnswerText</td>
+                </tr>
+            }
+        }
+        <tr>
+            <td class="LeftSide">Answer:</td>
+            <td class="RightSide">
+                <TelerikDropDownList Data="@_currentAnswerChoices_DropDown"
+                                     Value="@_currentSelectedAnswer_DropDown"
+                                     ValueChanged="@((string newValue) => CurrentAnswerChanged(newValue))"
+                                     Enabled="true"
+                                     Width="150px">
+                    <DropDownListSettings>
+                        <DropDownListPopupSettings Height="180px" />
+                    </DropDownListSettings>
+                </TelerikDropDownList>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="SpanBoth">
+                <TelerikButton Class="UniformButton Submit" Enabled="@(QuestionsAnswered() == _questions?.Length)" OnClick="@(async () => await SubmitClicked())">Submit Answers</TelerikButton>
+            </td>
+        </tr>
+    </table>
+}
+
+<style>
+    .LeftSide {
+        width: 50%;
+        text-align: right;
+        padding-top: 45px;
+        padding-right: 15px;
+        font-size: larger;
+    }
+    .RightSide {
+        width: 50%;
+        text-align: left;
+        padding-top: 45px;
+        padding-left: 15px;
+        font-size: larger;
+    }
+    .SpanBoth {
+        text-align: center;
+        padding-top: 45px;
+        padding-left: 15px;
+        font-size: larger;
+    }
+    .Submit {
+        background-color: lightpink;
+        font-weight: 700;
+    }
+    .UniformButton {
+        width: 150px;
+    }
+</style>

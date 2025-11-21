@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
 using System.Linq.Expressions;
+using Telerik.Blazor.Components.Common.Upload;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -19,10 +20,6 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
-        private const string _yesNo = "Yes/No";
-        private const string _trueFalse = "True/False";
-        private const string _multipleChoice = "Multiple Choice";
-
         private const string _windowWidth = "60%";
         private const string _windowLeft = "20%";
         private const string _topWindowTop = "10%";
@@ -64,7 +61,7 @@ namespace Training.Website.Components.Pages
             // GET ALL SESSIONS
             IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database);
 
-            if (sessionInfo != null && sessionInfo.Count() > 0)
+            if (sessionInfo != null && sessionInfo.Any() == true)
             {
                 List<string>? sessions = [];
 
@@ -75,6 +72,8 @@ namespace Training.Website.Components.Pages
                 }
                 _sessions = sessions;
                 _selectedSessionString = ApplicationState!.SessionID_String;
+                if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
+                    await SessionChanged(_selectedSessionString);
             }
         }
 
@@ -144,26 +143,6 @@ namespace Training.Website.Components.Pages
         {
             _changedMultipleChoiceLetter = newValue.ToString();
             _changedMultipleChoiceAnswer = null;
-        }
-
-        private SessionInformationModel? ConvertSessionStringToClass(string newValue)
-        {
-            SessionInformationModel? result = null;
-            int openParenthesis = newValue.IndexOf('(');
-
-            if (openParenthesis > -1)
-            {
-                int closeParenthesis = newValue.LastIndexOf(')');
-
-                if (closeParenthesis > -1 && (int.TryParse(newValue[..openParenthesis].Trim(), out int sessionId) == true))
-                    result = new SessionInformationModel()
-                    {
-                        Session_ID = sessionId,
-                        DocTitle = newValue.Substring(openParenthesis + 1, closeParenthesis - openParenthesis - 1).Trim()
-                    };
-            }
-
-            return result;
         }
 
         private void CorrectAnswerChanged(string newValue)
@@ -261,7 +240,7 @@ namespace Training.Website.Components.Pages
                       string.IsNullOrWhiteSpace(_currentAnswerFormat) == false &&
                       string.IsNullOrWhiteSpace(_currentSelectedCorrectAnswer) == false;
 
-            if (ok == true && _currentAnswerFormat == _multipleChoice)
+            if (ok == true && _currentAnswerFormat == Globals.MultipleChoice)
                 ok = _currentMultipleChoiceAnswers_DB != null && _currentMultipleChoiceAnswers_DB.All(q => string.IsNullOrWhiteSpace(q?.AnswerText) == false);
 
             return ok;
@@ -273,20 +252,20 @@ namespace Training.Website.Components.Pages
 
             switch(_currentAnswerFormat)
             {
-                case _multipleChoice:
+                case Globals.MultipleChoice:
                     _currentAnswerChoices_DropDown = await _service.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
                     break;
-                case _yesNo:
-                    _currentAnswerChoices_DropDown = ["Yes", "No"];
+                case Globals.YesNo:
+                    _currentAnswerChoices_DropDown = Globals.YesNo_Choices;
                     break;
-                case _trueFalse:
-                    _currentAnswerChoices_DropDown = ["True", "False"];
+                case Globals.TrueFalse:
+                    _currentAnswerChoices_DropDown = Globals.TrueFalse_Choices;
                     break;
                 case null:
                     _currentAnswerChoices_DropDown = [];
                     break;
                 default:
-                    throw new Exception("Invalid current answer format in PopulateCorrectAnswerDropDown()");
+                    throw new Exception(Globals.CurrentAnswerFormatError);
             }
 
             _currentSelectedCorrectAnswer = (_addMode == false)
@@ -348,7 +327,7 @@ namespace Training.Website.Components.Pages
                     _sessionHasQuestions = true;
                     _newQuestionNumber = newestQuestion.QuestionNumber + 1;
 
-                    if (selectedAnswerFormat.Value == _multipleChoice)
+                    if (selectedAnswerFormat.Value == Globals.MultipleChoice)
                         await InsertMultipleChoiceAnswers(newestQuestion);
                 }
             }
@@ -368,7 +347,7 @@ namespace Training.Website.Components.Pages
                                                question.CorrectAnswer != _currentSelectedCorrectAnswer;
 
                         bool multipleChoiceAnswersChanged = _changedMultipleChoiceAnswers.Count > 0;
-                        bool formerlyMultipleChoice = _originalAnswerFormat == _multipleChoice && _currentAnswerFormat != _multipleChoice;
+                        bool formerlyMultipleChoice = _originalAnswerFormat == Globals.MultipleChoice && _currentAnswerFormat != Globals.MultipleChoice;
 
                         if (questionChanged == true)
                             await _service.UpdateQuestion
@@ -394,6 +373,7 @@ namespace Training.Website.Components.Pages
             _currentQuestionText = null;
             _currentAnswerFormat = null;
             _currentAnswerChoices_DropDown = [];
+            _currentMultipleChoiceAnswers_DB = [];
             _currentSelectedCorrectAnswer = null;
             _changedMultipleChoiceAnswers = [];
 
@@ -406,7 +386,7 @@ namespace Training.Website.Components.Pages
             _addMode = false;
             _editMode = false;
             _selectedSessionString = newValue;
-            _selectedSession = ConvertSessionStringToClass(newValue);
+            _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _sessionHasQuestions = false;   // THIS WILL PREVENT ERRORS IN THE NEXT STATEMENT, BECAUSE THE SCREEN WILL RENDER BEFORE THE AWAIT COMPLETES.
             _questions = await GetQuestionsBySessionID_Main();
             _sessionHasQuestions = (_questions != null && _questions.Count > 0);
@@ -415,7 +395,7 @@ namespace Training.Website.Components.Pages
             {
                 _currentQuestionIndex = 0;
                 _currentQuestionText = _questions![_currentQuestionIndex.Value].Question;
-                SetCurrentAnswerFormat();
+                _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions[_currentQuestionIndex!.Value]);
                 _originalAnswerFormat = _currentAnswerFormat;
                 await PopulateCorrectAnswerDropDown(_questions![_currentQuestionIndex.Value].Question_ID);
             }
@@ -434,12 +414,6 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private void SetCurrentAnswerFormat()
-        {
-            int? answerFormatID = _questions![_currentQuestionIndex!.Value].AnswerFormat;
-            _currentAnswerFormat = (answerFormatID != null) ? _answerFormats?[answerFormatID.Value] : null;
-        }
-
         private async Task SetQuestionsControls()
         {
             int index = _currentQuestionIndex ?? -1;
@@ -447,7 +421,7 @@ namespace Training.Website.Components.Pages
             if (index >= 0)
             {
                 _currentQuestionText = _questions?[index].Question;
-                SetCurrentAnswerFormat();
+                _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions?[_currentQuestionIndex!.Value]);
                 _originalAnswerFormat = _currentAnswerFormat;
                 await PopulateCorrectAnswerDropDown(_questions![index].Question_ID);
                 _currentMultipleChoiceAnswers_DB =
