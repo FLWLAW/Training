@@ -32,6 +32,7 @@ namespace Training.Website.Components.Pages
         //private string?[]? _currentSelectedAnswers_DropDown = null;
         private UserAnswersModel?[]? _currentSelectedAnswers_DropDown = null;
         private double? _score = null;
+        private string? _testEligibilityMessage = null;
 
         private readonly UserServiceMethods _service = new();
         #endregion
@@ -128,6 +129,7 @@ namespace Training.Website.Components.Pages
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
+            _testEligibilityMessage = await TestEligibilityMessage();
             _questions = (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToArray();
             _currentSelectedAnswers_DropDown = new UserAnswersModel[_questions?.Length ?? 0];
             _currentQuestionIndex = 0;
@@ -182,6 +184,24 @@ namespace Training.Website.Components.Pages
                     foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
                         await _service.InsertIndividualAnswer(testAttemptID, userAnswer, Database);
                 }
+            }
+        }
+
+        private async Task<string?> TestEligibilityMessage()
+        {
+            IEnumerable<double>? scores = await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
+            int passes = scores?.Where(q => q >= Globals.TestPassingThreshold).Count() ?? 0;
+
+            if (passes > 0)
+                return "You have already taken this questionnaire and passed.";
+            else
+            {
+                int attempts = scores?.Count() ?? 0;
+
+                if (attempts < Globals.MaximumTestAttemptsPerSession)
+                    return null;
+                else
+                    return $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
             }
         }
     }

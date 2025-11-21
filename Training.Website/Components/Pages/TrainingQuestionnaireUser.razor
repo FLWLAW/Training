@@ -25,7 +25,17 @@
     </tr>
 </table>
 
-@if (_score != null)
+@if (_selectedSession != null && (_questions == null || _questions.Length == 0))
+{
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 100%; text-align: center; font-size: xx-large;">
+                THERE ARE NO QUESTIONS FOR THIS SESSION
+            </td>
+        </tr>
+    </table>
+}
+else if (_score != null)
 {
     <table style="width: 100%;">
         <tr>
@@ -39,6 +49,16 @@
             </td>
             <td style="font-size: xx-large; width: 50%; text-align: left; padding-left: 30px;">
                 @_score%
+            </td>
+        </tr>
+    </table>
+}
+else if (_testEligibilityMessage != null)
+{
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 100%; text-align: center; font-size: xx-large;">
+                @_testEligibilityMessage
             </td>
         </tr>
     </table>
