@@ -371,6 +371,7 @@ namespace Training.Website.Components.Pages
             _currentQuestionText = null;
             _currentAnswerFormat = null;
             _currentAnswerChoices_DropDown = [];
+            _currentMultipleChoiceAnswers_DB = [];
             _currentSelectedCorrectAnswer = null;
             _changedMultipleChoiceAnswers = [];
 
