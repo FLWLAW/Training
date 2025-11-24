@@ -189,11 +189,13 @@ namespace Training.Website.Components.Pages
 
         private async Task<string?> TestEligibilityMessage()
         {
-            IEnumerable<double>? scores = await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
-            int passes = scores?.Where(q => q >= Globals.TestPassingThreshold).Count() ?? 0;
+            IEnumerable<ScoresAndWhenSubmittedModel>? scores =
+                await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
 
-            if (passes > 0)
-                return "You have already taken this questionnaire and passed.";
+            ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
+
+            if (passingScore != null)
+                return $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
             else
             {
                 int attempts = scores?.Count() ?? 0;
