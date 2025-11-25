@@ -2,6 +2,7 @@
 @using Training.Website.Models
 @using Training.Website.Services
 
+<!-- TOP PORTION OF PAGE -->
 <TelerikWindow Modal="false" Resizable="false" Visible="true" Width="@_windowWidth" Top="@_topWindowTop" Left="@_windowLeft">
     <WindowContent>
         <table width="100%">
@@ -59,7 +60,6 @@
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => EditQuestionClicked())">Edit Question</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await RemoveQuestionClicked())">Remove Question</TelerikButton>
-                                
                             }
                             else
                             {
