@@ -8,5 +8,11 @@ namespace Training.Website.Components.Layout
         [CascadingParameter]
         private AppState? ApplicationState { get; set; }
         #endregion
+
+#if DEBUG
+        private const string _TITLE = "Training Questionnaire (** DEBUG MODE **)";
+#else
+        private const string _TITLE = "Training Questionnaire";
+#endif
     }
 }

@@ -47,14 +47,7 @@ namespace Training.Website.Components.Pages
             //TODO: THE CODE BELOW MAY NOT BE NEEDED IF THE SESSION ID WILL BE PASSED TO THIS PAGE VIA QUERYSTRING OR SOMEOTHER METHOD. IF IT IS NEEDED, THEN IT IS REDUNDNANT WITH THE ADMINISTRATOR PAGE AND A COMMON METHOD SHOULD BE IMPLEMENTED.
             if (sessionInfo != null && sessionInfo.Any() == true)
             {
-                List<string>? sessions = [];
-
-                foreach (SessionInformationModel? session in sessionInfo)
-                {
-                    string item = new($"{session.Session_ID} ({session.DocTitle})");
-                    sessions.Add(item);
-                }
-                _sessions = sessions;
+                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
