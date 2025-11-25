@@ -15,7 +15,7 @@
                 <td style="text-align: center; padding-bottom: 30px;">
                     <label style="padding-right: 30px;">Session ID:</label>
                     <TelerikDropDownList
-                        Data="@_sessions"
+                        Data="@_sessions_FullText"
                         Value="_selectedSessionString"
                         ValueChanged="@(async (string newValue) => await SessionChanged(newValue) )"
                         Enabled="@(! AddOrEditMode())"
@@ -24,6 +24,21 @@
                             <DropDownListPopupSettings Height="180px" />
                         </DropDownListSettings>
                     </TelerikDropDownList>
+                    <br />
+                    <label style="padding-right: 30px;">Or type in session here:</label>
+                    <TelerikAutoComplete
+                        @ref="@_sessionIdAutoComplete"
+                        Data="@_sessions_IDs"
+                        DebounceDelay="50"
+                        MinLength="3"
+                        Placeholder="Or enter session ID here:"
+                        ShowClearButton="true"
+                        Value="@_keypressedSessionID"
+                        ValueChanged="@((string newValue) => SessionIdAutoCompleteValueChanged(newValue) )"
+                        OnClose="@(async (AutoCompleteCloseEventArgs args) => await OnCloseSessionIdAutoComplete(args) )"
+                        Width="210px"
+                    />
+
                 </td>
             </tr>
         </table>
@@ -226,7 +241,7 @@
     <!-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
 
     <!-- BOTTOM PORTION OF PAGE -->
-    <TelerikWindow Modal="false" Visible="true" Resizable="false" Width="@_windowWidth" Height="33%" Top="@_bottomWindowTop" Left="@_windowLeft">
+    <TelerikWindow Modal="false" Visible="true" Resizable="false" Width="@_windowWidth" Height="28%" Top="@_bottomWindowTop" Left="@_windowLeft">
         <WindowContent>
             <table style="width: 100%; border: 2px solid; border-color: black;">
                 <tr>

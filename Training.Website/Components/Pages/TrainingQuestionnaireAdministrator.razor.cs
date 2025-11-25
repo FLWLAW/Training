@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
+using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -22,11 +23,13 @@ namespace Training.Website.Components.Pages
         private const string _windowLeft = "20%";
         private const string _topWindowTop = "7%";
         private const string _middleWindowTop = "22%";
-        private const string _bottomWindowTop = "62%";
+        private const string _bottomWindowTop = "70%";
 
         private Dictionary<int, string>? _answerFormats = null;
-        private IEnumerable<string>? _sessions = null;
+        private IEnumerable<string>? _sessions_FullText = null;
+        private IEnumerable<string?>? _sessions_IDs = null;
         private string? _selectedSessionString = null;
+        private string? _keypressedSessionID = null;
         private SessionInformationModel? _selectedSession = null;
 
         private int? _newQuestionNumber = null;
@@ -50,6 +53,8 @@ namespace Training.Website.Components.Pages
 
         private readonly AdministratorServiceMethods _service = new();
 
+        private TelerikAutoComplete<string?> _sessionIdAutoComplete = new();
+
         #endregion
 
         protected override async Task OnInitializedAsync()
@@ -61,7 +66,8 @@ namespace Training.Website.Components.Pages
 
             if (sessionInfo != null && sessionInfo.Any() == true)
             {
-                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+                _sessions_IDs = sessionInfo.Select(q => q.Session_ID.ToString());
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
@@ -237,6 +243,17 @@ namespace Training.Website.Components.Pages
             return ok;
         }
 
+        private async Task OnCloseSessionIdAutoComplete(AutoCompleteCloseEventArgs args)
+        {
+            if (_keypressedSessionID != null)
+            {
+                string? newValue = _sessions_FullText?.FirstOrDefault(q => q.StartsWith(_keypressedSessionID));
+
+                if (newValue != null)
+                    await SessionChanged(newValue);
+            }
+        }
+
         private async Task PopulateCorrectAnswerDropDown(int? questionID)
         {
             _currentAnswerChoices_DropDown = [];
@@ -380,7 +397,7 @@ namespace Training.Website.Components.Pages
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _sessionHasQuestions = false;   // THIS WILL PREVENT ERRORS IN THE NEXT STATEMENT, BECAUSE THE SCREEN WILL RENDER BEFORE THE AWAIT COMPLETES.
             _questions = await GetQuestionsBySessionID_Main();
-            _sessionHasQuestions = (_questions != null && _questions.Count > 0);
+            _sessionHasQuestions = SessionHasQuestions(); ;
 
             if (_sessionHasQuestions == true)
             {
@@ -398,12 +415,19 @@ namespace Training.Website.Components.Pages
                 _originalAnswerFormat = null;
             }
 
+            if (_keypressedSessionID != _selectedSession?.Session_ID.ToString())
+                _keypressedSessionID = _selectedSession?.Session_ID.ToString();
+
             _changedMultipleChoiceLetter = null;
             _changedMultipleChoiceAnswer = null;
             _changedMultipleChoiceAnswers = [];
 
             StateHasChanged();
         }
+
+        private bool SessionHasQuestions() => (_questions != null && _questions.Count > 0);
+
+        private void SessionIdAutoCompleteValueChanged(string newValue) => _keypressedSessionID = newValue;
 
         private async Task SetQuestionsControls()
         {
