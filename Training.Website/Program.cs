@@ -13,13 +13,13 @@ builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNe
 builder.Services.AddAuthorization(options => { options.FallbackPolicy = options.DefaultPolicy; });
 */
 
-string? dbConnectionString = Configuration.DatabaseConnectionString();
+string? dbConnectionString_OPS = Configuration.DatabaseConnectionString_OPS();
 
-if (dbConnectionString is null)
-    throw new InvalidOperationException("Database connection string is not configured.");
+if (dbConnectionString_OPS is null)
+    throw new InvalidOperationException("Database connection string for OPS is not configured.");
 else
 {
-    builder.Services.AddScoped<IDatabase>(s => new SqlDatabase(dbConnectionString));
+    builder.Services.AddScoped<IDatabase>(s => new SqlDatabase(dbConnectionString_OPS));
 
     builder.Services.AddTelerikBlazor();
 
