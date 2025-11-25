@@ -32,6 +32,7 @@ namespace Training.Website.Components.Pages
         //private string?[]? _currentSelectedAnswers_DropDown = null;
         private UserAnswersModel?[]? _currentSelectedAnswers_DropDown = null;
         private double? _score = null;
+        private string? _testEligibilityMessage = null;
 
         private readonly UserServiceMethods _service = new();
         #endregion
@@ -46,14 +47,7 @@ namespace Training.Website.Components.Pages
             //TODO: THE CODE BELOW MAY NOT BE NEEDED IF THE SESSION ID WILL BE PASSED TO THIS PAGE VIA QUERYSTRING OR SOMEOTHER METHOD. IF IT IS NEEDED, THEN IT IS REDUNDNANT WITH THE ADMINISTRATOR PAGE AND A COMMON METHOD SHOULD BE IMPLEMENTED.
             if (sessionInfo != null && sessionInfo.Any() == true)
             {
-                List<string>? sessions = [];
-
-                foreach (SessionInformationModel? session in sessionInfo)
-                {
-                    string item = new($"{session.Session_ID} ({session.DocTitle})");
-                    sessions.Add(item);
-                }
-                _sessions = sessions;
+                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
@@ -128,6 +122,7 @@ namespace Training.Website.Components.Pages
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
+            _testEligibilityMessage = await TestEligibilityMessage();
             _questions = (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToArray();
             _currentSelectedAnswers_DropDown = new UserAnswersModel[_questions?.Length ?? 0];
             _currentQuestionIndex = 0;
@@ -182,6 +177,26 @@ namespace Training.Website.Components.Pages
                     foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
                         await _service.InsertIndividualAnswer(testAttemptID, userAnswer, Database);
                 }
+            }
+        }
+
+        private async Task<string?> TestEligibilityMessage()
+        {
+            IEnumerable<ScoresAndWhenSubmittedModel>? scores =
+                await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
+
+            ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
+
+            if (passingScore != null)
+                return $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
+            else
+            {
+                int attempts = scores?.Count() ?? 0;
+
+                if (attempts < Globals.MaximumTestAttemptsPerSession)
+                    return null;
+                else
+                    return $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
             }
         }
     }

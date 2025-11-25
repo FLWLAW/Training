@@ -1,0 +1,42 @@
+﻿@page "/TrainingQuestionnaireAudience"
+
+@if(ApplicationState == null)
+{
+    <p><strong>Error: ApplicationState is null...</strong></p>
+}
+else
+{
+    <table width="100%" style="background-color: lightgray;">
+        <tr>
+            <td style="font-weight: 700">
+                <span class="HeaderLabelClass">Session ID#</span>
+                <br />
+                <TelerikDropDownList Data="@_sessions"
+                                     Value="_selectedSessionString"
+                                     ValueChanged="@(async (string newValue) => await SessionChanged(newValue))"
+                                     Enabled="true"
+                                     Width="900px">
+                    <DropDownListSettings>
+                        <DropDownListPopupSettings Height="180px" />
+                    </DropDownListSettings>
+                </TelerikDropDownList>
+            </td>
+        </tr>
+    </table>
+    <table width="100%">
+        <tr>
+        </tr>
+    </table>
+}
+
+    
+
+<style>
+    .HeaderLabelClass {
+        /*width: 25%;*/
+        height: 30px;
+    }
+    .UniformWidth_TD {
+        width: 368px;
+    }
+</style>

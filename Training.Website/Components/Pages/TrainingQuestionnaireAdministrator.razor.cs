@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
-using System.Linq.Expressions;
-using Telerik.Blazor.Components.Common.Upload;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -22,7 +20,7 @@ namespace Training.Website.Components.Pages
         #region PRIVATE FIELDS
         private const string _windowWidth = "60%";
         private const string _windowLeft = "20%";
-        private const string _topWindowTop = "10%";
+        private const string _topWindowTop = "15%";
         private const string _bottomWindowTop = "55%";
         private const string _windowHeight = "43%";
 
@@ -63,14 +61,7 @@ namespace Training.Website.Components.Pages
 
             if (sessionInfo != null && sessionInfo.Any() == true)
             {
-                List<string>? sessions = [];
-
-                foreach (SessionInformationModel? session in sessionInfo)
-                {
-                    string item = new($"{session.Session_ID} ({session.DocTitle})");
-                    sessions.Add(item);
-                }
-                _sessions = sessions;
+                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
