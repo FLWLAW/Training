@@ -2,32 +2,52 @@
 @using Training.Website.Models
 @using Training.Website.Services
 
-<table width="100%">
-    <tr>
-        <td style="width: 100%; text-align: center;">
-            Administrator Page
-        </td>
-    </tr>
-    <tr>
-        <td style="text-align: center; padding-bottom: 30px;">
-            <label style="padding-right: 30px;">Session ID:</label>
-            <TelerikDropDownList
-                Data="@_sessions"
-                Value="_selectedSessionString"
-                ValueChanged="@(async (string newValue) => await SessionChanged(newValue) )"
-                Enabled="@(! AddOrEditMode())"
-                Width="900px">
-                <DropDownListSettings>
-                    <DropDownListPopupSettings Height="180px" />
-                </DropDownListSettings>
-            </TelerikDropDownList>
-        </td>
-    </tr>
-</table>
+<!-- TOP PORTION OF PAGE -->
+<TelerikWindow Modal="false" Resizable="false" Visible="true" Width="@_windowWidth" Top="@_topWindowTop" Left="@_windowLeft">
+    <WindowContent>
+        <table width="100%">
+            <tr>
+                <td style="width: 100%; text-align: center;">
+                    Administrator Page
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding-bottom: 30px;">
+                    <label style="padding-right: 30px;">Session ID:</label>
+                    <TelerikDropDownList
+                        Data="@_sessions_FullText"
+                        Value="_selectedSessionString"
+                        ValueChanged="@(async (string newValue) => await SessionChanged(newValue) )"
+                        Enabled="@(! AddOrEditMode())"
+                        Width="900px">
+                        <DropDownListSettings>
+                            <DropDownListPopupSettings Height="180px" />
+                        </DropDownListSettings>
+                    </TelerikDropDownList>
+                    <br />
+                    <label style="padding-right: 30px;">Or type in session here:</label>
+                    <TelerikAutoComplete
+                        @ref="@_sessionIdAutoComplete"
+                        Data="@_sessions_IDs"
+                        DebounceDelay="50"
+                        MinLength="3"
+                        Placeholder="Or enter session ID here:"
+                        ShowClearButton="true"
+                        Value="@_keypressedSessionID"
+                        ValueChanged="@((string newValue) => SessionIdAutoCompleteValueChanged(newValue) )"
+                        OnClose="@(async (AutoCompleteCloseEventArgs args) => await OnCloseSessionIdAutoComplete(args) )"
+                        Width="210px"
+                    />
+
+                </td>
+            </tr>
+        </table>
+    </WindowContent>
+</TelerikWindow>
 @if(_selectedSessionString != null)
 {
-    <!-- TOP PORTION OF PAGE -->
-    <TelerikWindow Modal="false" Resizable="false" Visible="true" Width="@_windowWidth" Height="@_windowHeight" Top="@_topWindowTop" Left="@_windowLeft">
+    <!-- MIDDLE PORTION OF PAGE -->
+    <TelerikWindow Modal="false" Resizable="false" Visible="true" Width="@_windowWidth" Top="@_middleWindowTop" Left="@_windowLeft">
         <WindowContent>
             <table style="width: 100%;">
                 @if (_sessionHasQuestions == true || AddOrEditMode() == true)
@@ -55,7 +75,6 @@
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => EditQuestionClicked())">Edit Question</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await RemoveQuestionClicked())">Remove Question</TelerikButton>
-                                
                             }
                             else
                             {
@@ -201,7 +220,7 @@
                         <td class="QuestionsTopHalfHeader_Right">&nbsp;</td>
                     </tr>
                 }
-                else
+                else if (_changingSession == false)
                 {
                     <tr>
                         <td class="NoQuestionsTopHalfHeader_Left">
@@ -222,7 +241,7 @@
     <!-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
 
     <!-- BOTTOM PORTION OF PAGE -->
-    <TelerikWindow Modal="false" Visible="true" Resizable="false" Width="@_windowWidth" Height="@_windowHeight" Top="@_bottomWindowTop" Left="@_windowLeft">
+    <TelerikWindow Modal="false" Visible="true" Resizable="false" Width="@_windowWidth" Height="28%" Top="@_bottomWindowTop" Left="@_windowLeft">
         <WindowContent>
             <table style="width: 100%; border: 2px solid; border-color: black;">
                 <tr>

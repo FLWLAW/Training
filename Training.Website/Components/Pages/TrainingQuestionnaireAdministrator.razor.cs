@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
+using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -20,13 +21,15 @@ namespace Training.Website.Components.Pages
         #region PRIVATE FIELDS
         private const string _windowWidth = "60%";
         private const string _windowLeft = "20%";
-        private const string _topWindowTop = "15%";
-        private const string _bottomWindowTop = "55%";
-        private const string _windowHeight = "43%";
+        private const string _topWindowTop = "7%";
+        private const string _middleWindowTop = "22%";
+        private const string _bottomWindowTop = "70%";
 
         private Dictionary<int, string>? _answerFormats = null;
-        private IEnumerable<string>? _sessions = null;
+        private IEnumerable<string>? _sessions_FullText = null;
+        private IEnumerable<string?>? _sessions_IDs = null;
         private string? _selectedSessionString = null;
+        private string? _keypressedSessionID = null;
         private SessionInformationModel? _selectedSession = null;
 
         private int? _newQuestionNumber = null;
@@ -40,6 +43,8 @@ namespace Training.Website.Components.Pages
         private bool _addMode = false;
         private bool _editMode = false;
 
+        private bool _changingSession = false;
+
         private const int _maxMultipleChoices = 4;
         private AnswerChoicesModel?[]? _currentMultipleChoiceAnswers_DB = null;
         private IEnumerable<string?>? _currentAnswerChoices_DropDown = null;
@@ -49,6 +54,8 @@ namespace Training.Website.Components.Pages
         private string? _currentSelectedCorrectAnswer = null;
 
         private readonly AdministratorServiceMethods _service = new();
+
+        private TelerikAutoComplete<string?> _sessionIdAutoComplete = new();
 
         #endregion
 
@@ -61,7 +68,8 @@ namespace Training.Website.Components.Pages
 
             if (sessionInfo != null && sessionInfo.Any() == true)
             {
-                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+                _sessions_IDs = sessionInfo.Select(q => q.Session_ID.ToString());
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
@@ -237,6 +245,17 @@ namespace Training.Website.Components.Pages
             return ok;
         }
 
+        private async Task OnCloseSessionIdAutoComplete(AutoCompleteCloseEventArgs args)
+        {
+            if (_keypressedSessionID != null)
+            {
+                string? newValue = _sessions_FullText?.FirstOrDefault(q => q.StartsWith(_keypressedSessionID));
+
+                if (newValue != null)
+                    await SessionChanged(newValue);
+            }
+        }
+
         private async Task PopulateCorrectAnswerDropDown(int? questionID)
         {
             _currentAnswerChoices_DropDown = [];
@@ -373,6 +392,7 @@ namespace Training.Website.Components.Pages
 
         private async Task SessionChanged(string newValue)
         {
+            _changingSession = true;
             ApplicationState!.SessionID_String = newValue;
             _addMode = false;
             _editMode = false;
@@ -380,7 +400,7 @@ namespace Training.Website.Components.Pages
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _sessionHasQuestions = false;   // THIS WILL PREVENT ERRORS IN THE NEXT STATEMENT, BECAUSE THE SCREEN WILL RENDER BEFORE THE AWAIT COMPLETES.
             _questions = await GetQuestionsBySessionID_Main();
-            _sessionHasQuestions = (_questions != null && _questions.Count > 0);
+            _sessionHasQuestions = SessionHasQuestions(); ;
 
             if (_sessionHasQuestions == true)
             {
@@ -398,12 +418,20 @@ namespace Training.Website.Components.Pages
                 _originalAnswerFormat = null;
             }
 
+            if (_keypressedSessionID != _selectedSession?.Session_ID.ToString())
+                _keypressedSessionID = _selectedSession?.Session_ID.ToString();
+
             _changedMultipleChoiceLetter = null;
             _changedMultipleChoiceAnswer = null;
             _changedMultipleChoiceAnswers = [];
 
+            _changingSession = false;
             StateHasChanged();
         }
+
+        private bool SessionHasQuestions() => (_questions != null && _questions.Count > 0);
+
+        private void SessionIdAutoCompleteValueChanged(string newValue) => _keypressedSessionID = newValue;
 
         private async Task SetQuestionsControls()
         {
