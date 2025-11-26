@@ -43,6 +43,8 @@ namespace Training.Website.Components.Pages
         private bool _addMode = false;
         private bool _editMode = false;
 
+        private bool _changingSession = false;
+
         private const int _maxMultipleChoices = 4;
         private AnswerChoicesModel?[]? _currentMultipleChoiceAnswers_DB = null;
         private IEnumerable<string?>? _currentAnswerChoices_DropDown = null;
@@ -390,6 +392,7 @@ namespace Training.Website.Components.Pages
 
         private async Task SessionChanged(string newValue)
         {
+            _changingSession = true;
             ApplicationState!.SessionID_String = newValue;
             _addMode = false;
             _editMode = false;
@@ -422,6 +425,7 @@ namespace Training.Website.Components.Pages
             _changedMultipleChoiceAnswer = null;
             _changedMultipleChoiceAnswers = [];
 
+            _changingSession = false;
             StateHasChanged();
         }
 
