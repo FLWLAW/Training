@@ -1,6 +1,6 @@
-﻿namespace Training.Website.Models
+﻿namespace Training.Website.Models.Users
 {
-    public class AllUsers_Name_IDs
+    public class AllUsers_Authentication
     {
         public string? Domain { get; set; }
         public string? UserName { get; set; }
@@ -13,12 +13,8 @@
         }
         public string? LoginID { get; set; }
         public int? AppUserID { get; set; }
-        /*
         public int? RoleID { get; set; }
         public int? TitleID { get; set; }
         public string? HomeState { get; set; }
-        */
-        //TODO: MIGHT NOT NEED
-        //public string? TitleDesc { get; set; }
     }
 }
