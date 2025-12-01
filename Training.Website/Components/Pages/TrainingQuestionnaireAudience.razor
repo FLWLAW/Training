@@ -1,4 +1,6 @@
-﻿@page "/TrainingQuestionnaireAudience"
+﻿@using Training.Website.Models.Users
+
+@page "/TrainingQuestionnaireAudience"
 
 @if(ApplicationState == null)
 {
@@ -8,8 +10,8 @@ else
 {
     <table width="100%" style="background-color: lightgray;">
         <tr>
-            <td style="font-weight: 700">
-                <span class="HeaderLabelClass">Session ID#</span>
+            <td class="HeaderClass" style="width: 50%;">
+                <span class="HeaderClass">Session ID#</span>
                 <br />
                 <TelerikDropDownList Data="@_sessions"
                                      Value="_selectedSessionString"
@@ -21,22 +23,113 @@ else
                     </DropDownListSettings>
                 </TelerikDropDownList>
             </td>
+            <td class="HeaderClass HeaderClassCentered">
+                <span class="HeaderClass">Roles:</span>
+                <br />
+                <TelerikMultiSelect
+                    Class="UniformWidth_DropDown"
+                    AutoClose="false"
+                    Enabled="true"
+                    Data="@_roles?.Select(q => q?.Value).Order()"
+                    Value="@_selectedRoles"
+                    ValueChanged="@((List<string> newValues) => RolesMultiSelectChanged(newValues) )"
+                    TagMode="@MultiSelectTagMode.Multiple">
+                    <MultiSelectSettings>
+                        <MultiSelectPopupSettings Height="300px" />
+                    </MultiSelectSettings>
+                </TelerikMultiSelect>
+            </td>
+            <td class="HeaderClass HeaderClassCentered">
+                <span class="HeaderClass">Titles:</span>
+                <br />
+                <TelerikMultiSelect Class="UniformWidth_DropDown"
+                                    AutoClose="false"
+                                    Enabled="true"
+                                    Data="@_titles?.Select(q => q?.Value).Order()"
+                                    Value="@_selectedTitles"
+                                    ValueChanged="@((List<string> newValues) => TitlesMultiSelectChanged(newValues))"
+                                    TagMode="@MultiSelectTagMode.Multiple">
+                    <MultiSelectSettings>
+                        <MultiSelectPopupSettings Height="180px" />
+                    </MultiSelectSettings>
+                </TelerikMultiSelect>
+
+            </td>
         </tr>
     </table>
-    <table width="100%">
-        <tr>
-        </tr>
-    </table>
+
+    @if (_allUsers_Assignment != null && _allUsers_Assignment.Count() > 0)
+    {
+        <table width="100%">
+            <tr>
+                <td style="width: 100%; text-align: center;">
+                    <TelerikGrid
+                        Data="@_allUsers_Assignment"
+                        Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                        Width="100%" Height="100%"
+                        FilterMode="@GridFilterMode.None" Groupable="false"
+                        SelectionMode="GridSelectionMode.None"
+                        OnRowClick="@OnRowClickHandler_AllUsers">
+                        <GridColumns>
+                            <!-- https://www.telerik.com/forums/checkbox-column-f1b24f092353 -->
+                            <GridColumn Field="@nameof(AllUsers_Assignment.Selected)" Title="Selected" Width="65px">
+                                <!-- https://github.com/telerik/blazor-docs/blob/master/components/grid/templates/column.md -->
+                                <Template>
+                                    @{
+                                        var item = (AllUsers_Assignment)context;
+                                        if (item.Selected == true)
+                                        {
+                                            <label class="CheckSelected">✔</label>
+                                        }
+                                        else
+                                        {
+                                            <span class="CheckSelected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                                        }
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field="@nameof(AllUsers_Assignment.UserName)" Title="User Name" Width="300px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.EmailAddress)" Title="EMail" Width="210px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.RoleDesc)" Title="Role" Width="180px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.TitleDesc)" Title="Title" Width="180px" />
+                        </GridColumns>
+                    </TelerikGrid>
+                </td>
+            </tr>
+        </table>
+    }
+
 }
 
     
 
 <style>
-    .HeaderLabelClass {
-        /*width: 25%;*/
+    span.HeaderClass {
         height: 30px;
     }
-    .UniformWidth_TD {
-        width: 368px;
+    td.HeaderClass {
+        font-weight: 700;
+    }
+    .HeaderClassCentered {
+        text-align: center;
+    }
+
+    .DisableMe {
+        color: darkgrey;
+    }
+
+    .UniformWidth_DropDown {
+        width: 260px;
+        background-color: white;
+    }
+
+    .CheckSelected {
+        width: 100%;
+        text-align: center;
+        font-size: large;
+        /*
+        color: black;
+        border: black 2px solid;
+        */
     }
 </style>
