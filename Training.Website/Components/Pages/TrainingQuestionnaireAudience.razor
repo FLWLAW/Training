@@ -1,4 +1,6 @@
-﻿@page "/TrainingQuestionnaireAudience"
+﻿@using Training.Website.Models.Users
+
+@page "/TrainingQuestionnaireAudience"
 
 @if(ApplicationState == null)
 {
@@ -55,6 +57,48 @@ else
             </td>
         </tr>
     </table>
+
+    @if (_allUsers_Assignment != null && _allUsers_Assignment.Count() > 0)
+    {
+        <table width="100%">
+            <tr>
+                <td style="width: 100%; text-align: center;">
+                    <TelerikGrid
+                        Data="@_allUsers_Assignment"
+                        Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                        Width="100%" Height="100%"
+                        FilterMode="@GridFilterMode.None" Groupable="false"
+                        SelectionMode="GridSelectionMode.None"
+                        OnRowClick="@OnRowClickHandler_AllUsers">
+                        <GridColumns>
+                            <!-- https://www.telerik.com/forums/checkbox-column-f1b24f092353 -->
+                            <GridColumn Field="@nameof(AllUsers_Assignment.Selected)" Title="Selected" Width="65px">
+                                <!-- https://github.com/telerik/blazor-docs/blob/master/components/grid/templates/column.md -->
+                                <Template>
+                                    @{
+                                        var item = (AllUsers_Assignment)context;
+                                        if (item.Selected == true)
+                                        {
+                                            <label class="CheckSelected">✔</label>
+                                        }
+                                        else
+                                        {
+                                            <span class="CheckSelected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                                        }
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field="@nameof(AllUsers_Assignment.UserName)" Title="User Name" Width="300px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.EmailAddress)" Title="EMail" Width="210px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.RoleDesc)" Title="Role" Width="180px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.TitleDesc)" Title="Title" Width="180px" />
+                        </GridColumns>
+                    </TelerikGrid>
+                </td>
+            </tr>
+        </table>
+    }
+
 }
 
     
@@ -77,5 +121,15 @@ else
     .UniformWidth_DropDown {
         width: 260px;
         background-color: white;
+    }
+
+    .CheckSelected {
+        width: 100%;
+        text-align: center;
+        font-size: large;
+        /*
+        color: black;
+        border: black 2px solid;
+        */
     }
 </style>

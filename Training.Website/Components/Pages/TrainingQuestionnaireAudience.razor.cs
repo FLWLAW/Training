@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
+using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Models.Users;
 using Training.Website.Services;
@@ -73,6 +74,12 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private void OnRowClickHandler_AllUsers(GridRowClickEventArgs args)
+        {
+            if (args.Item is AllUsers_Assignment detail && args.Field == nameof(AllUsers_Assignment.Selected))
+                detail.Selected = !detail.Selected;
+        }
+
         private void RecompileAssignedUsers()
         {
             List<AllUsers_Assignment> usersToAssign_Raw = [];
@@ -104,6 +111,8 @@ namespace Training.Website.Components.Pages
 
         private async Task SessionChanged(string newValue)
         {
+            //TODO: MAKE THIS METHOD SYNCHRONOUS??
+
             await Task.Delay(1);
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
