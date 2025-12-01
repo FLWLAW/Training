@@ -1,4 +1,6 @@
 ﻿using SqlServerDatabaseAccessLibrary;
+using System.Text;
+using Telerik.Blazor.Components;
 using Training.Website.Models;
 
 namespace Training.Website
@@ -62,6 +64,20 @@ namespace Training.Website
 
             return currentAnswerFormat;
         }
+
+        public static string ExportFilename(string filenameRaw, params object?[] additionalFilenameSegments)
+        {
+            StringBuilder filenameRefined = new(filenameRaw);
+
+            if (additionalFilenameSegments != null && additionalFilenameSegments.Any() == true)
+                foreach(object? segment in additionalFilenameSegments)
+                    if (segment != null)
+                        filenameRefined.Append($"_{segment.ToString()}");
+
+            return filenameRefined.ToString();
+        }
+
+        public static async Task ExportToExcelFile<T>(TelerikGrid<T>? grid) => await grid!.SaveAsExcelFileAsync();
 
         public static IdValue<string> SelectAll(string id) =>
             new()

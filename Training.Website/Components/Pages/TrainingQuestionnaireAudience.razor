@@ -62,11 +62,12 @@ else
     {
         <table width="100%">
             <tr>
-                <td style="width: 100%; text-align: center;">
+                <td style="width: 85%; text-align: center;">
+                    <!-- DISPLAY GRID -->
                     <TelerikGrid
                         Data="@_allUsers_Assignment"
                         Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
-                        Width="100%" Height="100%"
+                        Width="100%" Height="700px"
                         FilterMode="@GridFilterMode.None" Groupable="false"
                         SelectionMode="GridSelectionMode.None"
                         OnRowClick="@OnRowClickHandler_AllUsers">
@@ -89,19 +90,43 @@ else
                                 </Template>
                             </GridColumn>
                             <GridColumn Field="@nameof(AllUsers_Assignment.UserName)" Title="User Name" Width="300px" />
-                            <GridColumn Field="@nameof(AllUsers_Assignment.EmailAddress)" Title="EMail" Width="210px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.EmailAddress)" Title="Email" Width="210px" />
                             <GridColumn Field="@nameof(AllUsers_Assignment.RoleDesc)" Title="Role" Width="180px" />
                             <GridColumn Field="@nameof(AllUsers_Assignment.TitleDesc)" Title="Title" Width="180px" />
                         </GridColumns>
+                        <GridExport>
+                            <GridExcelExport FileName="@Globals.ExportFilename("UserList_Session", _selectedSessionString)"
+                                             AllPages="false" />
+                        </GridExport>
                     </TelerikGrid>
+                    <!-- EXPORT GRID -->
+                    <TelerikGrid @ref="@_allUsers_Assignment_ExportGrid"
+                                 Data="@_allUsers_Assignment.Where(q => q?.Selected == true)"
+                                 Width="0px" Height="0px">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(AllUsers_Assignment.UserName)" Title="User Name" Width="300px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.EmailAddress)" Title="Email" Width="210px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.RoleDesc)" Title="Role" Width="180px" />
+                            <GridColumn Field="@nameof(AllUsers_Assignment.TitleDesc)" Title="Title" Width="180px" />
+                        </GridColumns>
+                        <GridExport>
+                            <GridExcelExport FileName="@Globals.ExportFilename("UserList_Session", _selectedSessionString)"
+                                             AllPages="false" />
+                        </GridExport>
+                    </TelerikGrid>
+                </td>
+                <td style="text-align: center; align-items: center; width: 15%;">
+                    <TelerikButton Class="UniformButton"
+                                   OnClick="@(async() => await Globals.ExportToExcelFile(_allUsers_Assignment_ExportGrid) )"
+                                   Enabled="true">
+                        EXPORT TO EXCEL
+                    </TelerikButton>
                 </td>
             </tr>
         </table>
     }
 
 }
-
-    
 
 <style>
     span.HeaderClass {

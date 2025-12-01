@@ -33,6 +33,7 @@ namespace Training.Website.Components.Pages
         private List<string> _selectedTitles = [];
         private AllUsers_CMS_DB[]? _allUsers_DB = null;
         private List<AllUsers_Assignment?> _allUsers_Assignment = [];
+        private TelerikGrid<AllUsers_Assignment>? _allUsers_Assignment_ExportGrid;
         #endregion
 
         protected override async Task OnInitializedAsync()
@@ -87,19 +88,21 @@ namespace Training.Website.Components.Pages
             usersToAssign_Raw.AddRange(UsersInSelectedRoles());
             usersToAssign_Raw.AddRange(UsersInSelectedTitles());
             
-            IEnumerable<int?> distinctIDs = usersToAssign_Raw.Select(q => q.AppUserID).Distinct();
-
-            _allUsers_Assignment = [];
-            foreach(int? id in distinctIDs)
+            List<int> usersAsssigned = [];
+            
+            _allUsers_Assignment.Clear();
+            foreach (AllUsers_Assignment user in usersToAssign_Raw)
             {
-                if (id != null)
+                int? userID = user.AppUserID;
+
+                if (userID != null && usersAsssigned.Contains(userID.Value) == false)
                 {
-                    IEnumerable<AllUsers_Assignment>? users = usersToAssign_Raw.Where(q => q.AppUserID == id);
-                    _allUsers_Assignment.AddRange(users);
+                    _allUsers_Assignment.Add(user);
+                    usersAsssigned.Add(userID.Value);
                 }
             }
 
-            _allUsers_Assignment = [.. _allUsers_Assignment.OrderBy(s => s?.UserName)];
+            _allUsers_Assignment = [.._allUsers_Assignment.OrderBy(s => s?.UserName)];
         }
 
         private void RolesMultiSelectChanged(List<string>? newValues)
