@@ -6,6 +6,7 @@
         public int? RoleID { get; set; }
         public int? TitleID { get; set; }
         public string? UserName { get; set; }
+        public string? FirstName { get; set; }
         public string? EmailAddress { get; set; }
     }
 }

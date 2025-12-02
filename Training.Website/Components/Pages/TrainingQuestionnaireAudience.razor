@@ -121,6 +121,13 @@ else
                                    Enabled="true">
                         EXPORT TO EXCEL
                     </TelerikButton>
+                    <br />
+                    <TelerikButton
+                        Class="UniformButton"
+                        OnClick="@(async() => await SendEmailsToSelected() )"
+                        Enabled="true">
+                        SEND EMAILS TO SELECTED
+                    </TelerikButton>
                 </td>
             </tr>
         </table>
@@ -141,6 +148,11 @@ else
 
     .DisableMe {
         color: darkgrey;
+    }
+
+    .UniformButton {
+        font-size: small;
+        width: 160px;
     }
 
     .UniformWidth_DropDown {

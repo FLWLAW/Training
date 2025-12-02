@@ -5,6 +5,7 @@
         public required int? AppUserID { get; set; }
         public required bool Selected { get; set; }
         public required string? UserName { get; set; }
+        public required string? FirstName { get; set; }     // used for email.
         public required string? EmailAddress { get; set; }
         public required string? RoleDesc { get; set; }
         public required string? TitleDesc { get; set; }

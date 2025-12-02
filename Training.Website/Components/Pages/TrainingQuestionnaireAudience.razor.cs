@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.IdentityModel.Tokens;
+﻿using FLWLAW_Email.Library;
+using Microsoft.AspNetCore.Components;
+using MimeKit;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
+using System.Text;
 using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Models.Users;
@@ -68,6 +70,7 @@ namespace Training.Website.Components.Pages
                         EmailAddress = user?.EmailAddress,
                         RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
                         TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
+                        FirstName = user?.FirstName,
                         Selected = true
                     };
                     usersToAssign.Add(assignedUsers);
@@ -110,6 +113,58 @@ namespace Training.Website.Components.Pages
             _selectedRoles = newValues ?? [];
             RecompileAssignedUsers();
             StateHasChanged();
+        }
+
+        private async Task SendEmailsToSelected()
+        {
+            IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment.Where(u => u != null && u.Selected == true);
+
+#if DEBUG
+            EMailer email = new();
+            StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");
+
+            testMessageBody.Append("<br /><br />");
+            foreach (AllUsers_Assignment? recipient in recipients)
+            {
+                string message = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Training Team";
+
+                testMessageBody.Append("<br /><br />");
+                testMessageBody.Append("-------------------------------------------------------------------------------------------------------------------------------------------------------------");
+                testMessageBody.Append("<br /><br />");
+                testMessageBody.Append($"From: {email.From?.Name} &lt{email.From?.Address}&gt");
+                testMessageBody.Append("<br />");
+                testMessageBody.Append($"To: {recipient?.UserName} &lt{recipient?.EmailAddress}&gt");
+                testMessageBody.Append("<br />");
+                testMessageBody.Append($"Subject: Training Questionnaire Available for Session #{_selectedSession?.Session_ID}");
+                testMessageBody.Append("<br /><br />");
+                testMessageBody.Append(message);
+            }
+
+            email.BodyTextFormat = MimeKit.Text.TextFormat.Html;
+            email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
+            email.Body = testMessageBody;
+
+            //AllUsers_CMS_DB? susan = _allUsers_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
+
+            email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
+            //email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
+            email.Send();
+#else
+            foreach (AllUsers_Assignment? recipient in recipients)
+            {
+                MailboxAddress address = new(recipient!.UserName ?? string.Empty, recipient!.EmailAddress!);
+                string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Training Team";
+                EMailer email = new()
+                {
+                    BodyTextFormat = MimeKit.Text.TextFormat.Html,
+                    Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}",
+                    Body = new StringBuilder(body),
+                    To = [address]
+                };
+                email.Send();
+            }
+#endif
+            //await Task.Delay(1);
         }
 
         private async Task SessionChanged(string newValue)
