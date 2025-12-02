@@ -164,7 +164,7 @@ namespace Training.Website.Components.Pages
                 email.Send();
             }
 #endif
-            //await Task.Delay(1);
+            await Task.Delay(1);
         }
 
         private async Task SessionChanged(string newValue)
