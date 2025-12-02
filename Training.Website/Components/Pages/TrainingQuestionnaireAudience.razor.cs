@@ -24,6 +24,7 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
+        private bool _emailsSentWindowVisible = false;
         private SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
         private AudienceServiceMethods _service = new();
         private IEnumerable<string>? _sessions = null;
@@ -78,6 +79,8 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private void EmailsSentCloseClicked() => _emailsSentWindowVisible = false;
+
         private void OnRowClickHandler_AllUsers(GridRowClickEventArgs args)
         {
             if (args.Item is AllUsers_Assignment detail && args.Field == nameof(AllUsers_Assignment.Selected))
@@ -115,7 +118,7 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private async Task SendEmailsToSelected()
+        private void SendEmailsToSelected()
         {
             IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment.Where(u => u != null && u.Selected == true);
 
@@ -144,10 +147,10 @@ namespace Training.Website.Components.Pages
             email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
             email.Body = testMessageBody;
 
-            //AllUsers_CMS_DB? susan = _allUsers_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
+            AllUsers_CMS_DB? susan = _allUsers_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
 
             email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
-            //email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
+            email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
             email.Send();
 #else
             foreach (AllUsers_Assignment? recipient in recipients)
@@ -164,7 +167,8 @@ namespace Training.Website.Components.Pages
                 email.Send();
             }
 #endif
-            await Task.Delay(1);
+            _emailsSentWindowVisible = true;
+            StateHasChanged();
         }
 
         private async Task SessionChanged(string newValue)
