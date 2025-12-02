@@ -8,6 +8,29 @@
 }
 else
 {
+    <TelerikWindow
+        Modal="true"
+        Visible="@_emailsSentWindowVisible"
+        CloseOnOverlayClick="false"
+        Width="800px"
+        Height="200px">
+        <WindowContent>
+            <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
+                <tr>
+                    <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
+                        EMAIL(S) SENT
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <TelerikButton Class="Close" OnClick="@(() => EmailsSentCloseClicked())">Close</TelerikButton>
+                    </td>
+                </tr>
+            </table>
+        </WindowContent>
+    </TelerikWindow>
+
+
     <table width="100%" style="background-color: lightgray;">
         <tr>
             <td class="HeaderClass" style="width: 50%;">
@@ -124,7 +147,7 @@ else
                     <br />
                     <TelerikButton
                         Class="UniformButton"
-                        OnClick="@(async() => await SendEmailsToSelected() )"
+                        OnClick="@(() => SendEmailsToSelected() )"
                         Enabled="true">
                         SEND EMAILS TO SELECTED
                     </TelerikButton>
@@ -143,6 +166,12 @@ else
         font-weight: 700;
     }
     .HeaderClassCentered {
+        text-align: center;
+    }
+
+    .Close {
+        background-color: lightgray;
+        color: black;
         text-align: center;
     }
 
