@@ -25,15 +25,18 @@ namespace Training.Website.Components.Pages
 
         #region PRIVATE FIELDS
         private bool _emailsSentWindowVisible = false;
-        private SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
-        private AudienceServiceMethods _service = new();
+        private readonly SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
+        private readonly AudienceServiceMethods _service = new();
         private IEnumerable<string>? _sessions = null;
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
+        private bool _sessionAlreadyExistsInDueDatesTable = false;
         private IEnumerable<IdValue<int>?>? _roles = null;
         private List<string> _selectedRoles = [];
         private IEnumerable<IdValue<int>?>? _titles = null;
         private List<string> _selectedTitles = [];
+        private readonly DateTime _minimumDueDate = DateTime.Now.AddDays(1);
+        private DateTime? _dueDate = null;
         private AllUsers_CMS_DB[]? _allUsers_DB = null;
         private List<AllUsers_Assignment?> _allUsers_Assignment = [];
         private TelerikGrid<AllUsers_Assignment>? _allUsers_Assignment_ExportGrid;
@@ -51,6 +54,7 @@ namespace Training.Website.Components.Pages
 
                 _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
+                _dueDate = _minimumDueDate;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
             }
@@ -118,7 +122,10 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private void SendEmailsToSelected()
+        private void SaveDueDateToDB() =>
+            _service.SaveSessionDueDate(_selectedSession!.Session_ID, _dueDate!.Value, ApplicationState!.LoggedOnUser?.LoginID, _sessionAlreadyExistsInDueDatesTable, Database_OPS!);
+
+        private void SendEmails()
         {
             IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment.Where(u => u != null && u.Selected == true);
 
@@ -129,7 +136,7 @@ namespace Training.Website.Components.Pages
             testMessageBody.Append("<br /><br />");
             foreach (AllUsers_Assignment? recipient in recipients)
             {
-                string message = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Training Team";
+                string message = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
 
                 testMessageBody.Append("<br /><br />");
                 testMessageBody.Append("-------------------------------------------------------------------------------------------------------------------------------------------------------------");
@@ -147,16 +154,19 @@ namespace Training.Website.Components.Pages
             email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
             email.Body = testMessageBody;
 
+            //TODO: ADD QA
+
             AllUsers_CMS_DB? susan = _allUsers_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
+            email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
 
             email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
-            email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
+            
             email.Send();
 #else
             foreach (AllUsers_Assignment? recipient in recipients)
             {
                 MailboxAddress address = new(recipient!.UserName ?? string.Empty, recipient!.EmailAddress!);
-                string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Training Team";
+                string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
                 EMailer email = new()
                 {
                     BodyTextFormat = MimeKit.Text.TextFormat.Html,
@@ -167,20 +177,38 @@ namespace Training.Website.Components.Pages
                 email.Send();
             }
 #endif
+        }
+
+        private void SendEmailsToSelectedAndLogToDB_Main()
+        {
+            SaveDueDateToDB();
+            //TODO: LOG EMAILS TO DB
+            SendEmails();
             _emailsSentWindowVisible = true;
             StateHasChanged();
         }
 
         private async Task SessionChanged(string newValue)
         {
-            //TODO: MAKE THIS METHOD SYNCHRONOUS??
-
-            await Task.Delay(1);
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
+            SessionDueDateModel? sessionDueDateInfo = await _service.GetDueDateBySessionID(_selectedSession!.Session_ID, Database_OPS!);
+
+            if (sessionDueDateInfo != null)
+            {
+                _dueDate = sessionDueDateInfo.DueDate;
+                _sessionAlreadyExistsInDueDatesTable = true;
+            }
+            else
+            {
+                _dueDate = _minimumDueDate;
+                _sessionAlreadyExistsInDueDatesTable = false;
+            }
             StateHasChanged();
         }
+
+        private bool SessionSelected() => _selectedSession != null && _selectedSession.Session_ID != null && _selectedSession.Session_ID > 0;
 
         private void TitlesMultiSelectChanged(List<string>? newValues)
         {
