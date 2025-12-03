@@ -1,4 +1,5 @@
 ﻿using SqlServerDatabaseAccessLibrary;
+using Training.Website.Models;
 using Training.Website.Models.Users;
 
 namespace Training.Website.Services
@@ -13,5 +14,11 @@ namespace Training.Website.Services
 
         public async Task<IEnumerable<AllUsers_CMS_DB>?> GetAllUsers(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<AllUsers_CMS_DB>("usp_AppUser_SA");
+
+        public async Task<SessionDueDateModel?> GetDueDateBySessionID(int? sessionID, IDatabase database) =>
+            (await database!.QueryByStoredProcedureAsync<SessionDueDateModel, object?>("usp_Training_Questionnaire_GetDueDateBySessionID", new { Session_ID = sessionID }))?.FirstOrDefault();
+
+        public void SaveSessionDueDate(int? sessionID, DateTime dueDate, string? user, bool update, IDatabase database) =>
+            database!.NonQueryByStoredProcedure<object?>("usp_Training_Questionnaire_UpsertDueDate", new { Session_ID = sessionID, DueDate = dueDate, User = user, Update = update });
     }
 }

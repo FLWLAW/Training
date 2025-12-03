@@ -30,7 +30,6 @@ else
         </WindowContent>
     </TelerikWindow>
 
-
     <table width="100%" style="background-color: lightgray;">
         <tr>
             <td class="HeaderClass" style="width: 50%;">
@@ -76,7 +75,16 @@ else
                         <MultiSelectPopupSettings Height="180px" />
                     </MultiSelectSettings>
                 </TelerikMultiSelect>
-
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3" class="HeaderClass" style="text-align: center;">
+                <span style="padding-right: 30px;" class="HeaderClass">Due Date:</span>
+                <TelerikDatePicker
+                    Min="@_minimumDueDate"
+                    Enabled="@SessionSelected()"
+                    Width="200px"
+                    @bind-Value="@_dueDate" />
             </td>
         </tr>
     </table>
@@ -147,7 +155,7 @@ else
                     <br />
                     <TelerikButton
                         Class="UniformButton"
-                        OnClick="@(() => SendEmailsToSelected() )"
+                        OnClick="@(() => SendEmailsToSelectedAndLogToDB_Main() )"
                         Enabled="true">
                         SEND EMAILS TO SELECTED
                     </TelerikButton>
@@ -155,7 +163,6 @@ else
             </tr>
         </table>
     }
-
 }
 
 <style>
