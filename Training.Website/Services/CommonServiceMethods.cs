@@ -1,10 +1,14 @@
 ﻿using SqlServerDatabaseAccessLibrary;
 using Training.Website.Models;
+using Training.Website.Models.Users;
 
 namespace Training.Website.Services
 {
-    public abstract class CommonServiceMethods
+    public class CommonServiceMethods
     {
+        public async Task<IEnumerable<AllUsers_CMS_DB>?> GetAllUsers(IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<AllUsers_CMS_DB>("usp_AppUser_SA");
+
         public async Task<Dictionary<int, string>?> GetAnswerFormats(IDatabase? database)
         {
             IEnumerable<AnswerFormatsModel>? data =
@@ -27,7 +31,6 @@ namespace Training.Website.Services
         public IEnumerable<AnswerChoicesModel>? GetAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
             database!.QueryByStoredProcedure<AnswerChoicesModel, object?>
                 ("usp_Training_Questionnaire_GetAnswerChoicesByQuestionID", new { Question_ID = questionID });
-
 
         /*
         public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionID(int sessionID, IDatabase? database) =>

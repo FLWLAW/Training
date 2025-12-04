@@ -11,18 +11,31 @@
         </NavLink>
     </div>
 
-    <div class="nav-item px-1">
-        <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAdministrator">
-            Create Training Questionnaire and Answer Key
-        </NavLink>
-    </div>
+    @if (IsAdministrator() == true)
+    {
+        <div class="nav-item px-1">
+            <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAdministrator">
+                Create Training Questionnaire and Answer Key
+            </NavLink>
+        </div>
 
-    <div class="nav-item px-1">
-        <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAudience">
-            Audience<br />(NOT READY YET - DO NOT USE)
-        </NavLink>
-    </div>
+        <div class="nav-item px-1">
+            <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAudience">
+                Audience
+            </NavLink>
+        </div>
+    }
 
+    @if (IsTester() == true)
+    {
+        <div class="nav-item px-1">
+            <NavLink class="Dashboard-nav-link" href="ImpersonationScreen">
+                <br />
+                Impersonation Screen<br />
+                <span style="color: yellow;">** TESTERS ONLY **</span>
+            </NavLink>
+        </div>
+    }
 </div>
 
 <style>
