@@ -4,11 +4,11 @@ using Training.Website.Components;
 
 //DONE: 1.	When I select a session, then try to select a different Session, the window that says ‘There are no questions for this session’ blocks the dropdown. Can you add a ‘X’ to close that window or automatically close that window?
 //DONE: 2.	On the Session ID dropdown, is it possible to type the digits and it will go to that session? Right now only it’s only checking the first digit
-//TODO: SEARCH BY TITLE
-//TODO: SEARCH BY ROLE
+//DONE: SEARCH BY TITLE
+//DONE: SEARCH BY ROLE
 //TODO: REPORT PAGE
 //TODO: SET UP SECURITY
-//TODO: IMPERSONATION PAGE?
+//DONE: IMPERSONATION PAGE?
 //DONE: PREVENT **THERE ARE NO QUESTIONS FOR THIS SESSION** FROM FLASHING ON SCREEN BEFORE REFRESH
 
 var builder = WebApplication.CreateBuilder(args);

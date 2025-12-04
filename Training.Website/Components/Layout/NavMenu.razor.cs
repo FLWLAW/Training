@@ -13,10 +13,12 @@ namespace Training.Website.Components.Layout
 
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
-        private IDatabase? Database { get; set; }
+        private IDatabase? Database_OPS { get; set; }
 
+        /*
         [Inject]
         private NavigationManager? NavManager { get; set; }
+        */
         #endregion
 
         #region PRIVATE FIELDS
@@ -28,7 +30,7 @@ namespace Training.Website.Components.Layout
         protected override void OnInitialized()
         {
             _testers = _service.Testers();
-            _administrators =_service.Administrator_LoginIDs(Database);
+            _administrators =_service.Administrator_LoginIDs(Database_OPS);
         }
 
         private bool IsAdministrator() => _administrators!.Contains(ApplicationState!.LoggedOnUser!.LoginID?.ToLower());

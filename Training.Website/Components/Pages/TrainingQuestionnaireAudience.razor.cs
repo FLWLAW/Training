@@ -76,6 +76,7 @@ namespace Training.Website.Components.Pages
                         RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
                         TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
                         FirstName = user?.FirstName,
+                        LastName = user?.LastName,
                         Selected = true
                     };
                     usersToAssign.Add(assignedUsers);
@@ -84,6 +85,9 @@ namespace Training.Website.Components.Pages
         }
 
         private void EmailsSentCloseClicked() => _emailsSentWindowVisible = false;
+
+        private void LogEMailingToDB(AllUsers_Assignment? recipient) =>
+            _service.UpsertEMailingRecord(recipient, _selectedSession!.Session_ID, ApplicationState!.LoggedOnUser!.UserName, Database_OPS);
 
         private void OnRowClickHandler_AllUsers(GridRowClickEventArgs args)
         {
@@ -122,9 +126,6 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private void SaveDueDateToDB() =>
-            _service.SaveSessionDueDate(_selectedSession!.Session_ID, _dueDate!.Value, ApplicationState!.LoggedOnUser?.LoginID, _sessionAlreadyExistsInDueDatesTable, Database_OPS!);
-
         private void SendEmails()
         {
             IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment.Where(u => u != null && u.Selected == true);
@@ -148,6 +149,7 @@ namespace Training.Website.Components.Pages
                 testMessageBody.Append($"Subject: Training Questionnaire Available for Session #{_selectedSession?.Session_ID}");
                 testMessageBody.Append("<br /><br />");
                 testMessageBody.Append(message);
+                LogEMailingToDB(recipient);
             }
 
             email.BodyTextFormat = MimeKit.Text.TextFormat.Html;
@@ -174,14 +176,16 @@ namespace Training.Website.Components.Pages
                     Body = new StringBuilder(body),
                     To = [address]
                 };
+
                 email.Send();
+                LogEMailingToDB(recipient));
             }
 #endif
         }
 
         private void SendEmailsToSelectedAndLogToDB_Main()
         {
-            SaveDueDateToDB();
+            UpsertDueDateToDB();
             //TODO: LOG EMAILS TO DB
             SendEmails();
             _emailsSentWindowVisible = true;
@@ -216,6 +220,9 @@ namespace Training.Website.Components.Pages
             RecompileAssignedUsers();
             StateHasChanged();
         }
+
+        private void UpsertDueDateToDB() =>
+            _service.UpsertSessionDueDate(_selectedSession!.Session_ID!.Value, _dueDate!.Value, ApplicationState!.LoggedOnUser?.LoginID, _sessionAlreadyExistsInDueDatesTable, Database_OPS!);
 
         private List<AllUsers_Assignment> UsersInSelectedRoles()
         {
