@@ -1,0 +1,29 @@
+﻿@page "/ImpersonationScreen"
+
+@if (ApplicationState == null)
+{
+    <p><strong>Error: ApplicationState is null...</strong></p>
+}
+else
+{
+    <table style="width: 100%; background-color: lightgray;">
+        <tr>
+            <td style="font-weight: 700; width: 100%; text-align: center; align-content: center; vertical-align: middle;">
+                <!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
+                <!-- SELECT USER -->
+                <!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
+                <span class="HeaderLabelClass">Select User</span>
+                <br />
+                <TelerikDropDownList Class="UniformWidth_DropDown"
+                                     Width="200px"
+                                     Data="@_allUsers?.Select(q => q?.UserName)"
+                                     Enabled="true"
+                                     ValueChanged="@((string newValue) => UserSingleSelectValueChanged(newValue))">
+                    <DropDownListSettings>
+                        <DropDownListPopupSettings Height="360px" />
+                    </DropDownListSettings>
+                </TelerikDropDownList>
+            </td>
+        </tr>
+    </table>
+}

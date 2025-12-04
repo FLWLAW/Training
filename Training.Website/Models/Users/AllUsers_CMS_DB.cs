@@ -8,5 +8,6 @@
         public string? UserName { get; set; }
         public string? FirstName { get; set; }
         public string? EmailAddress { get; set; }
+        public string? LoginID { get; set; }
     }
 }
