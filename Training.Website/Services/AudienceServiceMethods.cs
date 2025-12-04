@@ -13,9 +13,6 @@ namespace Training.Website.Services
         public async Task<IEnumerable<IdValue<int>?>?> GetAllTitles(IDatabase? database) =>
             await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Title_SA", "TitleID", "TitleDesc");
 
-        public async Task<SessionDueDateModel?> GetDueDateBySessionID(int? sessionID, IDatabase database) =>
-            (await database!.QueryByStoredProcedureAsync<SessionDueDateModel, object?>("usp_Training_Questionnaire_GetDueDateBySessionID", new { Session_ID = sessionID }))?.FirstOrDefault();
-
         internal void UpsertEMailingRecord(AllUsers_Assignment? recipient, int? session_ID, string? sendingUser, IDatabase? database)
         {
             UpsertEMailings_Parameters parameters = new()

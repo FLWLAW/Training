@@ -1,0 +1,62 @@
+﻿@page "/EmailReports"
+@using Training.Website.Models
+
+<table width="100%" style="background-color: lightgray;">
+    <tr>
+        <td class="HeaderClass" style="width: 100%;">
+            <span class="HeaderClass">Session ID#</span>
+            <br />
+            <TelerikDropDownList
+                Data="@_sessions"
+                Value="_selectedSessionString"
+                ValueChanged="@(async (string newValue) => await SessionChanged(newValue))"
+                Enabled="true"
+                Width="900px">
+                <DropDownListSettings>
+                    <DropDownListPopupSettings Height="180px" />
+                </DropDownListSettings>
+            </TelerikDropDownList>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center">
+            Due Date: @_dueDate
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <TelerikGrid
+                Data="@_emailedUsers"
+                Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                Width="100%" Height="700px"
+                FilterMode="@GridFilterMode.None" Groupable="false"
+                SelectionMode="GridSelectionMode.None">
+                <GridColumns>
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.FirstName)" Title="First Name" Width="65px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.LastName)" Title="Last Name" Width="80px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Email)" Title="Email" Width="150px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoFirstSent)" Title="First Sent By" Width="200px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="200px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastUpdated)" Title="Last Updated By" Width="200px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastUpdated)" Title="When Last Updated" Width="200px" />
+                    <!-- NEED TO ADD STATUS, AND MAYBE ROLE AND TITLE -->
+                </GridColumns>
+            </TelerikGrid>
+        </td>
+    </tr>
+</table>
+
+
+<style>
+    span.HeaderClass {
+        height: 30px;
+    }
+
+    td.HeaderClass {
+        font-weight: 700;
+    }
+
+    .HeaderClassCentered {
+        text-align: center;
+    }
+</style>

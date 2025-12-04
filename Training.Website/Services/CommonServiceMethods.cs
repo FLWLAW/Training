@@ -32,6 +32,9 @@ namespace Training.Website.Services
             database!.QueryByStoredProcedure<AnswerChoicesModel, object?>
                 ("usp_Training_Questionnaire_GetAnswerChoicesByQuestionID", new { Question_ID = questionID });
 
+        public async Task<SessionDueDateModel?> GetDueDateBySessionID(int? sessionID, IDatabase database) =>
+            (await database!.QueryByStoredProcedureAsync<SessionDueDateModel, object?>("usp_Training_Questionnaire_GetDueDateBySessionID", new { Session_ID = sessionID }))?.FirstOrDefault();
+
         /*
         public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionID(int sessionID, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
