@@ -28,9 +28,16 @@ namespace Training.Website.Services
             database!.QueryByStoredProcedure<AnswerChoicesModel, object?>
                 ("usp_Training_Questionnaire_GetAnswerChoicesByQuestionID", new { Question_ID = questionID });
 
+
+        /*
         public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionID(int sessionID, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
                 ("usp_Training_Questionnaire_GetQuestionsBySessionID", new { Session_ID = sessionID });
+        */
+
+        public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionIDandQuestionnaireNumber(int sessionID, int questionnaireNumber, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
+                ("usp_Training_Questionnaire_GetQuestionsBySessionIDandQuestionnaireNumber", new { Session_ID = sessionID, QuestionnaireNumber = questionnaireNumber });
 
         public async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");

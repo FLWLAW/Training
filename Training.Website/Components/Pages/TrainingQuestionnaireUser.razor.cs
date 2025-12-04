@@ -22,6 +22,7 @@ namespace Training.Website.Components.Pages
         private IEnumerable<string>? _sessions = null;
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
+        private int _currentQuestionnaireNumber = 0;
         private int _currentQuestionIndex;
         private int _questionIndexLimit;
         private QuestionsModel[]? _questions = null;
@@ -32,7 +33,7 @@ namespace Training.Website.Components.Pages
         //private string?[]? _currentSelectedAnswers_DropDown = null;
         private UserAnswersModel?[]? _currentSelectedAnswers_DropDown = null;
         private double? _score = null;
-        private string? _testEligibilityMessage = null;
+        private EligibilityClass? _testEligibility = null;
 
         private readonly UserServiceMethods _service = new();
         #endregion
@@ -84,6 +85,45 @@ namespace Training.Website.Components.Pages
             _currentSelectedAnswers_DropDown![_currentQuestionIndex]!.UserAnswer = newValue;
         }
 
+        private int GetCurrentQuestionnaireNumber()
+        {
+            if (_testEligibility == null)
+                return 1;
+            else if (_testEligibility.Finished == true)
+                return _testEligibility.Count;
+            else
+                return _testEligibility.Count + 1;
+        }
+
+        private async Task<EligibilityClass> GetTestEligibility()
+        {
+            IEnumerable<ScoresAndWhenSubmittedModel>? scores =
+                await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
+
+            int attempts = scores?.Count() ?? 0;
+            string? message = null;
+            bool finished = false;
+
+            if (attempts > 0)
+            {
+                ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
+
+                if (passingScore != null)
+                {
+                    message = $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
+                    finished = true;
+                }
+                else if (attempts >= Globals.MaximumTestAttemptsPerSession)
+                {
+                    message = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
+                    finished = true;
+                }
+            }
+
+            return new EligibilityClass { Count = attempts, Finished = finished, Message = message };
+        }
+
+
         private void NextQuestionClicked()
         {
             if (AtLastQuestion() == false)
@@ -122,8 +162,10 @@ namespace Training.Website.Components.Pages
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
-            _testEligibilityMessage = await TestEligibilityMessage();
-            _questions = (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToArray();
+            _testEligibility = await GetTestEligibility();
+            // TODO: NEED A NOTATION IN THE TUPLE THAT USER IS FINISHED.
+            _currentQuestionnaireNumber = GetCurrentQuestionnaireNumber();
+            _questions = (await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, _currentQuestionnaireNumber, Database))?.ToArray();
             _currentSelectedAnswers_DropDown = new UserAnswersModel[_questions?.Length ?? 0];
             _currentQuestionIndex = 0;
             _questionIndexLimit = _questions?.GetUpperBound(0) ?? -1;
@@ -177,26 +219,6 @@ namespace Training.Website.Components.Pages
                     foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
                         await _service.InsertIndividualAnswer(testAttemptID, userAnswer, Database);
                 }
-            }
-        }
-
-        private async Task<string?> TestEligibilityMessage()
-        {
-            IEnumerable<ScoresAndWhenSubmittedModel>? scores =
-                await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
-
-            ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
-
-            if (passingScore != null)
-                return $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
-            else
-            {
-                int attempts = scores?.Count() ?? 0;
-
-                if (attempts < Globals.MaximumTestAttemptsPerSession)
-                    return null;
-                else
-                    return $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
             }
         }
     }

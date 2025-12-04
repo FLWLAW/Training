@@ -23,7 +23,7 @@ namespace Training.Website.Services
 
             parameters.Add("@Session_ID", value: sessionID, dbType: DbType.Int32, direction: ParameterDirection.Input);
             parameters.Add("@User_ID", value: userID, dbType: DbType.Int32, direction: ParameterDirection.Input);
-            parameters.Add("@Attempt", value: (attempts + 1), DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@QuestionnaireNumber", value: (attempts + 1), DbType.Int32, direction: ParameterDirection.Input);
             parameters.Add("@Score", value: score, DbType.Double, direction: ParameterDirection.Input);
             parameters.Add("@Current_ID", dbType: DbType.Int32, direction: ParameterDirection.Output);
 

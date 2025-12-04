@@ -19,11 +19,11 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
-        private const string _windowWidth = "60%";
+        private const string _windowWidth = "80%";
         private const string _windowLeft = "20%";
         private const string _topWindowTop = "7%";
-        private const string _middleWindowTop = "22%";
-        private const string _bottomWindowTop = "70%";
+        private const string _middleWindowTop = "27%";
+        private const string _bottomWindowTop = "74%";
 
         private Dictionary<int, string>? _answerFormats = null;
         private IEnumerable<string>? _sessions_FullText = null;
@@ -32,6 +32,7 @@ namespace Training.Website.Components.Pages
         private string? _keypressedSessionID = null;
         private SessionInformationModel? _selectedSession = null;
 
+        private int? _currentQuestionnaireNumber = 1;
         private int? _newQuestionNumber = null;
         private int? _currentQuestionIndex = null;
         private string? _currentQuestionText = null;
@@ -150,6 +151,12 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
+        private async Task CurrentQuestionnaireNumberChanged(object newValue)
+        {
+            _currentQuestionnaireNumber = (int?)newValue;
+            await SessionChanged(_selectedSessionString!);
+        }
+
         private void EditQuestionClicked()
         {
             _addMode = false;
@@ -158,8 +165,9 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private async Task<List<QuestionsModel>?> GetQuestionsBySessionID_Main() =>
-            (await _service.GetQuestionsBySessionID(_selectedSession!.Session_ID!.Value, Database))?.ToList();
+        private async Task<List<QuestionsModel>?> GetQuestionsBySessionIDandQuestionnaireNumber_Main() =>
+            (await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, _currentQuestionnaireNumber!.Value, Database))?.ToList();
+
 
         private async Task InsertMultipleChoiceAnswers(QuestionsModel? question)
         {
@@ -204,6 +212,7 @@ namespace Training.Website.Components.Pages
             int questionID = await _service.InsertQuestion
             (
                 _selectedSession!.Session_ID!.Value,
+                _currentQuestionnaireNumber!.Value,
                 _newQuestionNumber!.Value,
                 _currentQuestionText!,
                 answerFormatKey,
@@ -303,7 +312,7 @@ namespace Training.Website.Components.Pages
 
         private async Task RenumberQuestions()
         {
-            IEnumerable<QuestionsModel>? questions = await GetQuestionsBySessionID_Main();
+            IEnumerable<QuestionsModel>? questions = await GetQuestionsBySessionIDandQuestionnaireNumber_Main();
 
             if (questions != null)
             {
@@ -317,7 +326,7 @@ namespace Training.Website.Components.Pages
                     correctQuestionNumber++;
                 }
 
-                _questions = await GetQuestionsBySessionID_Main();
+                _questions = await GetQuestionsBySessionIDandQuestionnaireNumber_Main();
             }
         }
 
@@ -399,8 +408,8 @@ namespace Training.Website.Components.Pages
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _sessionHasQuestions = false;   // THIS WILL PREVENT ERRORS IN THE NEXT STATEMENT, BECAUSE THE SCREEN WILL RENDER BEFORE THE AWAIT COMPLETES.
-            _questions = await GetQuestionsBySessionID_Main();
-            _sessionHasQuestions = SessionHasQuestions(); ;
+            _questions = await GetQuestionsBySessionIDandQuestionnaireNumber_Main();
+            _sessionHasQuestions = SessionHasQuestions();
 
             if (_sessionHasQuestions == true)
             {

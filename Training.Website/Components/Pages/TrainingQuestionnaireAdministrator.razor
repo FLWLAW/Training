@@ -3,7 +3,7 @@
 @using Training.Website.Services
 
 <!-- TOP PORTION OF PAGE -->
-<TelerikWindow Modal="false" Resizable="false" Visible="true" Width="@_windowWidth" Top="@_topWindowTop" Left="@_windowLeft">
+<TelerikWindow Modal="false" Resizable="false" Visible="true" Width="@_windowWidth" Top="@_topWindowTop" Left="@_windowLeft" Height="200px">
     <WindowContent>
         <table width="100%">
             <tr>
@@ -24,21 +24,34 @@
                             <DropDownListPopupSettings Height="180px" />
                         </DropDownListSettings>
                     </TelerikDropDownList>
-                    <br />
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label style="padding-right: 30px;">Or type in session here:</label>
                     <TelerikAutoComplete
                         @ref="@_sessionIdAutoComplete"
                         Data="@_sessions_IDs"
                         DebounceDelay="50"
                         MinLength="3"
-                        Placeholder="Or enter session ID here:"
                         ShowClearButton="true"
                         Value="@_keypressedSessionID"
                         ValueChanged="@((string newValue) => SessionIdAutoCompleteValueChanged(newValue) )"
                         OnClose="@(async (AutoCompleteCloseEventArgs args) => await OnCloseSessionIdAutoComplete(args) )"
                         Width="210px"
                     />
-
+                </td>
+                <td style="text-align: center; padding-bottom: 30px;">
+                    <label style="padding-right: 30px;">Questionnaire Number:</label>
+                    <TelerikSlider
+                        Value="@_currentQuestionnaireNumber"
+                        OnChange="@CurrentQuestionnaireNumberChanged"
+                        Min="1"
+                        Max="@Globals.MaximumTestAttemptsPerSession"
+                        SmallStep="1"
+                        LargeStep="1"
+                        Width="300px"
+                    />
                 </td>
             </tr>
         </table>
@@ -224,7 +237,7 @@
                 {
                     <tr>
                         <td class="NoQuestionsTopHalfHeader_Left">
-                            ** THERE ARE NO QUESTIONS FOR THIS SESSION **
+                            ** THERE ARE NO QUESTIONS FOR THIS SESSION WITH THIS QUESTIONNAIRE NUMBER **
                         </td>
                         <td class="NoQuestionsTopHalfHeader_Right">
                             <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton>

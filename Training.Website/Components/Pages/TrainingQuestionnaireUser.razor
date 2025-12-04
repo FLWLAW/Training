@@ -29,6 +29,7 @@
 {
     <table style="width: 100%;">
         <tr>
+            <!-- NOTE: THIS MESSAGE WILL OCCUR IF THE USER FAILED THE FIRST QUESTIONNAIRE AND THERE IS NO SECOND QUESTIONNAIRE -->
             <td style="width: 100%; text-align: center; font-size: xx-large;">
                 THERE ARE NO QUESTIONS FOR THIS SESSION
             </td>
@@ -53,12 +54,12 @@ else if (_score != null)
         </tr>
     </table>
 }
-else if (_testEligibilityMessage != null)
+else if (_testEligibility != null && _testEligibility?.Message != null && _testEligibility.Finished == true)
 {
     <table style="width: 100%;">
         <tr>
             <td style="width: 100%; text-align: center; font-size: xx-large;">
-                @_testEligibilityMessage
+                @_testEligibility.Message
             </td>
         </tr>
     </table>
