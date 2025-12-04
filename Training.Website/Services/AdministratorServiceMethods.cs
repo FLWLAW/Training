@@ -50,13 +50,14 @@ namespace Training.Website.Services
 
         public async Task<int> InsertQuestion
             (
-                int sessionID, int questionNumber, string question, int answerFormatID, string? correctAnswer, int createdByID,
+                int sessionID, int questionnaireNumber, int questionNumber, string question, int answerFormatID, string? correctAnswer, int createdByID,
                 IDatabase? database
             )
         {
             DynamicParameters parameters = new();
 
             parameters.Add("@Training_SESSION_ID", value: sessionID, dbType: DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@QuestionnaireNumber", value: questionnaireNumber, dbType: DbType.Int32, direction: ParameterDirection.Input);
             parameters.Add("@QuestionNumber", value: questionNumber, dbType: DbType.Int32, direction: ParameterDirection.Input);
             parameters.Add("@Question", value: question, dbType: DbType.AnsiString, direction: ParameterDirection.Input);
             parameters.Add("@AnswerFormat_ID", value: answerFormatID, dbType: DbType.Int32, direction: ParameterDirection.Input);
