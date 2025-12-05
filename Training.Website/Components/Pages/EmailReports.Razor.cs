@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging.Abstractions;
 using SqlServerDatabaseAccessLibrary;
 using Training.Website.Models;
+using Training.Website.Models.Users;
 using Training.Website.Services;
 
 namespace Training.Website.Components.Pages
@@ -22,14 +24,22 @@ namespace Training.Website.Components.Pages
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
         private DateTime? _dueDate = null;
+        private IEnumerable<IdValue<int>?>? _roles = null;
+        private IEnumerable<IdValue<int>?>? _titles = null;
         private IEnumerable<EMailReportBySessionIdModel?>? _emailedUsers = null;
+        private IEnumerable<AllUsers_CMS_DB?>? _allUsers_CMS = null;
         private readonly EmailReportServiceMethods _service = new();
+        private readonly SqlDatabase _database_CMS = new(Configuration.DatabaseConnectionString_CMS()!);
         #endregion
 
         protected override async Task OnInitializedAsync()
         {
             IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database_OPS);
+
             _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+            _roles = await _service.GetAllRoles(_database_CMS);
+            _titles = await _service.GetAllTitles(_database_CMS);
+            _allUsers_CMS = await _service.GetAllUsers(_database_CMS);
         }
 
 // ===========================================================================================================================================================================================================================================================================================================================================
@@ -39,32 +49,57 @@ namespace Training.Website.Components.Pages
             DateTime today = DateTime.Today;
             EMailReportBySessionIdModel?[]? emailedUsers = (await _service.GetEMailingsBySessionID(_selectedSession?.Session_ID!.Value, Database_OPS!))?.ToArray();
 
-            foreach(EMailReportBySessionIdModel? user in emailedUsers!)
+            foreach(EMailReportBySessionIdModel? user_OPS in emailedUsers!)
             {
-                if (user != null)
+                if (user_OPS != null)
                 {
-                    IEnumerable<ScoresAndWhenSubmittedModel?>? scores = await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value, user.CMS_User_ID!.Value, Database_OPS!);
+                    IEnumerable<ScoresAndWhenSubmittedModel?>? scores =
+                        await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value, user_OPS.CMS_User_ID!.Value, Database_OPS!);
 
-                    if (scores == null || scores.Any() == false)
-                    {
-                        user.Status = (_dueDate < today) ? "Overdue" : "Not Attempted";
-                        user.WhenUserLastSubmitted = null;
-                    }
-                    else
-                    {
-                        user.WhenUserLastSubmitted = scores.Max(q => q?.WhenSubmitted);
+                    bool noAttempts = (scores == null || scores.Any() == false);
 
-                        if (scores.Any(q => q?.Score >= Globals.TestPassingThreshold))
-                            user.Status = (user.WhenUserLastSubmitted == null) ? "--NULL--" : (user.WhenUserLastSubmitted?.Date > _dueDate) ? "Passed (late)" : "Passed";
-                        else if (scores.Count() < Globals.MaximumTestAttemptsPerSession)
-                            user.Status = "Incomplete";
-                        else
-                            user.Status = "Failed";
-                    }
+                    user_OPS.WhenUserLastSubmitted = (noAttempts == true) ? null : scores!.Max(q => q?.WhenSubmitted);
+                    user_OPS.Status = GetStatus(noAttempts, today, user_OPS.WhenUserLastSubmitted, scores);
+                    user_OPS.Role = GetRoleName(user_OPS.CMS_User_ID);
+                    user_OPS.Title = GetTitleName(user_OPS.CMS_User_ID);
                 }
             }
 
             _emailedUsers = emailedUsers;
+        }
+
+        private string? GetRoleName(int? cmsUserID)
+        {
+            if (cmsUserID == null)
+                return null;
+            else 
+            {
+                int? roleID = _allUsers_CMS?.FirstOrDefault(q => q?.AppUserID == cmsUserID)?.RoleID;
+                return (roleID != null) ? _roles?.FirstOrDefault(q => q?.ID == roleID.Value)?.Value : null;
+            }
+        }
+
+        private string? GetTitleName(int? cmsUserID)
+        {
+            if (cmsUserID == null)
+                return null;
+            else
+            {
+                int? titleID = _allUsers_CMS?.FirstOrDefault(q => q?.AppUserID == cmsUserID)?.TitleID;
+                return (titleID != null) ? _titles?.FirstOrDefault(q => q?.ID == titleID.Value)?.Value : null;
+            }
+        }
+
+        private string? GetStatus(bool noAttempts, DateTime today, DateTime? whenUserLastSubmitted, IEnumerable<ScoresAndWhenSubmittedModel?>? scores)
+        {
+            if (noAttempts == true)
+                return (_dueDate < today) ? "Overdue" : "Not Attempted";
+            else if (scores!.Any(q => q?.Score >= Globals.TestPassingThreshold))
+                return (whenUserLastSubmitted == null) ? "--NULL--" : (whenUserLastSubmitted?.Date > _dueDate) ? "Passed (late)" : "Passed";
+            else if (scores!.Count() < Globals.MaximumTestAttemptsPerSession)
+                return "Incomplete";
+            else
+                return "Failed";
         }
 
         private async Task SessionChanged(string newValue)

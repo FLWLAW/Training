@@ -7,12 +7,6 @@ namespace Training.Website.Services
 {
     public class AudienceServiceMethods : CommonServiceMethods
     {
-        public async Task<IEnumerable<IdValue<int>?>?> GetAllRoles(IDatabase? database) =>
-            await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Role_SA", "RoleID", "RoleDesc");
-
-        public async Task<IEnumerable<IdValue<int>?>?> GetAllTitles(IDatabase? database) =>
-            await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Title_SA", "TitleID", "TitleDesc");
-
         internal void UpsertEMailingRecord(AllUsers_Assignment? recipient, int? session_ID, string? sendingUser, IDatabase? database)
         {
             UpsertEMailings_Parameters parameters = new()
