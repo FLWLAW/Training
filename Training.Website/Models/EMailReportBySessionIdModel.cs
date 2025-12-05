@@ -13,6 +13,7 @@
         public string? WhoLastUpdated { get; set; }
         public DateTime? WhenLastUpdated { get; set; }
         public string? Status { get; set; }
+        public DateTime? WhenUserLastSubmitted { get; set; }
         /*
         public string? Role { get; set; }
         public string? Title { get; set; }

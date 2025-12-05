@@ -45,6 +45,10 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
                 ("usp_Training_Questionnaire_GetQuestionsBySessionIDandQuestionnaireNumber", new { Session_ID = sessionID, QuestionnaireNumber = questionnaireNumber });
 
+        public async Task<IEnumerable<ScoresAndWhenSubmittedModel>?> GetScoresBySessionIDandUserID(int sessionID, int userID, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<ScoresAndWhenSubmittedModel, object?>
+                ("usp_Training_Questionnaire_GetScoresBySessionIDandUserID", new { Session_ID = sessionID, CMS_User_ID = userID });
+
         public async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");
     }

@@ -7,10 +7,6 @@ namespace Training.Website.Services
 {
     public class UserServiceMethods : CommonServiceMethods
     {
-        public async Task<IEnumerable<ScoresAndWhenSubmittedModel>?> GetScoresBySessionIDandUserID(int sessionID, int userID, IDatabase? database) =>
-            await database!.QueryByStoredProcedureAsync<ScoresAndWhenSubmittedModel, object?>
-                ("usp_Training_Questionnaire_GetScoresBySessionIDandUserID", new { Session_ID = sessionID, CMS_User_ID = userID });
-
         public async Task<int> InsertTestResult(int sessionID, int userID, double score, IDatabase? database)
         {
             int attempts =

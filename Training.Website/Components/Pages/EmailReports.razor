@@ -18,11 +18,14 @@
             </TelerikDropDownList>
         </td>
     </tr>
-    <tr>
-        <td style="text-align: center">
-            Due Date: @_dueDate
-        </td>
-    </tr>
+    @if (_dueDate != null)
+    {
+        <tr>
+            <td style="text-align: center">
+                Due Date: @_dueDate!.Value.ToShortDateString()
+            </td>
+        </tr>
+    }
     <tr>
         <td>
             <TelerikGrid
@@ -32,14 +35,16 @@
                 FilterMode="@GridFilterMode.None" Groupable="false"
                 SelectionMode="GridSelectionMode.None">
                 <GridColumns>
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.FirstName)" Title="First Name" Width="65px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.LastName)" Title="Last Name" Width="80px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Email)" Title="Email" Width="150px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.FirstName)" Title="First Name" Width="90px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.LastName)" Title="Last Name" Width="120px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Email)" Title="Email" Width="180px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoFirstSent)" Title="First Sent By" Width="200px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="200px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="150px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastUpdated)" Title="Last Updated By" Width="200px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastUpdated)" Title="When Last Updated" Width="200px" />
-                    <!-- NEED TO ADD STATUS, AND MAYBE ROLE AND TITLE -->
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastUpdated)" Title="When Last Updated" Width="150px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenUserLastSubmitted)" Title="When Last Submitted" Width="150px" />
+                    <!-- NEED TO ADD ROLE AND TITLE -->
                 </GridColumns>
             </TelerikGrid>
         </td>

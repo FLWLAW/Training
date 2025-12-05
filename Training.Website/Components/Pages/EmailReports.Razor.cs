@@ -32,13 +32,48 @@ namespace Training.Website.Components.Pages
             _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
         }
 
+// ===========================================================================================================================================================================================================================================================================================================================================
+
+        private async Task GetEMailedUsers()
+        {
+            DateTime today = DateTime.Today;
+            EMailReportBySessionIdModel?[]? emailedUsers = (await _service.GetEMailingsBySessionID(_selectedSession?.Session_ID!.Value, Database_OPS!))?.ToArray();
+
+            foreach(EMailReportBySessionIdModel? user in emailedUsers!)
+            {
+                if (user != null)
+                {
+                    IEnumerable<ScoresAndWhenSubmittedModel?>? scores = await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value, user.CMS_User_ID!.Value, Database_OPS!);
+
+                    if (scores == null || scores.Any() == false)
+                    {
+                        user.Status = (_dueDate < today) ? "Overdue" : "Not Attempted";
+                        user.WhenUserLastSubmitted = null;
+                    }
+                    else
+                    {
+                        user.WhenUserLastSubmitted = scores.Max(q => q?.WhenSubmitted);
+
+                        if (scores.Any(q => q?.Score >= Globals.TestPassingThreshold))
+                            user.Status = (user.WhenUserLastSubmitted == null) ? "--NULL--" : (user.WhenUserLastSubmitted?.Date > _dueDate) ? "Passed (late)" : "Passed";
+                        else if (scores.Count() < Globals.MaximumTestAttemptsPerSession)
+                            user.Status = "Incomplete";
+                        else
+                            user.Status = "Failed";
+                    }
+                }
+            }
+
+            _emailedUsers = emailedUsers;
+        }
+
         private async Task SessionChanged(string newValue)
         {
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _dueDate = (await _service.GetDueDateBySessionID(_selectedSession!.Session_ID, Database_OPS!))?.DueDate;
-            _emailedUsers = await _service.GetEMailingsBySessionID(_selectedSession?.Session_ID!.Value, Database_OPS!);
+            await GetEMailedUsers();
             StateHasChanged();
         }
     }
