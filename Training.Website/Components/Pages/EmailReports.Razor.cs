@@ -37,9 +37,7 @@ namespace Training.Website.Components.Pages
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
-            SessionDueDateModel? sessionDueDateInfo = await _service.GetDueDateBySessionID(_selectedSession!.Session_ID, Database_OPS!);
-
-            _dueDate = sessionDueDateInfo?.DueDate;
+            _dueDate = (await _service.GetDueDateBySessionID(_selectedSession!.Session_ID, Database_OPS!))?.DueDate;
             _emailedUsers = await _service.GetEMailingsBySessionID(_selectedSession?.Session_ID!.Value, Database_OPS!);
             StateHasChanged();
         }
