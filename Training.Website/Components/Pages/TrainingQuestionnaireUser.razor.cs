@@ -163,7 +163,6 @@ namespace Training.Website.Components.Pages
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _testEligibility = await GetTestEligibility();
-            // TODO: NEED A NOTATION IN THE TUPLE THAT USER IS FINISHED.
             _currentQuestionnaireNumber = GetCurrentQuestionnaireNumber();
             _questions = (await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, _currentQuestionnaireNumber, Database))?.ToArray();
             _currentSelectedAnswers_DropDown = new UserAnswersModel[_questions?.Length ?? 0];
@@ -219,6 +218,7 @@ namespace Training.Website.Components.Pages
                     foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
                         await _service.InsertIndividualAnswer(testAttemptID, userAnswer, Database);
                 }
+                _testEligibility = await GetTestEligibility();
             }
         }
     }
