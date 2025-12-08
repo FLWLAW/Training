@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
+using System.Text;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -34,7 +35,8 @@ namespace Training.Website.Components.Pages
         private UserAnswersModel?[]? _currentSelectedAnswers_DropDown = null;
         private double? _score = null;
         private EligibilityClass? _testEligibility = null;
-
+        private int? _testAttemptID = null;
+        private IEnumerable<UserResponsesModel?>? _userResponses = null;
         private readonly UserServiceMethods _service = new();
         #endregion
 
@@ -70,6 +72,27 @@ namespace Training.Website.Components.Pages
                     correctAnswerCount++;
 
             return correctAnswerCount;
+        }
+
+        private string? CorrectAnswerText(UserResponsesModel? response, bool correctAnswer)
+        {
+            if (response == null)
+                return null;
+            else
+            {
+                StringBuilder responseStatusText = new();
+
+                if (correctAnswer == true)
+                    responseStatusText.Append(' ', 3);
+                else
+                {
+                    responseStatusText.Append($"The correct answer is: {response.CorrectAnswer}");
+                    if (string.IsNullOrWhiteSpace(response.CorrectAnswerText) == false)
+                        responseStatusText.Append($" ({response.CorrectAnswerText})");
+                }
+
+                return responseStatusText.ToString();
+            }
         }
 
         private void CurrentAnswerChanged(string newValue)
@@ -212,13 +235,33 @@ namespace Training.Website.Components.Pages
                 _score = Score();
                 if (_score != null)
                 {
-                    int testAttemptID = await _service.InsertTestResult
+                    _testAttemptID = await _service.InsertTestResult
                         (_selectedSession!.Session_ID!.Value, Globals.UserID(ApplicationState), _score.Value, Database);
 
                     foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
-                        await _service.InsertIndividualAnswer(testAttemptID, userAnswer, Database);
+                        await _service.InsertIndividualAnswer(_testAttemptID!.Value, userAnswer, Database);
                 }
                 _testEligibility = await GetTestEligibility();
+                _userResponses = (_score >= Globals.TestPassingThreshold) ? null : await _service.GetUserResponses(_testAttemptID!.Value, Database);
+            }
+
+            StateHasChanged();
+        }
+
+        private string? UserAnswerText(UserResponsesModel? response)
+        {
+            if (response == null)
+                return null;
+            else
+            {
+                StringBuilder responseStatusText = new($"Your Answer: {response.UserAnswer}");
+
+                if (string.IsNullOrWhiteSpace(response.UserAnswerText) == false)
+                    responseStatusText.Append($" ({response.UserAnswerText})");
+                else
+                    responseStatusText.Append(' ', 3);
+
+                return responseStatusText.ToString();
             }
         }
     }
