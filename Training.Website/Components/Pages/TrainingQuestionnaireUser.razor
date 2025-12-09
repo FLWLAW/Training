@@ -55,15 +55,15 @@ else if (_score != null)
             </td>
         </tr>
     </table>
-    @if (_testEligibility?.Finished == false && _userResponses != null)
+    @if (ShowUserResponses() == true)
     {
-        <table style="width: 100%;">
+        <table class="center-table">
             <tr>
                 <td colspan="5" style="font-size: x-large; text-align: center; padding-top: 90px;">
                     <u>ANSWER KEY:</u>
                 </td>
             </tr>
-            @foreach (UserResponsesModel? response in _userResponses)
+            @foreach (UserResponsesModel? response in _userResponses!)
             {
                 bool correctAnswer = response!.UserAnswer == response.CorrectAnswer;
                 string statusColor = (correctAnswer == true) ? "green" : "red";
@@ -159,15 +159,18 @@ else if (_selectedSessionString != null)
         font-size: larger;
     }
     .ResponseHeader {
-        text-align: center;
-        padding-right: 15px;
+        text-align: left;
+        padding-left: 15px;
+        border: solid black 2px;
     }
     .Response {
-        text-align: center;
+        text-align: left;
         padding-left: 15px;
+        border: solid black 2px;
     }
     .Status {
         text-align: center;
+        border: solid black 2px;
     }
     .RightSide {
         width: 50%;
@@ -188,5 +191,11 @@ else if (_selectedSessionString != null)
     }
     .UniformButton {
         width: 150px;
+    }
+    /* https://www.google.com/search?q=html+how+to+center+a+table+horizontally&rlz=1C1GCEU_enUS1109US1109&oq=html+how+to+center+a+table+horizontally&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIICAEQABgWGB4yDQgCEAAYhgMYgAQYigUyBwgDEAAY7wUyCggEEAAYogQYiQUyCggFEAAYogQYiQXSAQoxMTcyM2owajE1qAIIsAIB8QV_PUctjqIs8Q&sourceid=chrome&ie=UTF-8 */
+    .center-table {
+        width: 80%; /* Or any specific width less than 100% */
+        margin-left: auto;
+        margin-right: auto;
     }
 </style>
