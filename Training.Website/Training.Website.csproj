@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="FLWLAW_Email.Library" Version="1.0.0" />
     <PackageReference Include="SqlServerDatabaseAccessLibrary" Version="1.1.0" />
+    <PackageReference Include="Telerik.Documents.Flow" Version="2025.4.1104" />
     <PackageReference Include="Telerik.UI.for.Blazor" Version="11.3.0" />
   </ItemGroup>
 

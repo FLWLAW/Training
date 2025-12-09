@@ -87,7 +87,9 @@
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await MoveDownButtonClicked() )">Move Down</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => EditQuestionClicked())">Edit Question</TelerikButton><br />
-                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await RemoveQuestionClicked())">Remove Question</TelerikButton>
+                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await RemoveQuestionClicked())">Remove Question</TelerikButton><br />
+                                <br />
+                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await ExportToWordClicked() )">Export To Word</TelerikButton>
                             }
                             else
                             {
@@ -348,6 +350,19 @@
         </WindowContent>
     </TelerikWindow>
 }
+<script>
+    window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+      const arrayBuffer = await contentStreamReference.arrayBuffer();
+      const blob = new Blob([arrayBuffer]);
+      const url = URL.createObjectURL(blob);
+      const anchorElement = document.createElement('a');
+      anchorElement.href = url;
+      anchorElement.download = fileName ?? '';
+      anchorElement.click();
+      anchorElement.remove();
+      URL.revokeObjectURL(url);
+    }
+</script>
 <style>
     .QuestionsTopHalfHeader_Left {
         width: 35%;
