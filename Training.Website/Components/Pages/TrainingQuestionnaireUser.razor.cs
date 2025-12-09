@@ -248,6 +248,8 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
+        private bool ShowUserResponses() => _testEligibility?.Finished == false && _userResponses != null;
+
         private string? UserAnswerText(UserResponsesModel? response)
         {
             if (response == null)
