@@ -1,6 +1,12 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
+using System.IO;
 using Telerik.Blazor.Components;
+using Telerik.SvgIcons;
+using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
+using Telerik.Windows.Documents.Flow.Model;
+using Telerik.Windows.Documents.Flow.Model.Styles;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -16,6 +22,8 @@ namespace Training.Website.Components.Pages
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
         private IDatabase? Database { get; set; }
+        [Inject]
+        private IJSRuntime? JS { get; set; }
         #endregion
 
         #region PRIVATE FIELDS
@@ -163,6 +171,59 @@ namespace Training.Website.Components.Pages
             _editMode = true;
          
             StateHasChanged();
+        }
+
+        private async Task ExportToWordClicked()
+        {
+            // https://www.google.com/search?q=telerik+blazor+export+to+word&rlz=1C1GCEU_enUS1109US1109&oq=telerik+blazor+export+to+word&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQIRigATIHCAIQIRigATIHCAMQIRigATIHCAQQIRigATIHCAUQIRigATIHCAYQIRirAjIHCAcQIRirAjIHCAgQIRifBTIHCAkQIRifBdIBCjEwNjI0ajBqMTWoAgiwAgHxBa1fxYxW5ZVS&sourceid=chrome&ie=UTF-8
+
+            RadFlowDocument document = new();
+            Section? section = document.Sections.AddSection();
+
+            for (int questionnaireNumber = 1; questionnaireNumber <= Globals.MaximumTestAttemptsPerSession; questionnaireNumber++)
+            {
+                IEnumerable<QuestionsModel?>? questions = await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, questionnaireNumber, Database);
+
+                if (questions != null)
+                {
+                    Paragraph? title = section.Blocks.AddParagraph();
+                    title.TextAlignment = Alignment.Center;
+                    title.Inlines.AddRun($"SESSION #{_selectedSession.Session_ID} {_selectedSessionString}").FontSize = 18;
+                    
+                    Paragraph? subtitle = section.Blocks.AddParagraph();
+                    subtitle.TextAlignment = Alignment.Center;
+                    Run qn = subtitle.Inlines.AddRun($"Questionnaire #{questionnaireNumber}");
+                    qn.FontSize = 16;
+                    qn.Underline.Pattern = UnderlinePattern.Single;
+
+                    foreach (QuestionsModel? question in questions)
+                    {
+                        section.Blocks.AddParagraph().Inlines.AddRun($"{question!.QuestionNumber}.\t{question.Question}");
+                        IEnumerable<AnswerChoicesModel?>? answerChoices = _service.GetAnswerChoicesByQuestionID(question.Question_ID!.Value, Database);
+                    
+                        if (answerChoices != null && answerChoices.Any() == true)
+                            foreach (AnswerChoicesModel? answerChoice in answerChoices)
+                                section.Blocks.AddParagraph().Inlines.AddRun($"\t{answerChoice!.AnswerLetter}.\t{answerChoice.AnswerText}");
+                        section.Blocks.AddParagraph();
+                        section.Blocks.AddParagraph().Inlines.AddRun($"Answer: \t{question.CorrectAnswer}");
+                        section.Blocks.AddParagraph().Inlines.AddRun("----------------------------------------------------------------------------------------------------------------------------");
+                    }
+                    section.Blocks.AddParagraph().Inlines.AddRun("=====================================================================================");
+                }
+            }
+
+            DocxFormatProvider formatProvider = new();
+
+            using (MemoryStream ms = new ())
+            {
+                string filename = $"Questionnaire Export Session {_selectedSession!.Session_ID!.Value}.docx";
+
+                formatProvider.Export(document, ms, null);
+
+                ms.Position = 0;    // VERY IMPORTANT!!!!!
+                using var streamRef = new DotNetStreamReference(stream: ms);
+                await JS!.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+            }
         }
 
         private async Task<List<QuestionsModel>?> GetQuestionsBySessionIDandQuestionnaireNumber_Main() =>
