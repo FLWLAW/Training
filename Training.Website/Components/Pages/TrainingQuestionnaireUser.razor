@@ -12,7 +12,7 @@
     <tr>
         <td style="text-align: center; padding-bottom: 30px;">
             <label style="padding-right: 30px;">Session ID:</label>
-            <TelerikDropDownList Data="@_sessions"
+            <TelerikDropDownList Data="@_sessions_FullText"
                                  Value="_selectedSessionString"
                                  ValueChanged="@(async (string newValue) => await SessionChanged(newValue))"
                                  Enabled="true"
@@ -23,6 +23,23 @@
             </TelerikDropDownList>
         </td>
     </tr>
+    <tr>
+        <td>
+            <label style="padding-right: 30px;">Or type in session here:</label>
+            <TelerikAutoComplete
+                @ref="@_sessionIdAutoComplete"
+                Data="@_sessions_IDs"
+                DebounceDelay="50"
+                MinLength="3"
+                ShowClearButton="true"
+                Value="@_keypressedSessionID"
+                ValueChanged="@((string newValue) => SessionIdAutoCompleteValueChanged(newValue) )"
+                OnClose="@(async (AutoCompleteCloseEventArgs args) => await OnCloseSessionIdAutoComplete(args) )"
+                Width="210px"
+            />
+        </td>
+    </tr>
+
 </table>
 
 @if (_selectedSession != null && (_questions == null || _questions.Length == 0))
