@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
 using System.Text;
+using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Services;
 
@@ -20,7 +21,7 @@ namespace Training.Website.Components.Pages
 
         #region PRIVATE FIELDS
         private Dictionary<int, string>? _answerFormats = null;
-        private IEnumerable<string>? _sessions = null;
+        private IEnumerable<string>? _sessions_FullText = null;
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
         private int _currentQuestionnaireNumber = 0;
@@ -38,6 +39,9 @@ namespace Training.Website.Components.Pages
         private int? _testAttemptID = null;
         private IEnumerable<UserResponsesModel?>? _userResponses = null;
         private readonly UserServiceMethods _service = new();
+        private IEnumerable<string?>? _sessions_IDs = null;
+        private string? _keypressedSessionID = null;
+        private TelerikAutoComplete<string?> _sessionIdAutoComplete = new();
         #endregion
 
         protected override async Task OnInitializedAsync()
@@ -50,7 +54,8 @@ namespace Training.Website.Components.Pages
             //TODO: THE CODE BELOW MAY NOT BE NEEDED IF THE SESSION ID WILL BE PASSED TO THIS PAGE VIA QUERYSTRING OR SOMEOTHER METHOD. IF IT IS NEEDED, THEN IT IS REDUNDNANT WITH THE ADMINISTRATOR PAGE AND A COMMON METHOD SHOULD BE IMPLEMENTED.
             if (sessionInfo != null && sessionInfo.Any() == true)
             {
-                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+                _sessions_IDs = sessionInfo.Select(q => q.Session_ID.ToString());
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
@@ -156,6 +161,17 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private async Task OnCloseSessionIdAutoComplete(AutoCompleteCloseEventArgs args)
+        {
+            if (_keypressedSessionID != null)
+            {
+                string? newValue = _sessions_FullText?.FirstOrDefault(q => q.StartsWith(_keypressedSessionID));
+
+                if (newValue != null)
+                    await SessionChanged(newValue);
+            }
+        }
+
         private void PreviousQuestionClicked()
         {
             if (AtFirstQuestion() == false)
@@ -195,6 +211,8 @@ namespace Training.Website.Components.Pages
             SetCurrentFields_Main(0);
             StateHasChanged();
         }
+
+        private void SessionIdAutoCompleteValueChanged(string newValue) => _keypressedSessionID = newValue;
 
         private void SetCurrentAnswerDropDownItems()
         {
