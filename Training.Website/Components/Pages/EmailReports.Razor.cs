@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging.Abstractions;
 using SqlServerDatabaseAccessLibrary;
+using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Models.Users;
 using Training.Website.Services;
@@ -29,6 +30,7 @@ namespace Training.Website.Components.Pages
         private IEnumerable<EMailReportBySessionIdModel?>? _emailedUsers = null;
         private IEnumerable<AllUsers_CMS_DB?>? _allUsers_CMS = null;
         private readonly EmailReportServiceMethods _service = new();
+        private TelerikGrid<EMailReportBySessionIdModel?>? _emailedReports = null;
         private readonly SqlDatabase _database_CMS = new(Configuration.DatabaseConnectionString_CMS()!);
         #endregion
 

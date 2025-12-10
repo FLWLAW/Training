@@ -178,7 +178,7 @@ namespace Training.Website.Components.Pages
                 };
 
                 email.Send();
-                LogEMailingToDB(recipient));
+                LogEMailingToDB(recipient);
             }
 #endif
         }
