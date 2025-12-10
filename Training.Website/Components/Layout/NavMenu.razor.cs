@@ -35,6 +35,11 @@ namespace Training.Website.Components.Layout
 
         private bool IsAdministrator() => _administrators!.Contains(ApplicationState!.LoggedOnUser!.LoginID?.ToLower());
 
-        private bool IsTester() => _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower());
+        private bool IsTester() => 
+            #if DEBUG 
+                _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower());
+            #else
+                false;
+            #endif
     }
 }

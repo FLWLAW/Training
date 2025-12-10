@@ -27,8 +27,18 @@
         </tr>
     }
     <tr>
+        <td style="text-align: center; background-color: white; padding-top: 6px; padding-bottom: 6px;">
+            <TelerikButton Class="UniformButton"
+                           OnClick="@(async() => await Globals.ExportToExcelFile(_emailedReports) )"
+                           Enabled="true">
+                EXPORT TO EXCEL
+            </TelerikButton>
+        </td>
+    </tr>
+    <tr>
         <td>
             <TelerikGrid
+                @ref="@_emailedReports"
                 Data="@_emailedUsers"
                 Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
                 Width="100%" Height="800px"
@@ -47,6 +57,10 @@
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenUserLastSubmitted)" Title="When Last Submitted" Width="150px" />
                 </GridColumns>
+                <GridExport>
+                    <GridExcelExport FileName="@Globals.ExportFilename("EmailedUsers_Session", _selectedSessionString)"
+                                     AllPages="false" />
+                </GridExport>
             </TelerikGrid>
         </td>
     </tr>
