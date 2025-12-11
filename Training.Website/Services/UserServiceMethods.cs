@@ -41,5 +41,22 @@ namespace Training.Website.Services
 
             await database!.NonQueryByStoredProcedureAsync<InsertIndividualAnswer_Parameters>("usp_Training_Questionnaire_InsertIndividualAnswer", parameters);
         }
+
+        public async Task<bool> WasUserAssignedQuestionnaire(int sessionID, int CMSUserID, IDatabase? database)
+        {
+            string[] parameterNames = ["@Session_ID", "@CMS_User_ID"];
+            object?[] parameterValues = [sessionID, CMSUserID];
+            object? resultRaw =
+                await database!.QueryByStoredProcedureAsync_OneRecordOneValueNoFieldName("dbo.usp_Training_Questionnaire_GetEmailedUserBySessionCmsOpsIDs", parameterNames, parameterValues!);
+
+            if (resultRaw == null)
+                throw new NoNullAllowedException();
+            else if (int.TryParse(resultRaw.ToString(), out int resultRefined) == false)
+                throw new InvalidDataException();
+            else if (resultRefined != 0)
+                return true;
+            else
+                return false;
+        }
     }
 }

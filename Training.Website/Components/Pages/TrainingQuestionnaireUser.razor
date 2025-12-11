@@ -39,7 +39,6 @@
             />
         </td>
     </tr>
-
 </table>
 
 @if (_selectedSession != null && (_questions == null || _questions.Length == 0))
@@ -96,7 +95,7 @@ else if (_score != null)
         </table>
     }
 }
-else if (_testEligibility != null && _testEligibility?.Message != null && _testEligibility.Finished == true)
+else if (_testEligibility != null && _testEligibility?.Message != null && (_testEligibility.Finished == true || _testEligibility.WasAssigned == false))
 {
     <table style="width: 100%;">
         <tr>

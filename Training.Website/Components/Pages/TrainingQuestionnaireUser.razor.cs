@@ -125,30 +125,38 @@ namespace Training.Website.Components.Pages
 
         private async Task<EligibilityClass> GetTestEligibility()
         {
-            IEnumerable<ScoresAndWhenSubmittedModel>? scores =
-                await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
-
-            int attempts = scores?.Count() ?? 0;
+            int attempts = 0;
             string? message = null;
             bool finished = false;
+            bool wasUserAssigned = await _service.WasUserAssignedQuestionnaire(_selectedSession!.Session_ID!.Value, ApplicationState!.LoggedOnUser!.AppUserID!.Value, Database);
 
-            if (attempts > 0)
+            if (wasUserAssigned == false)
+                message = "You have not been assigned this questionnaire.";
+            else
             {
-                ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
+                IEnumerable<ScoresAndWhenSubmittedModel>? scores =
+                    await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
 
-                if (passingScore != null)
+                attempts = scores?.Count() ?? 0;
+
+                if (attempts > 0)
                 {
-                    message = $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
-                    finished = true;
-                }
-                else if (attempts >= Globals.MaximumTestAttemptsPerSession)
-                {
-                    message = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
-                    finished = true;
+                    ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
+
+                    if (passingScore != null)
+                    {
+                        message = $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
+                        finished = true;
+                    }
+                    else if (attempts >= Globals.MaximumTestAttemptsPerSession)
+                    {
+                        message = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
+                        finished = true;
+                    }
                 }
             }
 
-            return new EligibilityClass { Count = attempts, Finished = finished, Message = message };
+            return new EligibilityClass { Count = attempts, Finished = finished, Message = message, WasAssigned = wasUserAssigned };
         }
 
 
