@@ -113,26 +113,38 @@ namespace Training.Website.Components.Pages
             List<int> usersAsssigned = [];
             
             _allUsers_Assignment.Clear();
-            foreach (AllUsers_Assignment user in usersToAssign_Raw)
+            foreach (AllUsers_Assignment userToAssign in usersToAssign_Raw)
             {
-                int? userID = user.AppUserID;
+                int? userID = userToAssign.AppUserID;
 
                 if (userID != null && usersAsssigned.Contains(userID.Value) == false)
                 {
-                    _allUsers_Assignment.Add(user);
+                    _allUsers_Assignment.Add(userToAssign);
                     usersAsssigned.Add(userID.Value);
                 }
                 else
                 {
+                    // IF USER ALREADY HAS BEEN GATHERED, APPEND ROLE INFO
                     AllUsers_Assignment? existingRecord = _allUsers_Assignment.FirstOrDefault(q => q?.AppUserID == userID!.Value);
 
                     if (existingRecord != null)
                     {
-                        if (existingRecord.RoleDesc != Globals.Notary && user.RoleDesc == Globals.Notary)
+                        if (existingRecord.RoleDesc != Globals.Notary && userToAssign.RoleDesc == Globals.Notary)
                             existingRecord.RoleDesc = $"{existingRecord.RoleDesc} ({Globals.Notary})";
-                        else if (existingRecord.RoleDesc == Globals.Notary && user.RoleDesc != Globals.Notary)
-                            existingRecord.RoleDesc = $"{user.RoleDesc} ({Globals.Notary})";
+                        else if (existingRecord.RoleDesc == Globals.Notary && userToAssign.RoleDesc != Globals.Notary)
+                            existingRecord.RoleDesc = $"{userToAssign.RoleDesc} ({Globals.Notary})";
                     }
+                }
+            }
+
+            // IF TITLE IS NULL/BLANK (WHICH CAN HAPPEN WHEN THE "NOTARY" ROLE IS SELECTED, FIX IT HERE
+            foreach (AllUsers_Assignment? assignedUser in _allUsers_Assignment)
+            {
+                if (string.IsNullOrWhiteSpace(assignedUser?.TitleDesc) == true)
+                {
+                    int? titleID = _allUsers_DB?.FirstOrDefault(q => q?.AppUserID == assignedUser?.AppUserID)?.TitleID;
+                    if (titleID != null)
+                        assignedUser!.TitleDesc = _titles?.FirstOrDefault(q => q?.ID == titleID)?.Value;
                 }
             }
 
