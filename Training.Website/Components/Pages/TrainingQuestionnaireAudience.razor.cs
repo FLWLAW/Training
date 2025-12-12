@@ -122,6 +122,18 @@ namespace Training.Website.Components.Pages
                     _allUsers_Assignment.Add(user);
                     usersAsssigned.Add(userID.Value);
                 }
+                else
+                {
+                    AllUsers_Assignment? existingRecord = _allUsers_Assignment.FirstOrDefault(q => q?.AppUserID == userID!.Value);
+
+                    if (existingRecord != null)
+                    {
+                        if (existingRecord.RoleDesc != Globals.Notary && user.RoleDesc == Globals.Notary)
+                            existingRecord.RoleDesc = $"{existingRecord.RoleDesc} ({Globals.Notary})";
+                        else if (existingRecord.RoleDesc == Globals.Notary && user.RoleDesc != Globals.Notary)
+                            existingRecord.RoleDesc = $"{user.RoleDesc} ({Globals.Notary})";
+                    }
+                }
             }
 
             _allUsers_Assignment = [.._allUsers_Assignment.OrderBy(s => s?.UserName)];
