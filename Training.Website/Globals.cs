@@ -18,6 +18,7 @@ namespace Training.Website
         public static readonly string[] TrueFalse_Choices = ["True", "False"];
 
         public const string SelectAll_Verbiage = "-- Select All --";
+        public const string Notary = "Notary";
 
         public static IEnumerable<string>? ConcatenateSessionInfoForDropDown(IEnumerable<SessionInformationModel>? sessionInfo)
         {

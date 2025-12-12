@@ -39,6 +39,7 @@ namespace Training.Website.Components.Pages
         private DateTime? _dueDate = null;
         private AllUsers_CMS_DB[]? _allUsers_DB = null;
         private List<AllUsers_Assignment?> _allUsers_Assignment = [];
+        private IEnumerable<AllUsers_Notaries?>? _notaries = null;
         private TelerikGrid<AllUsers_Assignment>? _allUsers_Assignment_ExportGrid;
         #endregion
 
@@ -49,8 +50,9 @@ namespace Training.Website.Components.Pages
             if (sessionInfo != null && sessionInfo.Any() == true)
             {
                 _allUsers_DB = (await _service.GetAllUsers(_dbCMS))?.ToArray();
-                _roles = await _service.GetAllRoles(_dbCMS);
+                _roles = await _service.GetAllRoles(true, _dbCMS);
                 _titles = await _service.GetAllTitles(_dbCMS);
+                _notaries = await _service.GetNotaries(_allUsers_DB, Database_OPS);
 
                 _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
@@ -62,10 +64,14 @@ namespace Training.Website.Components.Pages
 
         // ================================================================================================================================================================================================================================================================================================
 
-        private void AddAssignedUsers(IEnumerable<AllUsers_CMS_DB>? users, List<AllUsers_Assignment> usersToAssign)
+        private List<AllUsers_Assignment>? AddAssignedUsers(IEnumerable<AllUsers_CMS_DB>? users)
         {
-            if (users != null)
+            if (users == null || users.Any() == false)
+                return null;
+            else
             {
+                List<AllUsers_Assignment> usersToAssign = [];
+
                 foreach (AllUsers_CMS_DB? user in users)
                 {
                     AllUsers_Assignment? assignedUsers = new()
@@ -81,6 +87,8 @@ namespace Training.Website.Components.Pages
                     };
                     usersToAssign.Add(assignedUsers);
                 }
+
+                return usersToAssign;
             }
         }
 
@@ -105,14 +113,38 @@ namespace Training.Website.Components.Pages
             List<int> usersAsssigned = [];
             
             _allUsers_Assignment.Clear();
-            foreach (AllUsers_Assignment user in usersToAssign_Raw)
+            foreach (AllUsers_Assignment userToAssign in usersToAssign_Raw)
             {
-                int? userID = user.AppUserID;
+                int? userID = userToAssign.AppUserID;
 
                 if (userID != null && usersAsssigned.Contains(userID.Value) == false)
                 {
-                    _allUsers_Assignment.Add(user);
+                    _allUsers_Assignment.Add(userToAssign);
                     usersAsssigned.Add(userID.Value);
+                }
+                else
+                {
+                    // IF USER ALREADY HAS BEEN GATHERED, APPEND ROLE INFO
+                    AllUsers_Assignment? existingRecord = _allUsers_Assignment.FirstOrDefault(q => q?.AppUserID == userID!.Value);
+
+                    if (existingRecord != null)
+                    {
+                        if (existingRecord.RoleDesc != Globals.Notary && userToAssign.RoleDesc == Globals.Notary)
+                            existingRecord.RoleDesc = $"{existingRecord.RoleDesc} ({Globals.Notary})";
+                        else if (existingRecord.RoleDesc == Globals.Notary && userToAssign.RoleDesc != Globals.Notary)
+                            existingRecord.RoleDesc = $"{userToAssign.RoleDesc} ({Globals.Notary})";
+                    }
+                }
+            }
+
+            // IF TITLE IS NULL/BLANK (WHICH CAN HAPPEN WHEN THE "NOTARY" ROLE IS SELECTED, FIX IT HERE
+            foreach (AllUsers_Assignment? assignedUser in _allUsers_Assignment)
+            {
+                if (string.IsNullOrWhiteSpace(assignedUser?.TitleDesc) == true)
+                {
+                    int? titleID = _allUsers_DB?.FirstOrDefault(q => q?.AppUserID == assignedUser?.AppUserID)?.TitleID;
+                    if (titleID != null)
+                        assignedUser!.TitleDesc = _titles?.FirstOrDefault(q => q?.ID == titleID)?.Value;
                 }
             }
 
@@ -230,10 +262,31 @@ namespace Training.Website.Components.Pages
 
             foreach (string? role in _selectedRoles)
             {
-                int? roleID = (_roles?.FirstOrDefault(q => q?.Value == role)?.ID) ?? throw new NullReferenceException($"Unable to find a role description for role {role}.");
-                IEnumerable<AllUsers_CMS_DB>? usersInRole = _allUsers_DB?.Where(x => x.RoleID == roleID);
+                if (role.Equals(Globals.Notary, StringComparison.InvariantCultureIgnoreCase) == false)
+                {
+                    int? roleID = (_roles?.FirstOrDefault(q => q?.Value == role)?.ID) ?? throw new NullReferenceException($"Unable to find a role description for role {role}.");
+                    IEnumerable<AllUsers_CMS_DB>? usersInRole = _allUsers_DB?.Where(x => x.RoleID == roleID);
 
-                AddAssignedUsers(usersInRole, usersToAssign);
+                    usersToAssign.AddRange(AddAssignedUsers(usersInRole)!);
+                }
+                else
+                {
+                    foreach(AllUsers_Notaries? notary in _notaries!)
+                    {
+                        AllUsers_Assignment user = new()
+                        {
+                            AppUserID = notary.CMS_User_ID,
+                            EmailAddress = notary.EMail,
+                            FirstName = notary.FirstName,
+                            LastName = notary.LastName,
+                            UserName = notary.FullName,
+                            Selected = true,
+                            RoleDesc = Globals.Notary,
+                            TitleDesc = null
+                        };
+                        usersToAssign.Add(user);
+                    }
+                }
             }
 
             return usersToAssign;
@@ -248,7 +301,7 @@ namespace Training.Website.Components.Pages
                 int? titleID = (_titles?.FirstOrDefault(q => q?.Value == title)?.ID) ?? throw new NullReferenceException($"Unable to find a title description for title {title}.");
                 IEnumerable<AllUsers_CMS_DB>? usersInTitle = _allUsers_DB?.Where(x => x.TitleID == titleID);
 
-                AddAssignedUsers(usersInTitle, usersToAssign);
+                usersToAssign.AddRange(AddAssignedUsers(usersInTitle)!);
             }
 
             return usersToAssign;

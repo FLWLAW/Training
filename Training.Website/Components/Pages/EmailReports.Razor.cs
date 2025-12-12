@@ -29,8 +29,10 @@ namespace Training.Website.Components.Pages
         private IEnumerable<IdValue<int>?>? _titles = null;
         private IEnumerable<EMailReportBySessionIdModel?>? _emailedUsers = null;
         private IEnumerable<AllUsers_CMS_DB?>? _allUsers_CMS = null;
+        private AllUsers_Notaries?[]? _notaries = null;
         private readonly EmailReportServiceMethods _service = new();
         private TelerikGrid<EMailReportBySessionIdModel?>? _emailedReports = null;
+        
         private readonly SqlDatabase _database_CMS = new(Configuration.DatabaseConnectionString_CMS()!);
         #endregion
 
@@ -39,9 +41,10 @@ namespace Training.Website.Components.Pages
             IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database_OPS);
 
             _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
-            _roles = await _service.GetAllRoles(_database_CMS);
+            _roles = await _service.GetAllRoles(true, _database_CMS);  //TODO: CHANGE TO TRUE
             _titles = await _service.GetAllTitles(_database_CMS);
             _allUsers_CMS = await _service.GetAllUsers(_database_CMS);
+            _notaries = (await _service.GetNotaries(_allUsers_CMS, Database_OPS))?.ToArray();
         }
 
 // ===========================================================================================================================================================================================================================================================================================================================================
@@ -77,7 +80,15 @@ namespace Training.Website.Components.Pages
             else 
             {
                 int? roleID = _allUsers_CMS?.FirstOrDefault(q => q?.AppUserID == cmsUserID)?.RoleID;
-                return (roleID != null) ? _roles?.FirstOrDefault(q => q?.ID == roleID.Value)?.Value : null;
+                string? roleName = (roleID != null) ? _roles?.FirstOrDefault(q => q?.ID == roleID.Value)?.Value : null;
+
+                if (roleName != null && roleName.Contains(Globals.Notary, StringComparison.InvariantCultureIgnoreCase) == false)
+                {
+                    if (_notaries?.Any(q => q?.CMS_User_ID == cmsUserID) == true)
+                        roleName = $"{roleName} ({Globals.Notary})";
+                }
+
+                return roleName;
             }
         }
 
