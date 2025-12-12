@@ -13,11 +13,6 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region DEPENDENCY INJECTION PROPERTIES
-        /*
-        [Inject]
-        private IDatabase? Database { get; set; }
-        */
-
         [Inject]
         private NavigationManager? NavManager { get; set; }
         #endregion
@@ -33,7 +28,7 @@ namespace Training.Website.Components.Pages
             _allUsers = await _service.GetAllUsers(_dbCMS);
         }
 
-        private void  UserSingleSelectValueChanged(string? newValue)
+        private void UserSingleSelectValueChanged(string? newValue)
         {
             AllUsers_CMS_DB? user = _allUsers?.FirstOrDefault(q => q?.UserName?.Equals(newValue, StringComparison.InvariantCultureIgnoreCase) == true);
 
@@ -47,6 +42,5 @@ namespace Training.Website.Components.Pages
             };
             NavManager?.NavigateTo("/");
         }
-
     }
 }

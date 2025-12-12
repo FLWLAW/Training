@@ -92,6 +92,15 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private void DeSelectAllClicked()
+        {
+            foreach(AllUsers_Assignment? assignedUser in _allUsers_Assignment)
+                if (assignedUser != null)
+                    assignedUser.Selected = false;
+
+            StateHasChanged();
+        }
+
         private void EmailsSentCloseClicked() => _emailsSentWindowVisible = false;
 
         private void LogEMailingToDB(AllUsers_Assignment? recipient) =>

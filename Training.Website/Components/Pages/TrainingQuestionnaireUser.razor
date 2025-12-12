@@ -63,11 +63,23 @@ else if (_score != null)
                 }
                 else if(_testEligibility != null)
                 {
-                    string adverb = _testEligibility.Finished ? "cannot" : "must";
                     <label>Your score is @_score%, which is not a passing grade.</label>
                     <br />
-                    <label>You @adverb re-take the questionnaire.</label>
+                    if (_testEligibility.Finished == false)
+                    {
+                        <label>Please review and retake the questionnaire.</label>
+                    }
+                    else
+                    {
+                        <label>You cannot retake the questionnaire.</label>
+                    }
                 }
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="font-size: x-large; text-align: center;">
+                <br />
+                <TelerikButton Class="UniformButton" OnClick="@(() => CloseClicked() )">Close</TelerikButton>
             </td>
         </tr>
     </table>

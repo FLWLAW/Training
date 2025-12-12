@@ -17,6 +17,9 @@ namespace Training.Website.Components.Pages
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
         private IDatabase? Database { get; set; }
+
+        [Inject]
+        private NavigationManager? NavManager { get; set; }
         #endregion
 
         #region PRIVATE FIELDS
@@ -190,6 +193,8 @@ namespace Training.Website.Components.Pages
         }
 
         private int QuestionsAnswered() => _currentSelectedAnswers_DropDown?.Count(q => string.IsNullOrWhiteSpace(q?.UserAnswer) == false) ?? 0;
+
+        private void CloseClicked() => NavManager?.NavigateTo("/");
 
         private double? Score()
         {
