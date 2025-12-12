@@ -6,8 +6,15 @@ namespace Training.Website.Services
 {
     public class CommonServiceMethods
     {
-        public async Task<IEnumerable<IdValue<int>?>?> GetAllRoles(IDatabase? database) =>
-            await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Role_SA", "RoleID", "RoleDesc");
+        public async Task<IEnumerable<IdValue<int>?>?> GetAllRoles(bool addNotary, IDatabase? database)
+        {
+            List<IdValue<int>?> roles = (await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Role_SA", "RoleID", "RoleDesc"))?.ToList() ?? [];
+
+            if (addNotary == true)
+                roles.Add(new IdValue<int>() { ID = 0, Value = Globals.Notary });
+
+            return roles.OrderBy(q => q?.Value);
+        }
 
         public async Task<IEnumerable<IdValue<int>?>?> GetAllTitles(IDatabase? database) =>
             await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Title_SA", "TitleID", "TitleDesc");
@@ -46,6 +53,32 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
                 ("usp_Training_Questionnaire_GetQuestionsBySessionID", new { Session_ID = sessionID });
         */
+
+        public async Task<IEnumerable<AllUsers_Notaries?>?> GetNotaries(IEnumerable<AllUsers_CMS_DB?>? allUsers_CMS_DB, IDatabase? database)
+        {
+            AllUsers_Notaries?[]? notaries = (await database!.QueryByStoredProcedureAsync<AllUsers_Notaries?>("usp_Training_Questionnaire_GetNotaries"))?.ToArray();
+
+            if (notaries == null || notaries.Length == 0)
+                return null;
+            else
+            {
+                AllUsers_CMS_DB?[]? allCMS_DB_Users_Array = allUsers_CMS_DB?.ToArray();
+
+                if (allCMS_DB_Users_Array != null && allCMS_DB_Users_Array.Length > 0)
+                {
+                    foreach (AllUsers_Notaries? notary in notaries)
+                    {
+                        if (notary != null)
+                        {
+                            int? CMS_ID = allCMS_DB_Users_Array.FirstOrDefault(u => (u?.LoginID?.Equals(notary!.UserName, StringComparison.InvariantCultureIgnoreCase) == true))?.AppUserID;
+                            notary.CMS_User_ID = CMS_ID;
+                        }
+                    }
+                }
+
+                return notaries;
+            }
+        }
 
         public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionIDandQuestionnaireNumber(int sessionID, int questionnaireNumber, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
