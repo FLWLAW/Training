@@ -4,5 +4,6 @@
     {
         public double Score { get; set; }
         public DateTime WhenSubmitted { get; set; }
+        public DateTime? WhenMustRetakeBy { get; set; }
     }
 }
