@@ -8,6 +8,7 @@ namespace Training.Website
     public class Globals
     {
         public const int MaximumTestAttemptsPerSession = 2;
+        public const int RetakeTestDeadlineDays = 5;
         public const double TestPassingThreshold = 80;
 
         public const string YesNo = "Yes/No";

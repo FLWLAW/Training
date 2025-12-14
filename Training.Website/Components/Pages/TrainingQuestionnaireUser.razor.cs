@@ -38,6 +38,7 @@ namespace Training.Website.Components.Pages
         //private string?[]? _currentSelectedAnswers_DropDown = null;
         private UserAnswersModel?[]? _currentSelectedAnswers_DropDown = null;
         private double? _score = null;
+        private DateTime? _whenMustRetakeTestBy = null;
         private EligibilityClass? _testEligibility = null;
         private int? _testAttemptID = null;
         private IEnumerable<UserResponsesModel?>? _userResponses = null;
@@ -128,40 +129,50 @@ namespace Training.Website.Components.Pages
 
         private async Task<EligibilityClass> GetTestEligibility()
         {
-            int attempts = 0;
+            int previousAttempts = 0;
             string? message = null;
-            bool finished = false;
-            bool wasUserAssigned = await _service.WasUserAssignedQuestionnaire(_selectedSession!.Session_ID!.Value, ApplicationState!.LoggedOnUser!.AppUserID!.Value, Database);
+            bool noMore = false;
+            bool wasUserAssignedThisQuestionnaire =
+                await _service.WasUserAssignedQuestionnaire(_selectedSession!.Session_ID!.Value, ApplicationState!.LoggedOnUser!.AppUserID!.Value, Database);
 
-            if (wasUserAssigned == false)
+            if (wasUserAssignedThisQuestionnaire == false)
                 message = "You have not been assigned this questionnaire.";
             else
             {
                 IEnumerable<ScoresAndWhenSubmittedModel>? scores =
                     await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
 
-                attempts = scores?.Count() ?? 0;
+                previousAttempts = scores?.Count() ?? 0;
 
-                if (attempts > 0)
+                if (previousAttempts > 0)
                 {
                     ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
 
                     if (passingScore != null)
                     {
                         message = $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
-                        finished = true;
+                        noMore = true;
                     }
-                    else if (attempts >= Globals.MaximumTestAttemptsPerSession)
+                    else if (previousAttempts >= Globals.MaximumTestAttemptsPerSession)
                     {
                         message = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
-                        finished = true;
+                        noMore = true;
+                    }
+                    else
+                    {
+                        DateTime? deadline = scores?.FirstOrDefault(q => q?.WhenMustRetakeBy != null && q?.WhenMustRetakeBy < DateTime.Now)?.WhenMustRetakeBy;
+
+                        if (deadline != null)
+                        {
+                            message = $"The deadline to re-take this questionnaire expired on {deadline.Value}.";
+                            noMore = true;
+                        }
                     }
                 }
             }
 
-            return new EligibilityClass { Count = attempts, Finished = finished, Message = message, WasAssigned = wasUserAssigned };
+            return new EligibilityClass { Count = previousAttempts, Finished = noMore, Message = message, WasAssigned = wasUserAssignedThisQuestionnaire };
         }
-
 
         private void NextQuestionClicked()
         {
@@ -266,8 +277,21 @@ namespace Training.Website.Components.Pages
                 _score = Score();
                 if (_score != null)
                 {
+                    int previousAttempts =
+                        (
+                            await Database!.QueryByStoredProcedureAsync<int, object?>
+                            (
+                                "usp_Training_Questionnaire_GetCountOfTestAttemptsBySessionIDandUserID", new { Session_ID = _selectedSession!.Session_ID!.Value!, CMS_User_ID = Globals.UserID(ApplicationState) }
+                            )
+                        )?.First()
+                        ?? 0;
+
+                    int currentAttempt = previousAttempts + 1;
+
+                    _whenMustRetakeTestBy = (currentAttempt < Globals.MaximumTestAttemptsPerSession) ? DateTime.Now.AddDays(Globals.RetakeTestDeadlineDays) : null;
+
                     _testAttemptID = await _service.InsertTestResult
-                        (_selectedSession!.Session_ID!.Value, Globals.UserID(ApplicationState), _score.Value, Database);
+                        (_selectedSession!.Session_ID!.Value, Globals.UserID(ApplicationState), _score.Value, currentAttempt, _whenMustRetakeTestBy, Database);
 
                     foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
                         await _service.InsertIndividualAnswer(_testAttemptID!.Value, userAnswer, Database);

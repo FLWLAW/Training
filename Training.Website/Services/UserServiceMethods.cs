@@ -11,20 +11,15 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureAsync<UserResponsesModel, object?>
                 ("usp_Training_Questionnaire_GetUserResponsesByTestAttemptID", new { TestAttempt_ID = testAttemptID });
 
-        public async Task<int> InsertTestResult(int sessionID, int userID, double score, IDatabase? database)
+        public async Task<int> InsertTestResult(int sessionID, int userID, double score, int currentAttempt, DateTime? whenMustRetakeTestBy, IDatabase? database)
         {
-            int attempts =
-                (
-                    await database!.QueryByStoredProcedureAsync<int, object?>
-                        ("usp_Training_Questionnaire_GetCountOfTestAttemptsBySessionIDandUserID", new { Session_ID = sessionID, CMS_User_ID = userID })
-                ).First();
-
             DynamicParameters parameters = new();
 
             parameters.Add("@Session_ID", value: sessionID, dbType: DbType.Int32, direction: ParameterDirection.Input);
             parameters.Add("@CMS_User_ID", value: userID, dbType: DbType.Int32, direction: ParameterDirection.Input);
-            parameters.Add("@QuestionnaireNumber", value: (attempts + 1), DbType.Int32, direction: ParameterDirection.Input);
+            parameters.Add("@QuestionnaireNumber", value: currentAttempt, DbType.Int32, direction: ParameterDirection.Input);
             parameters.Add("@Score", value: score, DbType.Double, direction: ParameterDirection.Input);
+            parameters.Add("@WhenMustRetakeBy", value: whenMustRetakeTestBy, DbType.DateTime, direction: ParameterDirection.Input);
             parameters.Add("@Current_ID", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
             return await database!.NonQueryByStoredProcedureOutputParameterAsync<int>("usp_Training_Questionnaire_InsertTestResult", "@Current_ID", parameters);
