@@ -41,7 +41,7 @@ namespace Training.Website.Components.Pages
             IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database_OPS);
 
             _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
-            _roles = await _service.GetAllRoles(true, _database_CMS);  //TODO: CHANGE TO TRUE
+            _roles = await _service.GetAllRoles(true, _database_CMS);
             _titles = await _service.GetAllTitles(_database_CMS);
             _allUsers_CMS = await _service.GetAllUsers(_database_CMS);
             _notaries = (await _service.GetNotaries(_allUsers_CMS, Database_OPS))?.ToArray();

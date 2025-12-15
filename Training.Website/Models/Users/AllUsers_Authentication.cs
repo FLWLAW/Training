@@ -2,7 +2,7 @@
 {
     public class AllUsers_Authentication
     {
-        public string? Domain { get; set; }
+        //public string? Domain { get; set; }
         public string? UserName { get; set; }
         public string? UserName_Reformatted_For_DB
         {
@@ -12,9 +12,10 @@
             }
         }
         public string? LoginID { get; set; }
-        public int? AppUserID { get; set; }
+        public int? AppUserID { get; set; } // CMS DB
+        public int? EmpID { get; set; } // OPS DB
         public int? RoleID { get; set; }
         public int? TitleID { get; set; }
-        public string? HomeState { get; set; }
+        //public string? HomeState { get; set; }
     }
 }

@@ -33,11 +33,15 @@ namespace Training.Website.Components.Layout
             _administrators =_service.Administrator_LoginIDs(Database_OPS);
         }
 
-        private bool IsAdministrator() => _administrators!.Contains(ApplicationState!.LoggedOnUser!.LoginID?.ToLower());
+        private bool IsAdministrator() => ApplicationState != null && ApplicationState.LoggedOnUser != null && _administrators != null
+            ? _administrators!.Contains(ApplicationState!.LoggedOnUser!.LoginID?.ToLower())
+            : false;
 
         private bool IsTester() => 
             #if DEBUG 
-                _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower());
+                ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.LoginID != null && _testers != null
+                    ? _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower())
+                    : false;
             #else
                 false;
             #endif
