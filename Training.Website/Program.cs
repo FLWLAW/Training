@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Negotiate;
 using SqlServerDatabaseAccessLibrary;
 using Training.Website;
 using Training.Website.Components;
@@ -14,7 +15,7 @@ using Training.Website.Components;
 //DONE: TELL USER THEY PASSED/FAILED
 //TODO: HAVE A BUTTON ON USER PAGE TO REDIRECT USER BACK TO BEGINNING OF PAGE WITH THE NEXT QUESTIONNAIRE # IF THEY FAIL THE 1ST TIME
 //DONE: PAGE SHOWING WHAT THEY GOT RIGHT/WRONG
-//TODO: MUST RETAKE WITHIN X (120) HOURS
+//DONE: MUST RETAKE WITHIN X (120) HOURS
 //TODO: IMPORT BUTTON ON AUDIENCE SCREEN
 //DONE: ADD ABILITY TO TYPE SESSION # ON USER PAGE (SAME AS ON ADMINISTRATOR PAGE)
 //DONE: PREVENT TAKING TESTS FOR USERS NOT ASSIGNED TO A SESSION
@@ -29,10 +30,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-/*  // TODO: UNCOMMENT THIS LATER
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNegotiate();
 builder.Services.AddAuthorization(options => { options.FallbackPolicy = options.DefaultPolicy; });
-*/
 
 string? dbConnectionString_OPS = Configuration.DatabaseConnectionString_OPS();
 
