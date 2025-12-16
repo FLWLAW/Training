@@ -13,7 +13,11 @@ namespace Training.Website.Components.Layout
 
         [Inject]
         private AuthenticationStateProvider? GetAuthenticationStateAsync { get; set; }
-
+        /*
+        [Parameter]
+        [SupplyParameterFromQuery]
+        public string? SessionID { get; set; }
+        */
         public AppState? ApplicationState { get; set; } = new();
 
         protected async override Task OnInitializedAsync()

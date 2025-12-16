@@ -226,13 +226,25 @@ namespace Training.Website.Components.Pages
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _testEligibility = await GetTestEligibility();
-            _currentQuestionnaireNumber = GetCurrentQuestionnaireNumber();
-            _questions = (await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, _currentQuestionnaireNumber, Database))?.ToArray();
-            _currentSelectedAnswers_DropDown = new UserAnswersModel[_questions?.Length ?? 0];
-            _currentQuestionIndex = 0;
-            _questionIndexLimit = _questions?.GetUpperBound(0) ?? -1;
-            _score = null;
-            SetCurrentFields_Main(0);
+            if(_testEligibility != null && _testEligibility.WasAssigned == false)
+            {
+                _currentQuestionnaireNumber = 0;
+                _questions = null;
+                _currentSelectedAnswers_DropDown = null;
+                _currentQuestionIndex = 0;
+                _questionIndexLimit = -1;
+                _score = null;
+            }
+            else
+            {
+                _currentQuestionnaireNumber = GetCurrentQuestionnaireNumber();
+                _questions = (await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, _currentQuestionnaireNumber, Database))?.ToArray();
+                _currentSelectedAnswers_DropDown = new UserAnswersModel[_questions?.Length ?? 0];
+                _currentQuestionIndex = 0;
+                _questionIndexLimit = _questions?.GetUpperBound(0) ?? -1;
+                _score = null;
+                SetCurrentFields_Main(0);
+            }
             StateHasChanged();
         }
 
