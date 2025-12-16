@@ -140,7 +140,7 @@ namespace Training.Website.Components.Pages
             else
             {
                 IEnumerable<ScoresAndWhenSubmittedModel>? scores =
-                    await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.UserID(ApplicationState), Database);
+                    await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.CMS_UserID(ApplicationState), Database);
 
                 previousAttempts = scores?.Count() ?? 0;
 
@@ -281,7 +281,7 @@ namespace Training.Website.Components.Pages
                         (
                             await Database!.QueryByStoredProcedureAsync<int, object?>
                             (
-                                "usp_Training_Questionnaire_GetCountOfTestAttemptsBySessionIDandUserID", new { Session_ID = _selectedSession!.Session_ID!.Value!, CMS_User_ID = Globals.UserID(ApplicationState) }
+                                "usp_Training_Questionnaire_GetCountOfTestAttemptsBySessionIDandUserID", new { Session_ID = _selectedSession!.Session_ID!.Value!, CMS_User_ID = Globals.CMS_UserID(ApplicationState) }
                             )
                         )?.First()
                         ?? 0;
@@ -291,7 +291,11 @@ namespace Training.Website.Components.Pages
                     _whenMustRetakeTestBy = (currentAttempt < Globals.MaximumTestAttemptsPerSession) ? DateTime.Now.AddDays(Globals.RetakeTestDeadlineDays) : null;
 
                     _testAttemptID = await _service.InsertTestResult
-                        (_selectedSession!.Session_ID!.Value, Globals.UserID(ApplicationState), _score.Value, currentAttempt, _whenMustRetakeTestBy, Database);
+                        (
+                            _selectedSession!.Session_ID!.Value, Globals.CMS_UserID(ApplicationState), Globals.OPS_UserID(ApplicationState),
+                            _score.Value, currentAttempt, _whenMustRetakeTestBy,
+                            Database
+                        );
 
                     foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
                         await _service.InsertIndividualAnswer(_testAttemptID!.Value, userAnswer, Database);

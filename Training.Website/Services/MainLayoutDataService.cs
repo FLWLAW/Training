@@ -62,8 +62,5 @@ namespace Training.Website.Services
             return user;
 #endif
         }
-
-        private async Task<int?> GetOPS_DB_UserID(string? loginID, IDatabase? database_OPS) =>
-            (await database_OPS!.QueryByStatementAsync<int?>($"SELECT TOP 1 Emp_ID FROM [Employees Tbl] WHERE UserName = '{loginID}'"))?.FirstOrDefault();
     }
 }

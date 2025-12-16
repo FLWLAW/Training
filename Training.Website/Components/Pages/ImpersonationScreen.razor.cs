@@ -14,6 +14,9 @@ namespace Training.Website.Components.Pages
 
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
+        private IDatabase? Database { get; set; }
+
+        [Inject]
         private NavigationManager? NavManager { get; set; }
         #endregion
 
@@ -28,13 +31,14 @@ namespace Training.Website.Components.Pages
             _allUsers = await _service.GetAllUsers(_dbCMS);
         }
 
-        private void UserSingleSelectValueChanged(string? newValue)
+        private async Task UserSingleSelectValueChanged(string? newValue)
         {
             AllUsers_CMS_DB? user = _allUsers?.FirstOrDefault(q => q?.UserName?.Equals(newValue, StringComparison.InvariantCultureIgnoreCase) == true);
 
             ApplicationState!.LoggedOnUser = new()
             {
                 AppUserID = user?.AppUserID,
+                EmpID = await _service.GetOPS_DB_UserID(user?.LoginID, Database),
                 RoleID = user?.RoleID,
                 TitleID = user?.TitleID,
                 UserName = user?.UserName,

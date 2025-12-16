@@ -217,7 +217,7 @@ namespace Training.Website.Components.Pages
                         question!.Question_ID!.Value,
                         currentChoice.AnswerLetter!.Value,
                         currentChoice.AnswerText!,
-                        Globals.UserID(ApplicationState),
+                        Globals.CMS_UserID(ApplicationState),
                         Database
                     );
                 }
@@ -252,7 +252,7 @@ namespace Training.Website.Components.Pages
                 _currentQuestionText!,
                 answerFormatKey,
                 _currentSelectedCorrectAnswer,
-                Globals.UserID(ApplicationState),
+                Globals.CMS_UserID(ApplicationState),
                 Database
             );
 
@@ -405,14 +405,14 @@ namespace Training.Website.Components.Pages
 
                         if (questionChanged == true)
                             await _service.UpdateQuestion
-                                (question.Question_ID!.Value, _currentQuestionText!, selectedAnswerFormat.Key, _currentSelectedCorrectAnswer!, Globals.UserID(ApplicationState), Database);
+                                (question.Question_ID!.Value, _currentQuestionText!, selectedAnswerFormat.Key, _currentSelectedCorrectAnswer!, Globals.CMS_UserID(ApplicationState), Database);
 
                         if (formerlyMultipleChoice == true)
                             await _service.DeleteAnswerChoicesByQuestionID(question.Question_ID!.Value, Database);
                         else if (multipleChoiceAnswersChanged == true)
                             foreach (AnswerChoicesModel? newAnswer in _changedMultipleChoiceAnswers)
                                 if (newAnswer != null)
-                                    await _service.UpdateMultipleChoiceAnswer(newAnswer.Answer_ID!.Value, newAnswer.AnswerLetter!.Value, newAnswer.AnswerText!, Globals.UserID(ApplicationState), Database);
+                                    await _service.UpdateMultipleChoiceAnswer(newAnswer.Answer_ID!.Value, newAnswer.AnswerLetter!.Value, newAnswer.AnswerText!, Globals.CMS_UserID(ApplicationState), Database);
 
                         if (questionChanged == true || formerlyMultipleChoice == true || multipleChoiceAnswersChanged == true)
                         {

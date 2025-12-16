@@ -80,6 +80,9 @@ namespace Training.Website.Services
             }
         }
 
+        public async Task<int?> GetOPS_DB_UserID(string? loginID, IDatabase? database_OPS) =>
+            (await database_OPS!.QueryByStatementAsync<int?>($"SELECT TOP 1 Emp_ID FROM [Employees Tbl] WHERE UserName = '{loginID}'"))?.FirstOrDefault();
+
         public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionIDandQuestionnaireNumber(int sessionID, int questionnaireNumber, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
                 ("usp_Training_Questionnaire_GetQuestionsBySessionIDandQuestionnaireNumber", new { Session_ID = sessionID, QuestionnaireNumber = questionnaireNumber });

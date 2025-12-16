@@ -21,6 +21,10 @@ namespace Training.Website
         public const string SelectAll_Verbiage = "-- Select All --";
         public const string Notary = "Notary";
 
+
+        public static int CMS_UserID(AppState? appState) =>
+            appState?.LoggedOnUser?.AppUserID ?? 0;
+
         public static IEnumerable<string>? ConcatenateSessionInfoForDropDown(IEnumerable<SessionInformationModel>? sessionInfo)
         {
             if (sessionInfo == null)
@@ -88,7 +92,8 @@ namespace Training.Website
                 Value = SelectAll_Verbiage
             };
 
-        public static int UserID(AppState? appState) =>
-            appState?.LoggedOnUser?.AppUserID ?? 0;
+        public static int OPS_UserID(AppState? appState) =>
+            appState?.LoggedOnUser?.EmpID ?? 0;
+
     }
 }
