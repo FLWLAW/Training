@@ -18,7 +18,7 @@ else
                                      Width="200px"
                                      Data="@_allUsers?.Select(q => q?.UserName)"
                                      Enabled="true"
-                                     ValueChanged="@((string newValue) => UserSingleSelectValueChanged(newValue))">
+                                     ValueChanged="@(async (string newValue) => await UserSingleSelectValueChanged(newValue))">
                     <DropDownListSettings>
                         <DropDownListPopupSettings Height="360px" />
                     </DropDownListSettings>
