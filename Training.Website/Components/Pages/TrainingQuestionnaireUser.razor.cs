@@ -24,6 +24,9 @@ namespace Training.Website.Components.Pages
         private NavigationManager? NavManager { get; set; }
         #endregion
 
+        [Parameter]
+        public string? SessionID_QueryString { get; set; }
+
         #region PRIVATE FIELDS
         private Dictionary<int, string>? _answerFormats = null;
         private IEnumerable<string>? _sessions_FullText = null;
@@ -55,14 +58,23 @@ namespace Training.Website.Components.Pages
             _answerFormats = await _service.GetAnswerFormats(Database);
 
             // GET ALL SESSIONS
-            IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database);
+            IEnumerable<SessionInformationModel>? allSessionsInfo = await _service.GetSessionInformation(Database);
 
             //TODO: THE CODE BELOW MAY NOT BE NEEDED IF THE SESSION ID WILL BE PASSED TO THIS PAGE VIA QUERYSTRING OR SOMEOTHER METHOD. IF IT IS NEEDED, THEN IT IS REDUNDNANT WITH THE ADMINISTRATOR PAGE AND A COMMON METHOD SHOULD BE IMPLEMENTED.
-            if (sessionInfo != null && sessionInfo.Any() == true)
+            if (allSessionsInfo != null && allSessionsInfo.Any() == true)
             {
-                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
-                _sessions_IDs = sessionInfo.Select(q => q.Session_ID.ToString());
-                _selectedSessionString = ApplicationState!.SessionID_String;
+                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(allSessionsInfo);
+                _sessions_IDs = allSessionsInfo.Select(q => q.Session_ID.ToString());
+                
+                if (SessionID_QueryString == null)
+                    _selectedSessionString = ApplicationState!.SessionID_String;
+                else
+                {
+                    SessionInformationModel? sessionInfo = await _service.GetSessionInformationByID(SessionID_QueryString, Database);
+                    _selectedSessionString = Globals.ConcatenateSessionInfo(sessionInfo);
+                    ApplicationState!.SessionID_String = _selectedSessionString;
+                }
+
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
             }

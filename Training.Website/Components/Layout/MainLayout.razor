@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 
+@using Training.Website.Components.Pages
+
 <TelerikRootComponent>
     <div class="page">
         <CascadingValue Value="@ApplicationState">
@@ -11,7 +13,14 @@
                     <ErrorBoundary Context="Exception">
                         <ChildContent>
                             <MainTitleBar />
-                            @Body
+                            @if(string.IsNullOrWhiteSpace(SessionID) == true)
+                            {
+                                @Body
+                            }
+                            else
+                            {
+                                <TrainingQuestionnaireUser SessionID_QueryString=@SessionID />
+                            }
                         </ChildContent>
                         <ErrorContent>
                             <div class="alert bg-danger text-white alert-dismissible">

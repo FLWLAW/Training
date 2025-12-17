@@ -25,6 +25,8 @@ namespace Training.Website
         public static int CMS_UserID(AppState? appState) =>
             appState?.LoggedOnUser?.AppUserID ?? 0;
 
+        public static string? ConcatenateSessionInfo(SessionInformationModel? session) => $"{session?.Session_ID} ({session?.DocTitle})";
+
         public static IEnumerable<string>? ConcatenateSessionInfoForDropDown(IEnumerable<SessionInformationModel>? sessionInfo)
         {
             if (sessionInfo == null)
@@ -35,8 +37,10 @@ namespace Training.Website
 
                 foreach (SessionInformationModel? session in sessionInfo)
                 {
-                    string item = new($"{session.Session_ID} ({session.DocTitle})");
-                    sessions.Add(item);
+                    string? item = ConcatenateSessionInfo(session);
+
+                    if (string.IsNullOrWhiteSpace(item) == false)
+                        sessions.Add(item);
                 }
 
                 return sessions;
