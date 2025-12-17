@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Services\CookieService.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="FLWLAW_Email.Library" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="9.0.11" />
     <PackageReference Include="SqlServerDatabaseAccessLibrary" Version="1.1.0" />

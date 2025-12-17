@@ -7,6 +7,9 @@ namespace Training.Website.Services
 {
     public class UserServiceMethods : CommonServiceMethods
     {
+        public async Task<SessionInformationModel?> GetSessionInformationByID(string? sessionID, IDatabase? database) =>
+            (await database!.QueryByStoredProcedureAsync<SessionInformationModel?, object?>("usp_Training_Questionnaire_GetSessionInformationByID", new { Session_ID = sessionID }))?.FirstOrDefault();
+
         public async Task<IEnumerable<UserResponsesModel?>?> GetUserResponses(int testAttemptID, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<UserResponsesModel, object?>
                 ("usp_Training_Questionnaire_GetUserResponsesByTestAttemptID", new { TestAttempt_ID = testAttemptID });
