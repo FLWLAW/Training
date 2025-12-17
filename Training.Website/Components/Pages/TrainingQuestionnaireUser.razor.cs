@@ -2,6 +2,7 @@
 using SqlServerDatabaseAccessLibrary;
 using System.Diagnostics.Eventing.Reader;
 using System.Text;
+using System.Threading.Tasks;
 using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Services;
@@ -73,6 +74,8 @@ namespace Training.Website.Components.Pages
 
         private bool AtLastQuestion() => _currentQuestionIndex == _questionIndexLimit;
 
+        private void CloseClicked() => NavManager?.NavigateTo("/");
+
         private int CorrectAnswerCount()
         {
             int correctAnswerCount = 0;
@@ -118,14 +121,17 @@ namespace Training.Website.Components.Pages
             _currentSelectedAnswers_DropDown![_currentQuestionIndex]!.UserAnswer = newValue;
         }
 
-        private int GetCurrentQuestionnaireNumber()
+        private async Task<int> GetCurrentQuestionnaireNumber()
         {
-            if (_testEligibility == null)
+            string sql = $"SELECT TOP 1 QuestionnaireNumber FROM [TRAINING Questionnaire Test Results Main Tbl] WHERE [Session_ID] = {_selectedSession?.Session_ID} AND CMS_USER_ID = {ApplicationState!.LoggedOnUser!.AppUserID} ORDER BY QuestionnaireNumber DESC";
+            int? highestTakenQuestionnaireNumber = (await Database!.QueryByStatementAsync<int?>(sql))?.FirstOrDefault();
+
+            if (highestTakenQuestionnaireNumber == null)
                 return 1;
-            else if (_testEligibility.NoMore == true)
-                return _testEligibility.Count;
+            else if (highestTakenQuestionnaireNumber >= Globals.MaximumTestAttemptsPerSession)
+                return Globals.MaximumTestAttemptsPerSession;
             else
-                return _testEligibility.Count + 1;
+                return highestTakenQuestionnaireNumber.Value + 1;
         }
 
         private async Task<int> GetPreviousAttempts() =>
@@ -144,12 +150,10 @@ namespace Training.Website.Components.Pages
 
             string? messageLine1 = null;
             string? messageLine2 = null;
-            int previousAttempts = 0;
+            int attempts = 0;
             bool noMore = false;
             bool wasUserAssignedThisQuestionnaire =
                 await _service.WasUserAssignedQuestionnaire(_selectedSession!.Session_ID!.Value, ApplicationState!.LoggedOnUser!.AppUserID!.Value, Database);
-
-            _whenMustRetakeTestBy = null;
 
             if (wasUserAssignedThisQuestionnaire == false)
             {
@@ -166,9 +170,9 @@ namespace Training.Website.Components.Pages
                 IEnumerable<ScoresAndWhenSubmittedModel>? scores =
                     await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.CMS_UserID(ApplicationState), Database);
 
-                previousAttempts = scores?.Count() ?? 0;
+                attempts = scores?.Count() ?? 0;
 
-                if (previousAttempts > 0)
+                if (_score == null && attempts > 0)
                 {
                     ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
 
@@ -177,7 +181,7 @@ namespace Training.Website.Components.Pages
                         messageLine1 = $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
                         noMore = true;
                     }
-                    else if (previousAttempts >= Globals.MaximumTestAttemptsPerSession)
+                    else if (attempts >= Globals.MaximumTestAttemptsPerSession)
                     {
                         messageLine1 = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
                         noMore = true;
@@ -198,15 +202,13 @@ namespace Training.Website.Components.Pages
                 {
                     if (_score >= Globals.TestPassingThreshold)
                     {
-                        messageLine1 = $"Congratulations! Your score is {_score} and you have passed.";
+                        messageLine1 = $"Congratulations! Your score is {_score}% and you have passed.";
                         noMore = true;
                     }
                     else
                     {
-                        int currentAttempt = previousAttempts + 1;
-
-                        messageLine1 = $"Your score is {_score}, which is not a passing grade.";
-                        if (currentAttempt >= Globals.MaximumTestAttemptsPerSession)
+                        messageLine1 = $"Your score is {_score}%, which is not a passing grade.";
+                        if (attempts >= Globals.MaximumTestAttemptsPerSession)
                         {
                             messageLine2 = "You have reached the maximum number of attempts and cannot retake the questionnaire.";
                             noMore = true;
@@ -217,7 +219,7 @@ namespace Training.Website.Components.Pages
                 }
             }
 
-            return new EligibilityClass { Count = previousAttempts, NoMore = noMore, MessageLine1 = messageLine1, MessageLine2 = messageLine2, WasAssigned = wasUserAssignedThisQuestionnaire };
+            return new EligibilityClass { Count = attempts, NoMore = noMore, MessageLine1 = messageLine1, MessageLine2 = messageLine2, WasAssigned = wasUserAssignedThisQuestionnaire };
         }
 
         private async Task NextQuestionClicked()
@@ -251,8 +253,6 @@ namespace Training.Website.Components.Pages
 
         private int QuestionsAnswered() => _currentSelectedAnswers_DropDown?.Count(q => string.IsNullOrWhiteSpace(q?.UserAnswer) == false) ?? 0;
 
-        private void CloseClicked() => NavManager?.NavigateTo("/");
-
         private double? Score()
         {
             if (_questions != null)
@@ -271,15 +271,15 @@ namespace Training.Website.Components.Pages
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
-            _currentQuestionnaireNumber = GetCurrentQuestionnaireNumber();
             _currentQuestionIndex = 0;
             _score = null;
+            _currentQuestionnaireNumber = await GetCurrentQuestionnaireNumber();
             _questions = _selectedSession != null
                 ? (await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, _currentQuestionnaireNumber, Database))?.ToArray()
                 : null;
             _testEligibility = await GetTestEligibility();
 
-            if(_testEligibility == null || _testEligibility.WasAssigned == false || _questions == null || _questions.Length == 0)
+            if (_testEligibility == null || _testEligibility.WasAssigned == false || _questions == null || _questions.Length == 0)
             {
                 _currentSelectedAnswers_DropDown = null;
                 _questionIndexLimit = -1;

@@ -41,7 +41,7 @@
     </tr>
 </table>
 
-@if (_testEligibility != null && _testEligibility.NoMore == true)
+@if (_testEligibility != null && string.IsNullOrWhiteSpace(_testEligibility.MessageLine1) == false)
 {
     <table class="center-table">
         <tr>
@@ -57,14 +57,6 @@
                 </td>
             </tr>
         }
-        <!--
-        <tr>
-            <td colspan="2" style="font-size: x-large; text-align: center;">
-                <br />
-                <TelerikButton Class="UniformButton" OnClick="@(() => CloseClicked() )">Close</TelerikButton>
-            </td>
-        </tr>
-        -->
     </table>
 }
 @if (ShowUserResponses() == true)
@@ -89,9 +81,15 @@
                 <td class="Response">@CorrectAnswerText(response, correctAnswer)</td>
             </tr>
         }
+        <tr>
+            <td colspan="5" style="font-size: x-large; text-align: center;">
+                <br />
+                <TelerikButton Class="UniformButton" OnClick="@(() => CloseClicked())">Close</TelerikButton>
+            </td>
+        </tr>
     </table>
 }
-@if (_testEligibility != null && _testEligibility.NoMore == false && _selectedSessionString != null)
+else if (_testEligibility != null && _testEligibility.NoMore == false && _selectedSessionString != null)
 {
     <table style="width: 100%;">
         <tr>
