@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
+using System.Diagnostics.Eventing.Reader;
 using System.Text;
+using System.Threading.Tasks;
 using Telerik.Blazor.Components;
 using Training.Website.Models;
 using Training.Website.Services;
@@ -72,6 +74,8 @@ namespace Training.Website.Components.Pages
 
         private bool AtLastQuestion() => _currentQuestionIndex == _questionIndexLimit;
 
+        private void CloseClicked() => NavManager?.NavigateTo("/");
+
         private int CorrectAnswerCount()
         {
             int correctAnswerCount = 0;
@@ -117,45 +121,70 @@ namespace Training.Website.Components.Pages
             _currentSelectedAnswers_DropDown![_currentQuestionIndex]!.UserAnswer = newValue;
         }
 
-        private int GetCurrentQuestionnaireNumber()
+        private async Task<int> GetCurrentQuestionnaireNumber()
         {
-            if (_testEligibility == null)
+            string sql = $"SELECT TOP 1 QuestionnaireNumber FROM [TRAINING Questionnaire Test Results Main Tbl] WHERE [Session_ID] = {_selectedSession?.Session_ID} AND CMS_USER_ID = {ApplicationState!.LoggedOnUser!.AppUserID} ORDER BY QuestionnaireNumber DESC";
+            int? highestTakenQuestionnaireNumber = (await Database!.QueryByStatementAsync<int?>(sql))?.FirstOrDefault();
+
+            if (highestTakenQuestionnaireNumber == null)
                 return 1;
-            else if (_testEligibility.Finished == true)
-                return _testEligibility.Count;
+            else if (highestTakenQuestionnaireNumber >= Globals.MaximumTestAttemptsPerSession)
+                return Globals.MaximumTestAttemptsPerSession;
             else
-                return _testEligibility.Count + 1;
+                return highestTakenQuestionnaireNumber.Value + 1;
         }
+
+        private async Task<int> GetPreviousAttempts() =>
+            (
+                await Database!.QueryByStoredProcedureAsync<int, object?>
+                (
+                    "usp_Training_Questionnaire_GetCountOfTestAttemptsBySessionIDandUserID",
+                    new { Session_ID = _selectedSession!.Session_ID!.Value!, CMS_User_ID = Globals.CMS_UserID(ApplicationState) }
+                )
+            )?.First()
+            ?? 0;
 
         private async Task<EligibilityClass> GetTestEligibility()
         {
-            int previousAttempts = 0;
-            string? message = null;
+            // CALLED FROM SubmitClicked() and SessionChanged()
+
+            string? messageLine1 = null;
+            string? messageLine2 = null;
+            int attempts = 0;
             bool noMore = false;
             bool wasUserAssignedThisQuestionnaire =
                 await _service.WasUserAssignedQuestionnaire(_selectedSession!.Session_ID!.Value, ApplicationState!.LoggedOnUser!.AppUserID!.Value, Database);
 
             if (wasUserAssignedThisQuestionnaire == false)
-                message = "You have not been assigned this questionnaire.";
+            {
+                messageLine1 = "You have not been assigned this questionnaire.";
+                noMore = true;
+            }
+            else if (_questions == null || _questions.Length == 0)
+            {
+                messageLine1 = "THERE ARE NO QUESTIONS FOR THIS SESSION";
+                noMore = true;
+            }
             else
             {
                 IEnumerable<ScoresAndWhenSubmittedModel>? scores =
                     await _service.GetScoresBySessionIDandUserID(_selectedSession!.Session_ID!.Value!, Globals.CMS_UserID(ApplicationState), Database);
 
-                previousAttempts = scores?.Count() ?? 0;
+                attempts = scores?.Count() ?? 0;
 
-                if (previousAttempts > 0)
+                if (_score == null && attempts > 0)
                 {
                     ScoresAndWhenSubmittedModel? passingScore = scores?.FirstOrDefault(q => q.Score >= Globals.TestPassingThreshold);
 
                     if (passingScore != null)
                     {
-                        message = $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
+                        messageLine1 = $"You already took this questionnaire on {passingScore.WhenSubmitted} and passed with a score of {passingScore.Score}%.";
                         noMore = true;
                     }
-                    else if (previousAttempts >= Globals.MaximumTestAttemptsPerSession)
+                    else if (attempts >= Globals.MaximumTestAttemptsPerSession)
                     {
-                        message = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
+                        messageLine1 = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing.";
+                        messageLine2 = $"(The minimum passing grade is {Globals.TestPassingThreshold}%.)";
                         noMore = true;
                     }
                     else
@@ -164,21 +193,41 @@ namespace Training.Website.Components.Pages
 
                         if (deadline != null)
                         {
-                            message = $"The deadline to re-take this questionnaire expired on {deadline.Value}.";
+                            messageLine1 = $"The deadline to re-take this questionnaire expired on {deadline.Value}.";
                             noMore = true;
                         }
                     }
                 }
+
+                if (noMore == false && _score != null)
+                {
+                    if (_score >= Globals.TestPassingThreshold)
+                    {
+                        messageLine1 = $"Congratulations! Your score is {_score}% and you have passed.";
+                        noMore = true;
+                    }
+                    else
+                    {
+                        messageLine1 = $"Your score is {_score}%, which is not a passing grade.";
+                        if (attempts >= Globals.MaximumTestAttemptsPerSession)
+                        {
+                            messageLine2 = "You have reached the maximum number of attempts and cannot retake the questionnaire.";
+                            noMore = true;
+                        }
+                        else
+                            messageLine2 = $"Please review and retake the questionnaire by {_whenMustRetakeTestBy}.";
+                    }
+                }
             }
 
-            return new EligibilityClass { Count = previousAttempts, Finished = noMore, Message = message, WasAssigned = wasUserAssignedThisQuestionnaire };
+            return new EligibilityClass { Count = attempts, NoMore = noMore, MessageLine1 = messageLine1, MessageLine2 = messageLine2, WasAssigned = wasUserAssignedThisQuestionnaire };
         }
 
-        private void NextQuestionClicked()
+        private async Task NextQuestionClicked()
         {
             if (AtLastQuestion() == false)
             {
-                SetCurrentFields_Main(1);
+                await SetCurrentFields_Main(1);
                 StateHasChanged();
             }
         }
@@ -194,18 +243,16 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private void PreviousQuestionClicked()
+        private async Task PreviousQuestionClicked()
         {
             if (AtFirstQuestion() == false)
             {
-                SetCurrentFields_Main(-1);
+                await SetCurrentFields_Main(-1);
                 StateHasChanged();
             }
         }
 
         private int QuestionsAnswered() => _currentSelectedAnswers_DropDown?.Count(q => string.IsNullOrWhiteSpace(q?.UserAnswer) == false) ?? 0;
-
-        private void CloseClicked() => NavManager?.NavigateTo("/");
 
         private double? Score()
         {
@@ -225,57 +272,63 @@ namespace Training.Website.Components.Pages
             ApplicationState!.SessionID_String = newValue;
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
+            _currentQuestionIndex = 0;
+            _score = null;
+            _currentQuestionnaireNumber = await GetCurrentQuestionnaireNumber();
+            _questions = _selectedSession != null
+                ? (await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, _currentQuestionnaireNumber, Database))?.ToArray()
+                : null;
             _testEligibility = await GetTestEligibility();
-            if(_testEligibility != null && _testEligibility.WasAssigned == false)
+
+            if (_testEligibility == null || _testEligibility.WasAssigned == false || _questions == null || _questions.Length == 0)
             {
-                _currentQuestionnaireNumber = 0;
-                _questions = null;
                 _currentSelectedAnswers_DropDown = null;
-                _currentQuestionIndex = 0;
                 _questionIndexLimit = -1;
-                _score = null;
             }
             else
             {
-                _currentQuestionnaireNumber = GetCurrentQuestionnaireNumber();
-                _questions = (await _service.GetQuestionsBySessionIDandQuestionnaireNumber(_selectedSession!.Session_ID!.Value, _currentQuestionnaireNumber, Database))?.ToArray();
                 _currentSelectedAnswers_DropDown = new UserAnswersModel[_questions?.Length ?? 0];
-                _currentQuestionIndex = 0;
                 _questionIndexLimit = _questions?.GetUpperBound(0) ?? -1;
-                _score = null;
-                SetCurrentFields_Main(0);
+                await SetCurrentFields_Main(0);
             }
             StateHasChanged();
         }
 
         private void SessionIdAutoCompleteValueChanged(string newValue) => _keypressedSessionID = newValue;
 
-        private void SetCurrentAnswerDropDownItems()
+        private async Task SetCurrentAnswerDropDownItems()
         {
-            if (_currentAnswerFormat == Globals.MultipleChoice)
+            await Task.Run(() =>
             {
-                int? questionID = _questions?[_currentQuestionIndex]?.Question_ID;
+                if (_currentAnswerFormat == Globals.MultipleChoice)
+                {
+                    int? questionID = _questions?[_currentQuestionIndex]?.Question_ID;
 
-                _currentMultipleChoiceAnswers = (questionID != null)
-                    ? _service.GetAnswerChoicesByQuestionID(questionID.Value, Database)
-                    : null;
-            }
+                    _currentMultipleChoiceAnswers = (questionID != null)
+                        ? _service.GetAnswerChoicesByQuestionID(questionID.Value, Database)
+                        : null;
+                }
 
-            _currentAnswerChoices_DropDown = _currentAnswerFormat switch
-            {
-                Globals.MultipleChoice => _currentMultipleChoiceAnswers?.Select(q => q?.AnswerLetter.ToString()).Order(),
-                Globals.TrueFalse => Globals.TrueFalse_Choices,
-                Globals.YesNo => Globals.YesNo_Choices,
-                _ => throw new Exception(Globals.CurrentAnswerFormatError)
-            };
+                _currentAnswerChoices_DropDown = _currentAnswerFormat switch
+                {
+                    Globals.MultipleChoice => _currentMultipleChoiceAnswers?.Select(q => q?.AnswerLetter.ToString()).Order(),
+                    Globals.TrueFalse => Globals.TrueFalse_Choices,
+                    Globals.YesNo => Globals.YesNo_Choices,
+                    _ => throw new Exception(Globals.CurrentAnswerFormatError)
+                };
+            });
         }
 
-        private void SetCurrentFields_Main(int indexIncrement)
+        private async Task SetCurrentFields_Main(int indexIncrement)
         {
-            _currentQuestionIndex += indexIncrement;
-            _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions?[_currentQuestionIndex]);
-            _currentSelectedAnswer_DropDown = _currentSelectedAnswers_DropDown?[_currentQuestionIndex]?.UserAnswer ?? null;
-            SetCurrentAnswerDropDownItems();
+            await Task.Run(() =>
+            {
+                _currentQuestionIndex += indexIncrement;
+                _currentAnswerFormat = Globals.CurrentAnswerFormat(_answerFormats, _questions?[_currentQuestionIndex]);
+                _currentSelectedAnswer_DropDown = _currentSelectedAnswers_DropDown?[_currentQuestionIndex]?.UserAnswer ?? null;
+            });
+
+            await SetCurrentAnswerDropDownItems();
         }
 
         private async Task SubmitClicked()
@@ -289,16 +342,7 @@ namespace Training.Website.Components.Pages
                 _score = Score();
                 if (_score != null)
                 {
-                    int previousAttempts =
-                        (
-                            await Database!.QueryByStoredProcedureAsync<int, object?>
-                            (
-                                "usp_Training_Questionnaire_GetCountOfTestAttemptsBySessionIDandUserID", new { Session_ID = _selectedSession!.Session_ID!.Value!, CMS_User_ID = Globals.CMS_UserID(ApplicationState) }
-                            )
-                        )?.First()
-                        ?? 0;
-
-                    int currentAttempt = previousAttempts + 1;
+                    int currentAttempt = await GetPreviousAttempts() + 1;
 
                     _whenMustRetakeTestBy = (currentAttempt < Globals.MaximumTestAttemptsPerSession) ? DateTime.Now.AddDays(Globals.RetakeTestDeadlineDays) : null;
 
@@ -319,7 +363,7 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private bool ShowUserResponses() => _testEligibility?.Finished == false && _userResponses != null;
+        private bool ShowUserResponses() => _testEligibility?.NoMore == false && _userResponses != null;
 
         private string? UserAnswerText(UserResponsesModel? response)
         {

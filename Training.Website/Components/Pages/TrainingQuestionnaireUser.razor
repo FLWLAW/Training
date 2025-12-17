@@ -41,83 +41,55 @@
     </tr>
 </table>
 
-@if (_selectedSession != null && (_questions == null || _questions.Length == 0))
+@if (_testEligibility != null && string.IsNullOrWhiteSpace(_testEligibility.MessageLine1) == false)
 {
-    <table style="width: 100%;">
-        <tr>
-            <!-- NOTE: THIS MESSAGE WILL OCCUR IF THE USER FAILED THE FIRST QUESTIONNAIRE AND THERE IS NO SECOND QUESTIONNAIRE -->
-            <td style="width: 100%; text-align: center; font-size: xx-large;">
-                THERE ARE NO QUESTIONS FOR THIS SESSION
-            </td>
-        </tr>
-    </table>
-}
-else if (_score != null)
-{
-    <table style="width: 100%;">
+    <table class="center-table">
         <tr>
             <td colspan="2" style="font-size: x-large; text-align: center;">
-                @if (_score >= Globals.TestPassingThreshold)
-                {
-                    <label>Congratulations! Your score is @_score% and you have passed.</label>
-                }
-                else if(_testEligibility != null)
-                {
-                    <label>Your score is @_score%, which is not a passing grade.</label>
-                    <br />
-                    if (_testEligibility.Finished == false)
-                    {
-                        <label>Please review and retake the questionnaire by @_whenMustRetakeTestBy.</label>
-                    }
-                    else
-                    {
-                        <label>You have reached the maximum number of attempts and cannot retake the questionnaire.</label>
-                    }
-                }
+                <label>@_testEligibility.MessageLine1</label>
             </td>
         </tr>
-        <tr>
-            <td colspan="2" style="font-size: x-large; text-align: center;">
-                <br />
-                <TelerikButton Class="UniformButton" OnClick="@(() => CloseClicked() )">Close</TelerikButton>
-            </td>
-        </tr>
-    </table>
-    @if (ShowUserResponses() == true)
-    {
-        <table class="center-table">
+        @if(string.IsNullOrWhiteSpace(_testEligibility.MessageLine2) == false)
+        {
             <tr>
-                <td colspan="5" style="font-size: x-large; text-align: center; padding-top: 90px;">
-                    <u>ANSWER KEY:</u>
+                <td colspan="2" style="font-size: x-large; text-align: center;">
+                    <label>@_testEligibility.MessageLine2</label>
                 </td>
             </tr>
-            @foreach (UserResponsesModel? response in _userResponses!)
-            {
-                bool correctAnswer = response!.UserAnswer == response.CorrectAnswer;
-                string statusColor = (correctAnswer == true) ? "green" : "red";
-                string statusText = (correctAnswer == true) ? "Correct" : "Incorrect";
-                <tr>
-                    <td class="ResponseHeader">Question #@response!.QuestionNumber:</td>
-                    <td class="ResponseHeader">@response.Question</td>
-                    <td class="Response">@UserAnswerText(response)</td>
-                    <td class="Status" style="color: @statusColor;">@statusText</td>
-                    <td class="Response">@CorrectAnswerText(response, correctAnswer)</td>
-                </tr>
-            }
-        </table>
-    }
+        }
+    </table>
 }
-else if (_testEligibility != null && _testEligibility?.Message != null && (_testEligibility.Finished == true || _testEligibility.WasAssigned == false))
+@if (ShowUserResponses() == true)
 {
-    <table style="width: 100%;">
+    <table class="center-table">
         <tr>
-            <td style="width: 100%; text-align: center;">
-                @_testEligibility.Message
+            <td colspan="5" style="font-size: x-large; text-align: center; padding-top: 90px;">
+                <u>ANSWER KEY:</u>
+            </td>
+        </tr>
+        @foreach (UserResponsesModel? response in _userResponses!)
+        {
+            bool correctAnswer = response!.UserAnswer == response.CorrectAnswer;
+            string statusColor = (correctAnswer == true) ? "green" : "red";
+            string statusText = (correctAnswer == true) ? "Correct" : "Incorrect";
+
+            <tr>
+                <td class="ResponseHeader">Question #@response!.QuestionNumber:</td>
+                <td class="ResponseHeader">@response.Question</td>
+                <td class="Response">@UserAnswerText(response)</td>
+                <td class="Status" style="color: @statusColor;">@statusText</td>
+                <td class="Response">@CorrectAnswerText(response, correctAnswer)</td>
+            </tr>
+        }
+        <tr>
+            <td colspan="5" style="font-size: x-large; text-align: center;">
+                <br />
+                <TelerikButton Class="UniformButton" OnClick="@(() => CloseClicked())">Close</TelerikButton>
             </td>
         </tr>
     </table>
 }
-else if (_selectedSessionString != null)
+else if (_testEligibility != null && _testEligibility.NoMore == false && _selectedSessionString != null)
 {
     <table style="width: 100%;">
         <tr>
@@ -132,10 +104,10 @@ else if (_selectedSessionString != null)
         </tr>
         <tr>
             <td class="LeftSide">
-                <TelerikButton Class="UniformButton" Enabled="@(! AtFirstQuestion())" OnClick="@(() => PreviousQuestionClicked())">Previous Question</TelerikButton>
+                <TelerikButton Class="UniformButton" Enabled="@(! AtFirstQuestion())" OnClick="@(async () => await PreviousQuestionClicked())">Previous Question</TelerikButton>
             </td>
             <td class="RightSide">
-                <TelerikButton Class="UniformButton" Enabled="@(! AtLastQuestion())" OnClick="@(() => NextQuestionClicked())">Next Question</TelerikButton>
+                <TelerikButton Class="UniformButton" Enabled="@(! AtLastQuestion())" OnClick="@(async () => await NextQuestionClicked())">Next Question</TelerikButton>
             </td>
         </tr>
         <tr>
