@@ -183,7 +183,8 @@ namespace Training.Website.Components.Pages
                     }
                     else if (attempts >= Globals.MaximumTestAttemptsPerSession)
                     {
-                        messageLine1 = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing (minimum passing grade: {Globals.TestPassingThreshold}%).";
+                        messageLine1 = $"You have attempted this questionnaire the maximum number of times ({Globals.MaximumTestAttemptsPerSession}) without passing.";
+                        messageLine2 = $"(The minimum passing grade is {Globals.TestPassingThreshold}%.)";
                         noMore = true;
                     }
                     else
