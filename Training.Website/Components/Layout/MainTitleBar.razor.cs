@@ -11,6 +11,8 @@ namespace Training.Website.Components.Layout
 
 #if DEBUG
         private const string _TITLE = "Training Questionnaire (** DEBUG MODE **)";
+#elif QA
+        private const string _TITLE = "Training Questionnaire (** QA MODE **)";
 #else
         private const string _TITLE = "Training Questionnaire";
 #endif

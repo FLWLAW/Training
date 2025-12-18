@@ -171,7 +171,7 @@ namespace Training.Website.Components.Pages
         {
             IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment.Where(u => u != null && u.Selected == true);
 
-#if DEBUG
+#if DEBUG || QA
             EMailer email = new();
             StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");
 
@@ -196,8 +196,6 @@ namespace Training.Website.Components.Pages
             email.BodyTextFormat = MimeKit.Text.TextFormat.Html;
             email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
             email.Body = testMessageBody;
-
-            //TODO: ADD QA
 
             AllUsers_CMS_DB? susan = _allUsers_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
             email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
@@ -227,7 +225,6 @@ namespace Training.Website.Components.Pages
         private void SendEmailsToSelectedAndLogToDB_Main()
         {
             UpsertDueDateToDB();
-            //TODO: LOG EMAILS TO DB
             SendEmails();
             _emailsSentWindowVisible = true;
             StateHasChanged();

@@ -5,7 +5,6 @@ using Training.Website.Services;
 
 namespace Training.Website.Components.Layout
 {
-    //TODO: UNCOMMENT MULTIPLE OBJECTS HERE LATER...
     public partial class MainLayout
     {
         #region DEPENDENCY INJECTION PARAMETERS
@@ -29,7 +28,6 @@ namespace Training.Website.Components.Layout
 
         protected async override Task OnInitializedAsync()
         {
-            // TODO: CHANGE TO ACTUAL METHOD TO GET LOGGED ON USER
             /*
             ApplicationState!.LoggedOnUser = new()
             {

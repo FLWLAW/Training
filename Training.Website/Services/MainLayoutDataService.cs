@@ -40,7 +40,7 @@ namespace Training.Website.Services
             else
             {
                 AllUsers_CMS_DB? user = (await GetAllUsers(database_CMS))?.FirstOrDefault(q => q?.LoginID?.ToLower() == loginID?.ToLower());
-#if DEBUG
+#if DEBUG || QA
                 if (user != null)
                     return user;
                 else if (loginID.Equals("DRosenblum", StringComparison.InvariantCultureIgnoreCase) == false)
