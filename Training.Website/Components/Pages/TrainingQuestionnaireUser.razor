@@ -24,7 +24,7 @@
         </td>
     </tr>
     <tr>
-        <td>
+        <td style="text-align: center;">
             <label style="padding-right: 30px;">Or type in session here:</label>
             <TelerikAutoComplete
                 @ref="@_sessionIdAutoComplete"
@@ -37,6 +37,7 @@
                 OnClose="@(async (AutoCompleteCloseEventArgs args) => await OnCloseSessionIdAutoComplete(args) )"
                 Width="210px"
             />
+            <label style="width: 774px;">&nbsp;&nbsp;&nbsp;</label>
         </td>
     </tr>
 </table>
