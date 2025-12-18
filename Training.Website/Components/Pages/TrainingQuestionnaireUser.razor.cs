@@ -153,7 +153,7 @@ namespace Training.Website.Components.Pages
                     "usp_Training_Questionnaire_GetCountOfTestAttemptsBySessionIDandUserID",
                     new { Session_ID = _selectedSession!.Session_ID!.Value!, CMS_User_ID = Globals.CMS_UserID(ApplicationState) }
                 )
-            )?.First()
+            )?.FirstOrDefault()
             ?? 0;
 
         private async Task<EligibilityClass> GetTestEligibility()
