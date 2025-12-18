@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using SqlServerDatabaseAccessLibrary;
-using Telerik.SvgIcons;
 using Training.Website.Models.Users;
 
 namespace Training.Website.Services
@@ -46,6 +45,7 @@ namespace Training.Website.Services
                 else if (loginID.Equals("DRosenblum", StringComparison.InvariantCultureIgnoreCase) == false)
                     return null;
                 else
+                {
                     return new AllUsers_CMS_DB()
                     {
                         AppUserID = 1000000,
@@ -57,10 +57,11 @@ namespace Training.Website.Services
                         TitleID = 1,
                         UserName = "David Rosenblum"
                     };
-            }
+                }
 #else
-            return user;
+                return user;
 #endif
+            }
         }
     }
 }

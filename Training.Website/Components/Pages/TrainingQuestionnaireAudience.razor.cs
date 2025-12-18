@@ -101,6 +101,29 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
+        private StringBuilder EMailMessage(string? firstName)
+        {
+            //TODO: FIX PRODUCTION baseURL ONCE IT IS READY - DO NOT PUT A SLASH AT THE END
+#if DEBUG
+            const string baseURL = "http://drosenblum-elitedesk:83";
+#elif QA
+            const string baseURL = "http://drosenblum-elitedesk:8484";
+#else
+            const string baseURL = TBD;
+#endif
+            StringBuilder message = new();
+
+            message.Append($"Dear {firstName},<br/><br/>");
+            message.Append($"You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>");
+            message.Append("Please click on the link below to access the questionnaire:<br/>");
+            message.Append($"<a href='{baseURL}/?SessionID={_selectedSession?.Session_ID}'>Training Questionnaire</a><br/><br/>");
+            message.Append("Thank you for your participation!<br/><br/>");
+            message.Append("Best regards,<br/>");
+            message.Append("Compliance Team");
+
+            return message;
+        }
+
         private void EmailsSentCloseClicked() => _emailsSentWindowVisible = false;
 
         private void LogEMailingToDB(AllUsers_Assignment? recipient) =>
@@ -178,7 +201,7 @@ namespace Training.Website.Components.Pages
             testMessageBody.Append("<br /><br />");
             foreach (AllUsers_Assignment? recipient in recipients)
             {
-                string message = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
+                StringBuilder message = EMailMessage(recipient?.FirstName);
 
                 testMessageBody.Append("<br /><br />");
                 testMessageBody.Append("-------------------------------------------------------------------------------------------------------------------------------------------------------------");
@@ -207,12 +230,13 @@ namespace Training.Website.Components.Pages
             foreach (AllUsers_Assignment? recipient in recipients)
             {
                 MailboxAddress address = new(recipient!.UserName ?? string.Empty, recipient!.EmailAddress!);
-                string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
+                //string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
+
                 EMailer email = new()
                 {
                     BodyTextFormat = MimeKit.Text.TextFormat.Html,
                     Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}",
-                    Body = new StringBuilder(body),
+                    Body = EMailMessage(recipient?.FirstName),
                     To = [address]
                 };
 
@@ -273,7 +297,8 @@ namespace Training.Website.Components.Pages
                     int? roleID = (_roles?.FirstOrDefault(q => q?.Value == role)?.ID) ?? throw new NullReferenceException($"Unable to find a role description for role {role}.");
                     IEnumerable<AllUsers_CMS_DB>? usersInRole = _allUsers_DB?.Where(x => x.RoleID == roleID);
 
-                    usersToAssign.AddRange(AddAssignedUsers(usersInRole)!);
+                    if (usersInRole != null && usersInRole.Any() == true)
+                        usersToAssign.AddRange(AddAssignedUsers(usersInRole)!);
                 }
                 else
                 {
