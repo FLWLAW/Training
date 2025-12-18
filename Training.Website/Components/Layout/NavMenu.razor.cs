@@ -38,7 +38,7 @@ namespace Training.Website.Components.Layout
             : false;
 
         private bool IsTester() => 
-            #if DEBUG 
+            #if DEBUG || QA
                 ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.LoginID != null && _testers != null
                     ? _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower())
                     : false;

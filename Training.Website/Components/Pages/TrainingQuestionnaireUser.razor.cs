@@ -60,7 +60,6 @@ namespace Training.Website.Components.Pages
             // GET ALL SESSIONS
             IEnumerable<SessionInformationModel>? allSessionsInfo = await _service.GetSessionInformation(Database);
 
-            //TODO: THE CODE BELOW MAY NOT BE NEEDED IF THE SESSION ID WILL BE PASSED TO THIS PAGE VIA QUERYSTRING OR SOMEOTHER METHOD. IF IT IS NEEDED, THEN IT IS REDUNDNANT WITH THE ADMINISTRATOR PAGE AND A COMMON METHOD SHOULD BE IMPLEMENTED.
             if (allSessionsInfo != null && allSessionsInfo.Any() == true)
             {
                 _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(allSessionsInfo);
