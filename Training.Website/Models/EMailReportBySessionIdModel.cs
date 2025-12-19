@@ -3,6 +3,7 @@
     public class EMailReportBySessionIdModel
     {
         public int? ID { get; set; }
+        public int? Session_ID { get; set; }
         public int? OPS_Emp_ID { get; set; }
         public int? CMS_User_ID { get; set; }
         public string? FirstName { get; set; }
