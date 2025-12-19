@@ -109,8 +109,10 @@ namespace Training.Website.Components.Pages
                 return (_dueDate < today) ? "Overdue" : "Not Attempted";
             else if (scores!.Any(q => q?.Score >= Globals.TestPassingThreshold) == true)
                 return (whenUserLastSubmitted == null) ? "--NULL--" : (whenUserLastSubmitted?.Date > _dueDate) ? "Passed (late)" : "Passed";
+            /*
             else if (scores!.Count() < Globals.MaximumTestAttemptsPerSession)
                 return "Incomplete";
+            */
             else
                 return "Failed";
         }
