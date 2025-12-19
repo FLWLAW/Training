@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging.Abstractions;
 using SqlServerDatabaseAccessLibrary;
 using Telerik.Blazor.Components;
 using Training.Website.Models;
@@ -30,6 +29,7 @@ namespace Training.Website.Components.Pages
         private IEnumerable<EMailReportBySessionIdModel?>? _emailedUsers = null;
         private IEnumerable<AllUsers_CMS_DB?>? _allUsers_CMS = null;
         private AllUsers_Notaries?[]? _notaries = null;
+        private IEnumerable<ResultsModel?>? _results = null;
         private readonly EmailReportServiceMethods _service = new();
         private TelerikGrid<EMailReportBySessionIdModel?>? _emailedReports = null;
         
@@ -49,7 +49,7 @@ namespace Training.Website.Components.Pages
 
 // ===========================================================================================================================================================================================================================================================================================================================================
 
-        private async Task GetEMailedUsers()
+        private async Task<IEnumerable<EMailReportBySessionIdModel?>?> GetEMailedUsers()
         {
             DateTime today = DateTime.Today;
             EMailReportBySessionIdModel?[]? emailedUsers = (await _service.GetEMailingsBySessionID(_selectedSession?.Session_ID!.Value, Database_OPS!))?.ToArray();
@@ -70,7 +70,7 @@ namespace Training.Website.Components.Pages
                 }
             }
 
-            _emailedUsers = emailedUsers;
+            return emailedUsers;
         }
 
         private string? GetRoleName(int? cmsUserID)
@@ -121,7 +121,9 @@ namespace Training.Website.Components.Pages
             _selectedSessionString = newValue;
             _selectedSession = Globals.ConvertSessionStringToClass(newValue);
             _dueDate = (await _service.GetDueDateBySessionID(_selectedSession!.Session_ID, Database_OPS!))?.DueDate;
-            await GetEMailedUsers();
+            _emailedUsers = await GetEMailedUsers();
+            _results = await _service.GetResultsBySessionID(_selectedSession!.Session_ID!.Value, Database_OPS);
+
             StateHasChanged();
         }
     }
