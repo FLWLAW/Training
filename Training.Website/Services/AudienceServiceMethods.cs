@@ -1,5 +1,4 @@
 ﻿using SqlServerDatabaseAccessLibrary;
-using System.Threading.Tasks;
 using Training.Website.Models;
 using Training.Website.Models.Users;
 
@@ -7,7 +6,13 @@ namespace Training.Website.Services
 {
     public class AudienceServiceMethods : CommonServiceMethods
     {
-        internal void UpsertEMailingRecord(AllUsers_Assignment? recipient, int? session_ID, string? sendingUser, IDatabase? database)
+        public async Task<IEnumerable<IdValue<int>?>?> GetAllReports(IDatabase? database) =>
+            await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Report_SA", "ReportID", "ReportDesc");
+
+        public async Task<IEnumerable<Reports_Username_ReportDesc_StageName_Model?>?> GetReportsUsersReportDescriptionsStageNames(IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<Reports_Username_ReportDesc_StageName_Model?>("usp_ReportSelectionStage_SA");
+
+        public void UpsertEMailingRecord(AllUsers_Assignment? recipient, int? session_ID, string? sendingUser, IDatabase? database)
         {
             UpsertEMailings_Parameters parameters = new()
             {
@@ -34,6 +39,5 @@ namespace Training.Website.Services
 
             database!.NonQueryByStoredProcedure("usp_Training_Questionnaire_UpsertDueDate", parameters);
         }
-
     }
 }

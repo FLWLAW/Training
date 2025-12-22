@@ -76,9 +76,25 @@ else
                     </MultiSelectSettings>
                 </TelerikMultiSelect>
             </td>
+            <td class="HeaderClass HeaderClassCentered">
+                <span class="HeaderClass">Reports:</span>
+                <br />
+                <TelerikMultiSelect
+                    Class="UniformWidth_DropDown"
+                    AutoClose="false"
+                    Enabled="true"
+                    Data="@_reports?.Select(q => q?.Value).Order()"
+                    Value="@_selectedReports"
+                    ValueChanged="@((List<string> newValues) => ReportsMultiSelectChanged(newValues) )"
+                    TagMode="@MultiSelectTagMode.Multiple">
+                    <MultiSelectSettings>
+                        <MultiSelectPopupSettings Height="300px" />
+                    </MultiSelectSettings>
+                </TelerikMultiSelect>
+            </td>
         </tr>
         <tr>
-            <td colspan="3" class="HeaderClass" style="text-align: center;">
+            <td colspan="4" class="HeaderClass" style="text-align: center;">
                 <span style="padding-right: 30px;" class="HeaderClass">Due Date:</span>
                 <TelerikDatePicker
                     Min="@_minimumDueDate"

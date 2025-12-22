@@ -35,9 +35,12 @@ namespace Training.Website.Components.Pages
         private List<string> _selectedRoles = [];
         private IEnumerable<IdValue<int>?>? _titles = null;
         private List<string> _selectedTitles = [];
+        private IEnumerable<IdValue<int>?>? _reports = null;
+        private List<string> _selectedReports = [];
+        private IEnumerable<Reports_Username_ReportDesc_StageName_Model?>? _reportsUsernames_ReportDescs_StageNames = null;
         private readonly DateTime _minimumDueDate = DateTime.Now.AddDays(1);
         private DateTime? _dueDate = null;
-        private AllUsers_CMS_DB[]? _allUsers_DB = null;
+        private AllUsers_CMS_DB[]? _allUsers_CMS_DB = null;
         private List<AllUsers_Assignment?> _allUsers_Assignment = [];
         private IEnumerable<AllUsers_Notaries?>? _notaries = null;
         private TelerikGrid<AllUsers_Assignment>? _allUsers_Assignment_ExportGrid;
@@ -49,10 +52,12 @@ namespace Training.Website.Components.Pages
 
             if (sessionInfo != null && sessionInfo.Any() == true)
             {
-                _allUsers_DB = (await _service.GetAllUsers(_dbCMS))?.ToArray();
+                _allUsers_CMS_DB = (await _service.GetAllUsers(_dbCMS))?.ToArray();
                 _roles = await _service.GetAllRoles(true, _dbCMS);
                 _titles = await _service.GetAllTitles(_dbCMS);
-                _notaries = await _service.GetNotaries(_allUsers_DB, Database_OPS);
+                _reports = await _service.GetAllReports(_dbCMS);
+                _reportsUsernames_ReportDescs_StageNames = await _service.GetReportsUsersReportDescriptionsStageNames(_dbCMS);
+                _notaries = await _service.GetNotaries(_allUsers_CMS_DB, Database_OPS);
 
                 _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
@@ -141,6 +146,7 @@ namespace Training.Website.Components.Pages
 
             usersToAssign_Raw.AddRange(UsersInSelectedRoles());
             usersToAssign_Raw.AddRange(UsersInSelectedTitles());
+            usersToAssign_Raw.AddRange(UsersInSelectedReports());
             
             List<int> usersAsssigned = [];
             
@@ -156,7 +162,7 @@ namespace Training.Website.Components.Pages
                 }
                 else
                 {
-                    // IF USER ALREADY HAS BEEN GATHERED, APPEND ROLE INFO
+                    // IF USER ALREADY HAS BEEN GATHERED, APPEND ROLE INFO IF THEY ARE A NOTARY
                     AllUsers_Assignment? existingRecord = _allUsers_Assignment.FirstOrDefault(q => q?.AppUserID == userID!.Value);
 
                     if (existingRecord != null)
@@ -174,13 +180,20 @@ namespace Training.Website.Components.Pages
             {
                 if (string.IsNullOrWhiteSpace(assignedUser?.TitleDesc) == true)
                 {
-                    int? titleID = _allUsers_DB?.FirstOrDefault(q => q?.AppUserID == assignedUser?.AppUserID)?.TitleID;
+                    int? titleID = _allUsers_CMS_DB?.FirstOrDefault(q => q?.AppUserID == assignedUser?.AppUserID)?.TitleID;
                     if (titleID != null)
                         assignedUser!.TitleDesc = _titles?.FirstOrDefault(q => q?.ID == titleID)?.Value;
                 }
             }
 
             _allUsers_Assignment = [.._allUsers_Assignment.OrderBy(s => s?.UserName)];
+        }
+
+        private void ReportsMultiSelectChanged(List<string>? newValues)
+        {
+            _selectedReports = newValues ?? [];
+            RecompileAssignedUsers();
+            StateHasChanged();
         }
 
         private void RolesMultiSelectChanged(List<string>? newValues)
@@ -220,7 +233,7 @@ namespace Training.Website.Components.Pages
             email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
             email.Body = testMessageBody;
 
-            AllUsers_CMS_DB? susan = _allUsers_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
+            AllUsers_CMS_DB? susan = _allUsers_CMS_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
             email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
 
             email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
@@ -286,6 +299,26 @@ namespace Training.Website.Components.Pages
         private void UpsertDueDateToDB() =>
             _service.UpsertSessionDueDate(_selectedSession!.Session_ID!.Value, _dueDate!.Value, ApplicationState!.LoggedOnUser?.LoginID, _sessionAlreadyExistsInDueDatesTable, Database_OPS!);
 
+        private List<AllUsers_Assignment> UsersInSelectedReports()
+        {
+            var distinctUsersReports = _reportsUsernames_ReportDescs_StageNames?.Select(q => new { q?.AppUserName, q?.ReportDesc }).Distinct();     // WE DON'T NEED "STAGE NAME" HERE
+            List<AllUsers_Assignment> usersToAssign = [];
+
+            foreach (string? report in _selectedReports)
+            {
+                var userInReport = distinctUsersReports?.FirstOrDefault(q => q.ReportDesc == report);
+
+                if (userInReport != null)
+                {
+                    AllUsers_CMS_DB? userInCMSDB = _allUsers_CMS_DB?.FirstOrDefault(q => q?.UserName == userInReport.AppUserName);
+                    if (userInCMSDB != null)
+                        usersToAssign.AddRange(AddAssignedUsers([userInCMSDB])!);
+                }
+            }
+
+            return usersToAssign;
+        }
+
         private List<AllUsers_Assignment> UsersInSelectedRoles()
         {
             List<AllUsers_Assignment> usersToAssign = [];
@@ -295,7 +328,7 @@ namespace Training.Website.Components.Pages
                 if (role.Equals(Globals.Notary, StringComparison.InvariantCultureIgnoreCase) == false)
                 {
                     int? roleID = (_roles?.FirstOrDefault(q => q?.Value == role)?.ID) ?? throw new NullReferenceException($"Unable to find a role description for role {role}.");
-                    IEnumerable<AllUsers_CMS_DB>? usersInRole = _allUsers_DB?.Where(x => x.RoleID == roleID);
+                    IEnumerable<AllUsers_CMS_DB>? usersInRole = _allUsers_CMS_DB?.Where(x => x.RoleID == roleID);
 
                     if (usersInRole != null && usersInRole.Any() == true)
                         usersToAssign.AddRange(AddAssignedUsers(usersInRole)!);
@@ -330,7 +363,7 @@ namespace Training.Website.Components.Pages
             foreach (string? title in _selectedTitles)
             {
                 int? titleID = (_titles?.FirstOrDefault(q => q?.Value == title)?.ID) ?? throw new NullReferenceException($"Unable to find a title description for title {title}.");
-                IEnumerable<AllUsers_CMS_DB>? usersInTitle = _allUsers_DB?.Where(x => x.TitleID == titleID);
+                IEnumerable<AllUsers_CMS_DB>? usersInTitle = _allUsers_CMS_DB?.Where(x => x.TitleID == titleID);
 
                 usersToAssign.AddRange(AddAssignedUsers(usersInTitle)!);
             }
