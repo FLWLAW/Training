@@ -32,7 +32,7 @@ else
 
     <table width="100%" style="background-color: lightgray;">
         <tr>
-            <td class="HeaderClass" style="width: 50%;">
+            <td colspan="4" class="HeaderClass" style="text-align: center; align-items: center;">
                 <span class="HeaderClass">Session ID#</span>
                 <br />
                 <TelerikDropDownList Data="@_sessions"
@@ -45,6 +45,8 @@ else
                     </DropDownListSettings>
                 </TelerikDropDownList>
             </td>
+        </tr>
+        <tr>
             <td class="HeaderClass HeaderClassCentered">
                 <span class="HeaderClass">Roles:</span>
                 <br />
@@ -76,9 +78,41 @@ else
                     </MultiSelectSettings>
                 </TelerikMultiSelect>
             </td>
+            <td class="HeaderClass HeaderClassCentered">
+                <span class="HeaderClass">Reports:</span>
+                <br />
+                <TelerikMultiSelect
+                    Class="UniformWidth_DropDown"
+                    AutoClose="false"
+                    Enabled="true"
+                    Data="@_reports?.Select(q => q?.Value).Order()"
+                    Value="@_selectedReports"
+                    ValueChanged="@((List<string> newValues) => ReportsMultiSelectChanged(newValues) )"
+                    TagMode="@MultiSelectTagMode.Multiple">
+                    <MultiSelectSettings>
+                        <MultiSelectPopupSettings Height="300px" />
+                    </MultiSelectSettings>
+                </TelerikMultiSelect>
+            </td>
+            <td class="HeaderClass HeaderClassCentered">
+                <span class="HeaderClass">Stages:</span>
+                <br />
+                <TelerikMultiSelect
+                    Class="UniformWidth_DropDown"
+                    AutoClose="false"
+                    Enabled="true"
+                    Data="@_stagesBySelectedReports"
+                    Value="@_selectedStages"
+                    ValueChanged="@((List<string> newValues) => StagesMultiSelectChanged(newValues) )"
+                    TagMode="@MultiSelectTagMode.Multiple">
+                    <MultiSelectSettings>
+                        <MultiSelectPopupSettings Height="300px" />
+                    </MultiSelectSettings>
+                </TelerikMultiSelect>
+            </td>
         </tr>
         <tr>
-            <td colspan="3" class="HeaderClass" style="text-align: center;">
+            <td colspan="4" class="HeaderClass" style="text-align: center;">
                 <span style="padding-right: 30px;" class="HeaderClass">Due Date:</span>
                 <TelerikDatePicker
                     Min="@_minimumDueDate"
