@@ -95,15 +95,15 @@ else
                 </TelerikMultiSelect>
             </td>
             <td class="HeaderClass HeaderClassCentered">
-                <span class="HeaderClass">Stages:</span>
+                <span class="HeaderClass">Worklist Groups:</span>
                 <br />
                 <TelerikMultiSelect
                     Class="UniformWidth_DropDown"
                     AutoClose="false"
                     Enabled="true"
-                    Data="@_stagesBySelectedReports"
-                    Value="@_selectedStages"
-                    ValueChanged="@((List<string> newValues) => StagesMultiSelectChanged(newValues) )"
+                    Data="@_worklistGroupsBySelectedReports"
+                    Value="@_selectedWorklistGroups"
+                    ValueChanged="@((List<string> newValues) => WorklistGroupsMultiSelectChanged(newValues) )"
                     TagMode="@MultiSelectTagMode.Multiple">
                     <MultiSelectSettings>
                         <MultiSelectPopupSettings Height="300px" />
