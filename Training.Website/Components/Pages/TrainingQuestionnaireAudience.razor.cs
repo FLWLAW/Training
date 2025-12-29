@@ -141,13 +141,12 @@ namespace Training.Website.Components.Pages
 
         private StringBuilder EMailMessage(string? firstName)
         {
-            //TODO: FIX PRODUCTION baseURL ONCE IT IS READY - DO NOT PUT A SLASH AT THE END
 #if DEBUG
             const string baseURL = "http://drosenblum-elitedesk:83";
 #elif QA
             const string baseURL = "http://drosenblum-elitedesk:8484";
 #else
-            const string baseURL = TBD;
+            const string baseURL = "http://training.efwlaw.com";
 #endif
             StringBuilder message = new();
 
