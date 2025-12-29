@@ -14,11 +14,6 @@ namespace Training.Website.Components.Layout
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
         private IDatabase? Database_OPS { get; set; }
-
-        /*
-        [Inject]
-        private NavigationManager? NavManager { get; set; }
-        */
         #endregion
 
         #region PRIVATE FIELDS
@@ -38,7 +33,7 @@ namespace Training.Website.Components.Layout
             : false;
 
         private bool IsTester() => 
-            #if DEBUG || QA
+            #if ! RELEASE
                 ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.LoginID != null && _testers != null
                     ? _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower())
                     : false;
