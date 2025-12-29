@@ -41,11 +41,10 @@ namespace Training.Website.Components.Pages
         
         private IEnumerable<IdValue<int>?>? _reports = null;
         private List<string> _selectedReports = [];
-        //private IEnumerable<Reports_Username_ReportDesc_StageName_Model?>? _reportsUsernames_ReportDescs_StageNames = null;
 
-        private IEnumerable<StagesReportsModel?>? _stagesReports = null;
-        private IEnumerable<string?>? _stagesBySelectedReports = [];
-        private List<String> _selectedStages = [];
+        private IEnumerable<WorklistGroupsAndReportsModel?>? _worklistGroupsReports = null;
+        private IEnumerable<string?>? _worklistGroupsBySelectedReports = [];
+        private List<String> _selectedWorklistGroups = [];
         
         private readonly DateTime _minimumDueDate = DateTime.Now.AddDays(1);
         private DateTime? _dueDate = null;
@@ -65,8 +64,7 @@ namespace Training.Website.Components.Pages
                 _roles = await _service.GetAllRoles(true, _dbCMS);
                 _titles = await _service.GetAllTitles(_dbCMS);
                 _reports = await _service.GetAllReports(_dbCMS);
-                _stagesReports = await _service.GetAllStages(_dbCMS);
-                //_reportsUsernames_ReportDescs_StageNames = await _service.GetReportsUsersReportDescriptionsStageNames(_dbCMS);
+                _worklistGroupsReports = await _service.GetAllWorklistGroupsWithReports(_dbCMS);
                 _notaries = await _service.GetNotaries(_allUsers_CMS_DB, Database_OPS);
 
                 _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
@@ -107,13 +105,13 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private void AddToLoginIDs(List<string?> loginIDs, StagesReportsModel stageReport)
+        private void AddToLoginIDs(List<string?> loginIDs, WorklistGroupsAndReportsModel worklistGroup_Report)
         {
-            if (stageReport.AssignedUserList != null)
-                loginIDs!.AddRange(stageReport.AssignedUserList.Split(';'));
+            if (worklistGroup_Report.AssignedUserList != null)
+                loginIDs!.AddRange(worklistGroup_Report.AssignedUserList.Split(';'));
 
-            if (stageReport?.TempAssignedUserList != null)
-                loginIDs!.AddRange(stageReport.TempAssignedUserList.Split(';'));
+            if (worklistGroup_Report?.TempAssignedUserList != null)
+                loginIDs!.AddRange(worklistGroup_Report.TempAssignedUserList.Split(';'));
 
             loginIDs = [.. loginIDs.Where(q => q != ";").Distinct()];
         }
@@ -143,13 +141,12 @@ namespace Training.Website.Components.Pages
 
         private StringBuilder EMailMessage(string? firstName)
         {
-            //TODO: FIX PRODUCTION baseURL ONCE IT IS READY - DO NOT PUT A SLASH AT THE END
 #if DEBUG
             const string baseURL = "http://drosenblum-elitedesk:83";
 #elif QA
             const string baseURL = "http://drosenblum-elitedesk:8484";
 #else
-            const string baseURL = TBD;
+            const string baseURL = "http://training.efwlaw.com";
 #endif
             StringBuilder message = new();
 
@@ -181,8 +178,7 @@ namespace Training.Website.Components.Pages
 
             usersToAssign_Raw.AddRange(UsersInSelectedRoles());
             usersToAssign_Raw.AddRange(UsersInSelectedTitles());
-            usersToAssign_Raw.AddRange(UsersInSelectedStagesReports());
-            //usersToAssign_Raw.AddRange(UsersInSelectedReports());
+            usersToAssign_Raw.AddRange(UsersInSelectedWorklistGroupsAndReports());
             
             List<int> usersAsssigned = [];
             
@@ -241,7 +237,7 @@ namespace Training.Website.Components.Pages
                 }
             }
 
-            _stagesBySelectedReports = StagesBySelectedReports();
+            _worklistGroupsBySelectedReports = WorklistGroupsBySelectedReports();
             RecompileAssignedUsers();
             StateHasChanged();
         }
@@ -249,13 +245,6 @@ namespace Training.Website.Components.Pages
         private void RolesMultiSelectChanged(List<string>? newValues)
         {
             _selectedRoles = newValues ?? [];
-            RecompileAssignedUsers();
-            StateHasChanged();
-        }
-
-        private void StagesMultiSelectChanged(List<string>? newValues)
-        {
-            _selectedStages = newValues ?? [];
             RecompileAssignedUsers();
             StateHasChanged();
         }
@@ -346,23 +335,6 @@ namespace Training.Website.Components.Pages
 
         private bool SessionSelected() => _selectedSession != null && _selectedSession.Session_ID != null && _selectedSession.Session_ID > 0;
 
-        private IEnumerable<string?>? StagesBySelectedReports()
-        {
-            List<string?> results = [];
-
-            foreach (string selectedReport in _selectedReports)
-            {
-                IEnumerable<StagesReportsModel?>? stages = _stagesReports?.Where(q => q?.ReportName?.Equals(selectedReport, StringComparison.InvariantCultureIgnoreCase) == true);
-
-                if (stages != null)
-                    foreach (StagesReportsModel? stage in stages)
-                        if (stage != null && stage.StageFullName != null)
-                            results.Add(stage.StageFullName);
-            }
-
-            return results.Order();
-        }
-
         private void TitlesMultiSelectChanged(List<string>? newValues)
         {
             _selectedTitles = newValues ?? [];
@@ -372,28 +344,6 @@ namespace Training.Website.Components.Pages
 
         private void UpsertDueDateToDB() =>
             _service.UpsertSessionDueDate(_selectedSession!.Session_ID!.Value, _dueDate!.Value, ApplicationState!.LoggedOnUser?.LoginID, _sessionAlreadyExistsInDueDatesTable, Database_OPS!);
-
-        /*
-        private List<AllUsers_Assignment> UsersInSelectedReports()
-        {
-            var distinctUsersReports = _reportsUsernames_ReportDescs_StageNames?.Select(q => new { q?.AppUserName, q?.ReportDesc }).Distinct();     // WE DON'T NEED "STAGE NAME" HERE
-            List<AllUsers_Assignment> usersToAssign = [];
-
-            foreach (string? report in _selectedReports)
-            {
-                var userInReport = distinctUsersReports?.FirstOrDefault(q => q.ReportDesc == report);
-
-                if (userInReport != null)
-                {
-                    AllUsers_CMS_DB? userInCMSDB = _allUsers_CMS_DB?.FirstOrDefault(q => q?.UserName == userInReport.AppUserName);
-                    if (userInCMSDB != null)
-                        usersToAssign.AddRange(AddAssignedUsers([userInCMSDB])!);
-                }
-            }
-
-            return usersToAssign;
-        }
-        */
 
         private List<AllUsers_Assignment> UsersInSelectedRoles()
         {
@@ -432,22 +382,22 @@ namespace Training.Website.Components.Pages
             return usersToAssign;
         }
 
-        private List<AllUsers_Assignment> UsersInSelectedStagesReports()
+        private List<AllUsers_Assignment> UsersInSelectedWorklistGroupsAndReports()
         {
             List<AllUsers_Assignment> usersToAssign = [];
             List<string?> loginIDs = [];
 
-            if (_selectedStages != null && _selectedStages.Count > 0)
+            if (_selectedWorklistGroups != null && _selectedWorklistGroups.Count > 0)
             {
-                foreach (string? selectedStage in _selectedStages)
+                foreach (string? selectedWorklistGroup in _selectedWorklistGroups)
                 {
-                    if (selectedStage != null)
+                    if (selectedWorklistGroup != null)
                     {
-                        StagesReportsModel? stageReport = _stagesReports?.FirstOrDefault(q => q?.StageFullName?.Equals(selectedStage) == true);
+                        WorklistGroupsAndReportsModel? worklistGroupAndReport = _worklistGroupsReports?.FirstOrDefault(q => q?.StageFullName?.Equals(selectedWorklistGroup) == true);
 
-                        if (stageReport != null)
+                        if (worklistGroupAndReport != null)
                         {
-                            AddToLoginIDs(loginIDs, stageReport);
+                            AddToLoginIDs(loginIDs, worklistGroupAndReport);
                             AddToUsersToAssign(usersToAssign, loginIDs);
                         }
                     }
@@ -459,13 +409,14 @@ namespace Training.Website.Components.Pages
                 {
                     if (selectedReport != null)
                     {
-                        IEnumerable<StagesReportsModel?>? stagesReport = _stagesReports?.Where(q => q?.ReportName?.Equals(selectedReport, StringComparison.InvariantCultureIgnoreCase) == true);
+                        IEnumerable<WorklistGroupsAndReportsModel?>? worklistGroupReports =
+                            _worklistGroupsReports?.Where(q => q?.ReportName?.Equals(selectedReport, StringComparison.InvariantCultureIgnoreCase) == true);
 
-                        if (stagesReport != null)
+                        if (worklistGroupReports != null)
                         {
-                            foreach (StagesReportsModel? stageReport in stagesReport)
-                                if (stageReport != null)
-                                    AddToLoginIDs(loginIDs, stageReport);
+                            foreach (WorklistGroupsAndReportsModel? worklistGroupAndReport in worklistGroupReports)
+                                if (worklistGroupAndReport != null)
+                                    AddToLoginIDs(loginIDs, worklistGroupAndReport);
 
                             if (loginIDs.Count > 0)
                                 AddToUsersToAssign(usersToAssign, loginIDs);
@@ -490,6 +441,31 @@ namespace Training.Website.Components.Pages
             }
 
             return usersToAssign;
+        }
+
+        private void WorklistGroupsMultiSelectChanged(List<string>? newValues)
+        {
+            _selectedWorklistGroups = newValues ?? [];
+            RecompileAssignedUsers();
+            StateHasChanged();
+        }
+
+        private IEnumerable<string?>? WorklistGroupsBySelectedReports()
+        {
+            List<string?> results = [];
+
+            foreach (string selectedReport in _selectedReports)
+            {
+                IEnumerable<WorklistGroupsAndReportsModel?>? worklistGroups =
+                    _worklistGroupsReports?.Where(q => q?.ReportName?.Equals(selectedReport, StringComparison.InvariantCultureIgnoreCase) == true);
+
+                if (worklistGroups != null)
+                    foreach (WorklistGroupsAndReportsModel? worklistGroup in worklistGroups)
+                        if (worklistGroup != null && worklistGroup.StageFullName != null)
+                            results.Add(worklistGroup.StageFullName);
+            }
+
+            return results.Order();
         }
     }
 }
