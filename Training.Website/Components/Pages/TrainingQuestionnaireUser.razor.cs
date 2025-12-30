@@ -134,15 +134,28 @@ namespace Training.Website.Components.Pages
 
         private async Task<int> GetCurrentQuestionnaireNumber()
         {
-            string sql = $"SELECT TOP 1 QuestionnaireNumber FROM [TRAINING Questionnaire Test Results Main Tbl] WHERE [Session_ID] = {_selectedSession?.Session_ID} AND CMS_USER_ID = {ApplicationState!.LoggedOnUser!.AppUserID} ORDER BY QuestionnaireNumber DESC";
-            int? highestTakenQuestionnaireNumber = (await Database!.QueryByStatementAsync<int?>(sql))?.FirstOrDefault();
-
-            if (highestTakenQuestionnaireNumber == null)
-                return 1;
-            else if (highestTakenQuestionnaireNumber >= Globals.MaximumTestAttemptsPerSession)
-                return Globals.MaximumTestAttemptsPerSession;
+            if (_selectedSession == null)
+                throw new NullReferenceException("GetCurrentQuestionnaireNumber: [_selectedSession] cannot be null.");
+            else if (_selectedSession.Session_ID == null)
+                throw new NullReferenceException("GetCurrentQuestionnaireNumber: [Session_ID] cannot be null.");
+            else if (ApplicationState == null)
+                throw new NullReferenceException("GetCurrentQuestionnaireNumber: [ApplicationState] cannot be null.");
+            else if (ApplicationState.LoggedOnUser == null)
+                throw new NullReferenceException("GetCurrentQuestionnaireNumber: [LoggedOnUser] cannot be null.");
+            else if (ApplicationState.LoggedOnUser.AppUserID == null)
+                throw new NullReferenceException("GetCurrentQuestionnaireNumber: [AppUserID] cannot be null.");
             else
-                return highestTakenQuestionnaireNumber.Value + 1;
+            {
+                string sql = $"SELECT TOP 1 QuestionnaireNumber FROM [TRAINING Questionnaire Test Results Main Tbl] WHERE [Session_ID] = {_selectedSession?.Session_ID} AND CMS_USER_ID = {ApplicationState!.LoggedOnUser!.AppUserID} ORDER BY QuestionnaireNumber DESC";
+                int? highestTakenQuestionnaireNumber = (await Database!.QueryByStatementAsync<int?>(sql))?.FirstOrDefault();
+
+                if (highestTakenQuestionnaireNumber == null)
+                    return 1;
+                else if (highestTakenQuestionnaireNumber >= Globals.MaximumTestAttemptsPerSession)
+                    return Globals.MaximumTestAttemptsPerSession;
+                else
+                    return highestTakenQuestionnaireNumber.Value + 1;
+            }
         }
 
         private async Task<int> GetPreviousAttempts() =>
