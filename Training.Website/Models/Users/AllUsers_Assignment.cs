@@ -2,8 +2,8 @@
 {
     public class AllUsers_Assignment
     {
+        public bool Selected { get; set; } = false;
         public required int? AppUserID { get; set; }
-        public required bool Selected { get; set; }
         public required string? UserName { get; set; }
         public required string? LastName { get; set; }     // used for email.
         public required string? FirstName { get; set; }     // used for email.

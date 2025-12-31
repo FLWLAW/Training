@@ -95,8 +95,7 @@ namespace Training.Website.Components.Pages
                         RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
                         TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
                         FirstName = user?.FirstName,
-                        LastName = user?.LastName,
-                        Selected = true
+                        LastName = user?.LastName
                     };
                     usersToAssign.Add(assignedUsers);
                 }
@@ -207,7 +206,7 @@ namespace Training.Website.Components.Pages
                 }
             }
 
-            // IF TITLE IS NULL/BLANK (WHICH CAN HAPPEN WHEN THE "NOTARY" ROLE IS SELECTED, FIX IT HERE
+            // IF TITLE IS NULL/BLANK (WHICH CAN HAPPEN WHEN THE "NOTARY" ROLE IS SELECTED), FIX IT HERE
             foreach (AllUsers_Assignment? assignedUser in _allUsers_Assignment)
             {
                 if (string.IsNullOrWhiteSpace(assignedUser?.TitleDesc) == true)
@@ -370,7 +369,6 @@ namespace Training.Website.Components.Pages
                             FirstName = notary.FirstName,
                             LastName = notary.LastName,
                             UserName = notary.FullName,
-                            Selected = true,
                             RoleDesc = Globals.Notary,
                             TitleDesc = null
                         };
