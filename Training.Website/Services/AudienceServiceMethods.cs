@@ -26,7 +26,7 @@ namespace Training.Website.Services
         {
             UpsertEMailings_Parameters parameters = new()
             {
-                CMS_User_ID = recipient!.AppUserID!.Value,
+                CMS_User_ID = recipient!.CMS_UserID!.Value,
                 Session_ID = session_ID!.Value,
                 SendingUser = sendingUser!,
                 EMailedUserLastName = recipient.LastName!,
