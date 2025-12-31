@@ -54,6 +54,7 @@ namespace Training.Website.Components.Pages
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
         private AllUsers_Assignment?[]? _allUsers_Assignment = null;
         private IEnumerable<AllUsers_Notaries?>? _notaries = null;
+        private IEnumerable<int>? _usersAssignedToTasksForSession = null;
         private TelerikGrid<AllUsers_Assignment>? _allUsers_Assignment_ExportGrid;
         #endregion
 
@@ -95,6 +96,7 @@ namespace Training.Website.Components.Pages
                     {
                         CMS_UserID = user?.AppUserID,
                         OPS_UserID = OPS_ID_From_Login_ID(user?.LoginID),
+                        LoginID = user?.LoginID,
                         UserName = user?.UserName,
                         EmailAddress = user?.EmailAddress,
                         RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
@@ -132,6 +134,16 @@ namespace Training.Website.Components.Pages
                         usersToAssign.AddRange(AddAssignedUsers([userCMSDB])!);
                 }
             }
+        }
+
+        private void ClearDropDownSelections()
+        {
+            _selectedRoles.Clear();
+            _selectedTitles.Clear();
+            _selectedReports.Clear();
+            _selectedWorklistGroups.Clear();
+            _worklistGroupsBySelectedReports = [];
+            _allUsers_Assignment = null;
         }
 
         private void DeSelectAllClicked()
@@ -193,7 +205,6 @@ namespace Training.Website.Components.Pages
             List<AllUsers_Assignment?>? allUsers_Assignment = [];
             List<int> usersAsssigned = [];
             
-            allUsers_Assignment.Clear();
             foreach (AllUsers_Assignment userToAssign in usersToAssign_Raw)
             {
                 int? userID = userToAssign.CMS_UserID;
@@ -231,8 +242,7 @@ namespace Training.Website.Components.Pages
             }
 
             _allUsers_Assignment = [..allUsers_Assignment.OrderBy(s => s?.UserName)];
-
-
+            SetSelected();
         }
 
         private void ReportsMultiSelectChanged(List<string>? newValues)
@@ -349,10 +359,29 @@ namespace Training.Website.Components.Pages
             }
 
             _spanHeaderClass = "HeaderClass";
+            ClearDropDownSelections();
+
+            _usersAssignedToTasksForSession = await _service.GetAllOpsUserIDsAssignedToTasksBySessionID(_selectedSession?.Session_ID, Database_OPS!);
+
             StateHasChanged();
         }
 
         private bool SessionSelected() => _selectedSession != null && _selectedSession.Session_ID != null && _selectedSession.Session_ID > 0;
+
+        private void SetSelected()
+        {
+            if (_allUsers_Assignment != null && _usersAssignedToTasksForSession != null && _usersAssignedToTasksForSession.Any() == true)
+            {
+                foreach (AllUsers_Assignment? user in _allUsers_Assignment)
+                {
+                    if (user != null)
+                    {
+                        user.OPS_UserID = _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(user.LoginID, StringComparison.InvariantCultureIgnoreCase) == true)?.Emp_ID;
+                        user.Selected = user.OPS_UserID != null && user.OPS_UserID != 0 && _usersAssignedToTasksForSession.Contains(user.OPS_UserID.Value);
+                    }
+                }
+            }
+        }
 
         private void TitlesMultiSelectChanged(List<string>? newValues)
         {
@@ -387,6 +416,7 @@ namespace Training.Website.Components.Pages
                             CMS_UserID = notary.CMS_User_ID,
                             OPS_UserID = notary.Emp_ID,
                             EmailAddress = notary.EMail,
+                            LoginID = notary.UserName,
                             FirstName = notary.FirstName,
                             LastName = notary.LastName,
                             UserName = notary.FullName,

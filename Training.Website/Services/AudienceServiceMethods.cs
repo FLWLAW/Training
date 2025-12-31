@@ -9,6 +9,14 @@ namespace Training.Website.Services
         public async Task<IEnumerable<IdValue<int>?>?> GetAllReports(IDatabase? database) =>
             await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Report_SA", "ReportID", "ReportDesc");
 
+        public async Task<IEnumerable<int>?> GetAllOpsUserIDsAssignedToTasksBySessionID(int? sessionID, IDatabase? database) =>
+            await database!.QueryByStatementAsync<int>($"SELECT Emp_ID FROM [TRAINING Tasks Tbl] WHERE TRAINING_ID = {sessionID}");
+
+
+        // MAY NEED TO MOVE TO CommonMethods
+        public async Task<IEnumerable<AllUsers_OPS_DB?>?> GetAllUsers_OPS_DB(IDatabase? database) =>
+            await database!.QueryByStatementAsync<AllUsers_OPS_DB?>("SELECT Emp_ID, UserName FROM [Employees Tbl]");
+
         public async Task<IEnumerable<WorklistGroupsAndReportsModel?>?> GetAllWorklistGroupsWithReports(IDatabase? database)
         {
             StagesReportsModel_Parameters parameters = new();   // LEAVE PROPERTIES AS NULL
@@ -18,16 +26,12 @@ namespace Training.Website.Services
             return results;
         }
 
-        // MAY NEED TO MOVE TO CommonMethods
-        public async Task<IEnumerable<AllUsers_OPS_DB?>?> GetAllUsers_OPS_DB(IDatabase? database) =>
-            await database!.QueryByStatementAsync<AllUsers_OPS_DB?>("SELECT Emp_ID, UserName FROM [Employees Tbl]");
-
-        public void UpsertEMailingRecord(AllUsers_Assignment? recipient, int? session_ID, string? sendingUser, IDatabase? database)
+        public void UpsertEMailingRecord(AllUsers_Assignment? recipient, int? sessionID, string? sendingUser, IDatabase? database)
         {
             UpsertEMailings_Parameters parameters = new()
             {
                 CMS_User_ID = recipient!.CMS_UserID!.Value,
-                Session_ID = session_ID!.Value,
+                Session_ID = sessionID!.Value,
                 SendingUser = sendingUser!,
                 EMailedUserLastName = recipient.LastName!,
                 EMailedUserFirstName = recipient.FirstName!,
