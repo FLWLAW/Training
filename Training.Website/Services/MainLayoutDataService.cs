@@ -38,7 +38,7 @@ namespace Training.Website.Services
                 throw new ArgumentNullException("'loginID' cannot be null.");
             else
             {
-                AllUsers_CMS_DB? user = (await GetAllUsers(database_CMS))?.FirstOrDefault(q => q?.LoginID?.ToLower() == loginID?.ToLower());
+                AllUsers_CMS_DB? user = (await GetAllUsers_CMS_DB(database_CMS))?.FirstOrDefault(q => q?.LoginID?.ToLower() == loginID?.ToLower());
 #if QA || RELEASE
                 if (user != null)
                     return user;

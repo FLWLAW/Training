@@ -2,8 +2,10 @@
 {
     public class AllUsers_Assignment
     {
-        public required int? AppUserID { get; set; }
-        public required bool Selected { get; set; }
+        public bool Selected { get; set; } = false;
+        public required int? CMS_UserID { get; set; }
+        public required int? OPS_UserID { get; set; }
+        public required string? LoginID { get; set; }
         public required string? UserName { get; set; }
         public required string? LastName { get; set; }     // used for email.
         public required string? FirstName { get; set; }     // used for email.

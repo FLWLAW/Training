@@ -32,7 +32,9 @@ namespace Training.Website.Components.Pages
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
         private bool _sessionAlreadyExistsInDueDatesTable = false;
-        
+
+        private string _spanHeaderClass = "HeaderClass DisableMe";
+
         private IEnumerable<IdValue<int>?>? _roles = null;
         private List<string> _selectedRoles = [];
         
@@ -48,26 +50,29 @@ namespace Training.Website.Components.Pages
         
         private readonly DateTime _minimumDueDate = DateTime.Now.AddDays(1);
         private DateTime? _dueDate = null;
-        private AllUsers_CMS_DB[]? _allUsers_CMS_DB = null;
-        private List<AllUsers_Assignment?> _allUsers_Assignment = [];
+        private AllUsers_CMS_DB?[]? _allUsers_CMS_DB = null;
+        private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
+        private AllUsers_Assignment?[]? _allUsers_Assignment = null;
         private IEnumerable<AllUsers_Notaries?>? _notaries = null;
+        private IEnumerable<int>? _usersAssignedToTasksForSession = null;
         private TelerikGrid<AllUsers_Assignment>? _allUsers_Assignment_ExportGrid;
         #endregion
 
         protected override async Task OnInitializedAsync()
         {
-            IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database_OPS);
+            IEnumerable<SessionInformationModel>? sessionsInfo = await _service.GetSessionInformation(Database_OPS);
 
-            if (sessionInfo != null && sessionInfo.Any() == true)
+            if (sessionsInfo != null && sessionsInfo.Any() == true)
             {
-                _allUsers_CMS_DB = (await _service.GetAllUsers(_dbCMS))?.ToArray();
+                _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
+                _allUsers_OPS_DB = (await _service.GetAllUsers_OPS_DB(Database_OPS))?.ToArray();
                 _roles = await _service.GetAllRoles(true, _dbCMS);
                 _titles = await _service.GetAllTitles(_dbCMS);
                 _reports = await _service.GetAllReports(_dbCMS);
                 _worklistGroupsReports = await _service.GetAllWorklistGroupsWithReports(_dbCMS);
                 _notaries = await _service.GetNotaries(_allUsers_CMS_DB, Database_OPS);
 
-                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionsInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 _dueDate = _minimumDueDate;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
@@ -89,14 +94,15 @@ namespace Training.Website.Components.Pages
                 {
                     AllUsers_Assignment? assignedUsers = new()
                     {
-                        AppUserID = user?.AppUserID,
+                        CMS_UserID = user?.AppUserID,
+                        OPS_UserID = OPS_ID_From_Login_ID(user?.LoginID),
+                        LoginID = user?.LoginID,
                         UserName = user?.UserName,
                         EmailAddress = user?.EmailAddress,
                         RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
                         TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
                         FirstName = user?.FirstName,
-                        LastName = user?.LastName,
-                        Selected = true
+                        LastName = user?.LastName
                     };
                     usersToAssign.Add(assignedUsers);
                 }
@@ -130,13 +136,26 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private void ClearDropDownSelections()
+        {
+            _selectedRoles.Clear();
+            _selectedTitles.Clear();
+            _selectedReports.Clear();
+            _selectedWorklistGroups.Clear();
+            _worklistGroupsBySelectedReports = [];
+            _allUsers_Assignment = null;
+        }
+
         private void DeSelectAllClicked()
         {
-            foreach(AllUsers_Assignment? assignedUser in _allUsers_Assignment)
-                if (assignedUser != null)
-                    assignedUser.Selected = false;
+            if (_allUsers_Assignment != null && _allUsers_Assignment.Length > 0)
+            {
+                foreach (AllUsers_Assignment? assignedUser in _allUsers_Assignment)
+                    if (assignedUser != null)
+                        assignedUser.Selected = false;
 
-            StateHasChanged();
+                StateHasChanged();
+            }
         }
 
         private StringBuilder EMailMessage(string? firstName)
@@ -172,6 +191,9 @@ namespace Training.Website.Components.Pages
                 detail.Selected = !detail.Selected;
         }
 
+        private int? OPS_ID_From_Login_ID(string? loginID) =>
+            _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(loginID, StringComparison.InvariantCultureIgnoreCase) == true)?.Emp_ID;
+
         private void RecompileAssignedUsers()
         {
             List<AllUsers_Assignment> usersToAssign_Raw = [];
@@ -179,23 +201,23 @@ namespace Training.Website.Components.Pages
             usersToAssign_Raw.AddRange(UsersInSelectedRoles());
             usersToAssign_Raw.AddRange(UsersInSelectedTitles());
             usersToAssign_Raw.AddRange(UsersInSelectedWorklistGroupsAndReports());
-            
+
+            List<AllUsers_Assignment?>? allUsers_Assignment = [];
             List<int> usersAsssigned = [];
             
-            _allUsers_Assignment.Clear();
             foreach (AllUsers_Assignment userToAssign in usersToAssign_Raw)
             {
-                int? userID = userToAssign.AppUserID;
+                int? userID = userToAssign.CMS_UserID;
 
                 if (userID != null && usersAsssigned.Contains(userID.Value) == false)
                 {
-                    _allUsers_Assignment.Add(userToAssign);
+                    allUsers_Assignment.Add(userToAssign);
                     usersAsssigned.Add(userID.Value);
                 }
                 else
                 {
                     // IF USER ALREADY HAS BEEN GATHERED, APPEND ROLE INFO IF THEY ARE A NOTARY
-                    AllUsers_Assignment? existingRecord = _allUsers_Assignment.FirstOrDefault(q => q?.AppUserID == userID!.Value);
+                    AllUsers_Assignment? existingRecord = allUsers_Assignment.FirstOrDefault(q => q?.CMS_UserID == userID!.Value);
 
                     if (existingRecord != null)
                     {
@@ -207,19 +229,20 @@ namespace Training.Website.Components.Pages
                 }
             }
 
-            // IF TITLE IS NULL/BLANK (WHICH CAN HAPPEN WHEN THE "NOTARY" ROLE IS SELECTED, FIX IT HERE
-            foreach (AllUsers_Assignment? assignedUser in _allUsers_Assignment)
+            // IF TITLE IS NULL/BLANK (WHICH CAN HAPPEN WHEN THE "NOTARY" ROLE IS SELECTED), FIX IT HERE
+            foreach (AllUsers_Assignment? assignedUser in allUsers_Assignment)
             {
                 if (string.IsNullOrWhiteSpace(assignedUser?.TitleDesc) == true)
                 {
-                    int? titleID = _allUsers_CMS_DB?.FirstOrDefault(q => q?.AppUserID == assignedUser?.AppUserID)?.TitleID;
+                    int? titleID = _allUsers_CMS_DB?.FirstOrDefault(q => q?.AppUserID == assignedUser?.CMS_UserID)?.TitleID;
 
                     if (titleID != null)
                         assignedUser!.TitleDesc = _titles?.FirstOrDefault(q => q?.ID == titleID)?.Value;
                 }
             }
 
-            _allUsers_Assignment = [.._allUsers_Assignment.OrderBy(s => s?.UserName)];
+            _allUsers_Assignment = [..allUsers_Assignment.OrderBy(s => s?.UserName)];
+            SetSelected();
         }
 
         private void ReportsMultiSelectChanged(List<string>? newValues)
@@ -251,58 +274,62 @@ namespace Training.Website.Components.Pages
 
         private void SendEmails()
         {
-            IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment.Where(u => u != null && u.Selected == true);
+            IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment?.Where(u => u != null && u.Selected == true);
+
+            if (recipients != null && recipients.Any() == true)
+            {
 
 #if DEBUG || QA
-            EMailer email = new();
-            StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");
-
-            testMessageBody.Append("<br /><br />");
-            foreach (AllUsers_Assignment? recipient in recipients)
-            {
-                StringBuilder message = EMailMessage(recipient?.FirstName);
+                EMailer email = new();
+                StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");
 
                 testMessageBody.Append("<br /><br />");
-                testMessageBody.Append("-------------------------------------------------------------------------------------------------------------------------------------------------------------");
-                testMessageBody.Append("<br /><br />");
-                testMessageBody.Append($"From: {email.From?.Name} &lt{email.From?.Address}&gt");
-                testMessageBody.Append("<br />");
-                testMessageBody.Append($"To: {recipient?.UserName} &lt{recipient?.EmailAddress}&gt");
-                testMessageBody.Append("<br />");
-                testMessageBody.Append($"Subject: Training Questionnaire Available for Session #{_selectedSession?.Session_ID}");
-                testMessageBody.Append("<br /><br />");
-                testMessageBody.Append(message);
-                LogEMailingToDB(recipient);
-            }
-
-            email.BodyTextFormat = MimeKit.Text.TextFormat.Html;
-            email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
-            email.Body = testMessageBody;
-
-            AllUsers_CMS_DB? susan = _allUsers_CMS_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
-            email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
-
-            email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
-            
-            email.Send();
-#else
-            foreach (AllUsers_Assignment? recipient in recipients)
-            {
-                MailboxAddress address = new(recipient!.UserName ?? string.Empty, recipient!.EmailAddress!);
-                //string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
-
-                EMailer email = new()
+                foreach (AllUsers_Assignment? recipient in recipients)
                 {
-                    BodyTextFormat = MimeKit.Text.TextFormat.Html,
-                    Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}",
-                    Body = EMailMessage(recipient?.FirstName),
-                    To = [address]
-                };
+                    StringBuilder message = EMailMessage(recipient?.FirstName);
+
+                    testMessageBody.Append("<br /><br />");
+                    testMessageBody.Append("-------------------------------------------------------------------------------------------------------------------------------------------------------------");
+                    testMessageBody.Append("<br /><br />");
+                    testMessageBody.Append($"From: {email.From?.Name} &lt{email.From?.Address}&gt");
+                    testMessageBody.Append("<br />");
+                    testMessageBody.Append($"To: {recipient?.UserName} &lt{recipient?.EmailAddress}&gt");
+                    testMessageBody.Append("<br />");
+                    testMessageBody.Append($"Subject: Training Questionnaire Available for Session #{_selectedSession?.Session_ID}");
+                    testMessageBody.Append("<br /><br />");
+                    testMessageBody.Append(message);
+                    LogEMailingToDB(recipient);
+                }
+
+                email.BodyTextFormat = MimeKit.Text.TextFormat.Html;
+                email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
+                email.Body = testMessageBody;
+
+                AllUsers_CMS_DB? susan = _allUsers_CMS_DB?.FirstOrDefault(q => q?.UserName == "Susan Eisenman");
+                email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
+
+                email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
 
                 email.Send();
-                LogEMailingToDB(recipient);
-            }
+#else
+                foreach (AllUsers_Assignment? recipient in recipients)
+                {
+                    MailboxAddress address = new(recipient!.UserName ?? string.Empty, recipient!.EmailAddress!);
+                    //string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
+
+                    EMailer email = new()
+                    {
+                        BodyTextFormat = MimeKit.Text.TextFormat.Html,
+                        Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}",
+                        Body = EMailMessage(recipient?.FirstName),
+                        To = [address]
+                    };
+
+                    email.Send();
+                    LogEMailingToDB(recipient);
+                }
 #endif
+            }
         }
 
         private void SendEmailsToSelectedAndLogToDB_Main()
@@ -330,10 +357,31 @@ namespace Training.Website.Components.Pages
                 _dueDate = _minimumDueDate;
                 _sessionAlreadyExistsInDueDatesTable = false;
             }
+
+            _spanHeaderClass = "HeaderClass";
+            ClearDropDownSelections();
+
+            _usersAssignedToTasksForSession = await _service.GetAllOpsUserIDsAssignedToTasksBySessionID(_selectedSession?.Session_ID, Database_OPS!);
+
             StateHasChanged();
         }
 
         private bool SessionSelected() => _selectedSession != null && _selectedSession.Session_ID != null && _selectedSession.Session_ID > 0;
+
+        private void SetSelected()
+        {
+            if (_allUsers_Assignment != null && _usersAssignedToTasksForSession != null && _usersAssignedToTasksForSession.Any() == true)
+            {
+                foreach (AllUsers_Assignment? user in _allUsers_Assignment)
+                {
+                    if (user != null)
+                    {
+                        user.OPS_UserID = _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(user.LoginID, StringComparison.InvariantCultureIgnoreCase) == true)?.Emp_ID;
+                        user.Selected = user.OPS_UserID != null && user.OPS_UserID != 0 && _usersAssignedToTasksForSession.Contains(user.OPS_UserID.Value);
+                    }
+                }
+            }
+        }
 
         private void TitlesMultiSelectChanged(List<string>? newValues)
         {
@@ -354,10 +402,10 @@ namespace Training.Website.Components.Pages
                 if (role.Equals(Globals.Notary, StringComparison.InvariantCultureIgnoreCase) == false)
                 {
                     int? roleID = (_roles?.FirstOrDefault(q => q?.Value == role)?.ID) ?? throw new NullReferenceException($"Unable to find a role description for role {role}.");
-                    IEnumerable<AllUsers_CMS_DB>? usersInRole = _allUsers_CMS_DB?.Where(x => x.RoleID == roleID);
+                    IEnumerable<AllUsers_CMS_DB?>? usersInRole = _allUsers_CMS_DB?.Where(x => x?.RoleID == roleID);
 
                     if (usersInRole != null && usersInRole.Any() == true)
-                        usersToAssign.AddRange(AddAssignedUsers(usersInRole)!);
+                        usersToAssign.AddRange(AddAssignedUsers(usersInRole!)!);
                 }
                 else
                 {
@@ -365,12 +413,13 @@ namespace Training.Website.Components.Pages
                     {
                         AllUsers_Assignment user = new()
                         {
-                            AppUserID = notary.CMS_User_ID,
+                            CMS_UserID = notary.CMS_User_ID,
+                            OPS_UserID = notary.Emp_ID,
                             EmailAddress = notary.EMail,
+                            LoginID = notary.UserName,
                             FirstName = notary.FirstName,
                             LastName = notary.LastName,
                             UserName = notary.FullName,
-                            Selected = true,
                             RoleDesc = Globals.Notary,
                             TitleDesc = null
                         };
@@ -435,9 +484,9 @@ namespace Training.Website.Components.Pages
             foreach (string? title in _selectedTitles)
             {
                 int? titleID = (_titles?.FirstOrDefault(q => q?.Value == title)?.ID) ?? throw new NullReferenceException($"Unable to find a title description for title {title}.");
-                IEnumerable<AllUsers_CMS_DB>? usersInTitle = _allUsers_CMS_DB?.Where(x => x.TitleID == titleID);
+                IEnumerable<AllUsers_CMS_DB?>? usersInTitle = _allUsers_CMS_DB?.Where(x => x?.TitleID == titleID);
 
-                usersToAssign.AddRange(AddAssignedUsers(usersInTitle)!);
+                usersToAssign.AddRange(AddAssignedUsers(usersInTitle!)!);
             }
 
             return usersToAssign;

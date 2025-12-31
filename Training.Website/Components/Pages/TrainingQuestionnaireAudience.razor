@@ -33,8 +33,7 @@ else
     <table width="100%" style="background-color: lightgray;">
         <tr>
             <td colspan="4" class="HeaderClass" style="text-align: center; align-items: center;">
-                <span class="HeaderClass">Session ID#</span>
-                <br />
+                <span class="HeaderClass" style="padding-right: 15px;">Session ID#:</span>  <!-- THIS PARTICULAR HEADER MOVED TO SAME LINE AS DROP DOWN CONTROL AS REQUESTED BY SUSAN, 2025-12-31 -->
                 <TelerikDropDownList Data="@_sessions"
                                      Value="_selectedSessionString"
                                      ValueChanged="@(async (string newValue) => await SessionChanged(newValue))"
@@ -48,12 +47,12 @@ else
         </tr>
         <tr>
             <td class="HeaderClass HeaderClassCentered">
-                <span class="HeaderClass">Roles:</span>
+                <span class="@_spanHeaderClass">Roles:</span>
                 <br />
                 <TelerikMultiSelect
                     Class="UniformWidth_DropDown"
                     AutoClose="false"
-                    Enabled="true"
+                    Enabled="@SessionSelected()"
                     Data="@_roles?.Select(q => q?.Value).Order()"
                     Value="@_selectedRoles"
                     ValueChanged="@((List<string> newValues) => RolesMultiSelectChanged(newValues) )"
@@ -64,11 +63,11 @@ else
                 </TelerikMultiSelect>
             </td>
             <td class="HeaderClass HeaderClassCentered">
-                <span class="HeaderClass">Titles:</span>
+                <span class="@_spanHeaderClass">Titles:</span>
                 <br />
                 <TelerikMultiSelect Class="UniformWidth_DropDown"
                                     AutoClose="false"
-                                    Enabled="true"
+                                    Enabled="@SessionSelected()"
                                     Data="@_titles?.Select(q => q?.Value).Order()"
                                     Value="@_selectedTitles"
                                     ValueChanged="@((List<string> newValues) => TitlesMultiSelectChanged(newValues))"
@@ -79,12 +78,12 @@ else
                 </TelerikMultiSelect>
             </td>
             <td class="HeaderClass HeaderClassCentered">
-                <span class="HeaderClass">Reports:</span>
+                <span class="@_spanHeaderClass">Reports:</span>
                 <br />
                 <TelerikMultiSelect
                     Class="UniformWidth_DropDown"
                     AutoClose="false"
-                    Enabled="true"
+                    Enabled="@SessionSelected()"
                     Data="@_reports?.Select(q => q?.Value).Order()"
                     Value="@_selectedReports"
                     ValueChanged="@((List<string> newValues) => ReportsMultiSelectChanged(newValues) )"
@@ -95,7 +94,7 @@ else
                 </TelerikMultiSelect>
             </td>
             <td class="HeaderClass HeaderClassCentered">
-                <span class="HeaderClass">Worklist Groups:</span>
+                <span class="@_spanHeaderClass">Worklist Groups:</span>
                 <br />
                 <TelerikMultiSelect
                     Class="UniformWidth_DropDown"
@@ -112,7 +111,7 @@ else
             </td>
         </tr>
         <tr>
-            <td colspan="4" class="HeaderClass" style="text-align: center;">
+            <td colspan="4" class="@_spanHeaderClass" style="text-align: center;">
                 <span style="padding-right: 30px;" class="HeaderClass">Due Date:</span>
                 <TelerikDatePicker
                     Min="@_minimumDueDate"

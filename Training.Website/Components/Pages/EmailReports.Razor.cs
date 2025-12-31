@@ -43,7 +43,7 @@ namespace Training.Website.Components.Pages
             _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
             _roles = await _service.GetAllRoles(true, _database_CMS);
             _titles = await _service.GetAllTitles(_database_CMS);
-            _allUsers_CMS = await _service.GetAllUsers(_database_CMS);
+            _allUsers_CMS = await _service.GetAllUsers_CMS_DB(_database_CMS);
             _notaries = (await _service.GetNotaries(_allUsers_CMS, Database_OPS))?.ToArray();
         }
 
