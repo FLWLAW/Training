@@ -49,7 +49,7 @@ namespace Training.Website.Components.Pages
         private readonly DateTime _minimumDueDate = DateTime.Now.AddDays(1);
         private DateTime? _dueDate = null;
         private AllUsers_CMS_DB[]? _allUsers_CMS_DB = null;
-        private List<AllUsers_Assignment?> _allUsers_Assignment = [];
+        private AllUsers_Assignment?[]? _allUsers_Assignment = null;
         private IEnumerable<AllUsers_Notaries?>? _notaries = null;
         private TelerikGrid<AllUsers_Assignment>? _allUsers_Assignment_ExportGrid;
         #endregion
@@ -131,11 +131,14 @@ namespace Training.Website.Components.Pages
 
         private void DeSelectAllClicked()
         {
-            foreach(AllUsers_Assignment? assignedUser in _allUsers_Assignment)
-                if (assignedUser != null)
-                    assignedUser.Selected = false;
+            if (_allUsers_Assignment != null && _allUsers_Assignment.Length > 0)
+            {
+                foreach (AllUsers_Assignment? assignedUser in _allUsers_Assignment)
+                    if (assignedUser != null)
+                        assignedUser.Selected = false;
 
-            StateHasChanged();
+                StateHasChanged();
+            }
         }
 
         private StringBuilder EMailMessage(string? firstName)
@@ -178,23 +181,24 @@ namespace Training.Website.Components.Pages
             usersToAssign_Raw.AddRange(UsersInSelectedRoles());
             usersToAssign_Raw.AddRange(UsersInSelectedTitles());
             usersToAssign_Raw.AddRange(UsersInSelectedWorklistGroupsAndReports());
-            
+
+            List<AllUsers_Assignment?>? allUsers_Assignment = [];
             List<int> usersAsssigned = [];
             
-            _allUsers_Assignment.Clear();
+            allUsers_Assignment.Clear();
             foreach (AllUsers_Assignment userToAssign in usersToAssign_Raw)
             {
                 int? userID = userToAssign.AppUserID;
 
                 if (userID != null && usersAsssigned.Contains(userID.Value) == false)
                 {
-                    _allUsers_Assignment.Add(userToAssign);
+                    allUsers_Assignment.Add(userToAssign);
                     usersAsssigned.Add(userID.Value);
                 }
                 else
                 {
                     // IF USER ALREADY HAS BEEN GATHERED, APPEND ROLE INFO IF THEY ARE A NOTARY
-                    AllUsers_Assignment? existingRecord = _allUsers_Assignment.FirstOrDefault(q => q?.AppUserID == userID!.Value);
+                    AllUsers_Assignment? existingRecord = allUsers_Assignment.FirstOrDefault(q => q?.AppUserID == userID!.Value);
 
                     if (existingRecord != null)
                     {
@@ -207,7 +211,7 @@ namespace Training.Website.Components.Pages
             }
 
             // IF TITLE IS NULL/BLANK (WHICH CAN HAPPEN WHEN THE "NOTARY" ROLE IS SELECTED), FIX IT HERE
-            foreach (AllUsers_Assignment? assignedUser in _allUsers_Assignment)
+            foreach (AllUsers_Assignment? assignedUser in allUsers_Assignment)
             {
                 if (string.IsNullOrWhiteSpace(assignedUser?.TitleDesc) == true)
                 {
@@ -218,7 +222,7 @@ namespace Training.Website.Components.Pages
                 }
             }
 
-            _allUsers_Assignment = [.._allUsers_Assignment.OrderBy(s => s?.UserName)];
+            _allUsers_Assignment = [..allUsers_Assignment.OrderBy(s => s?.UserName)];
         }
 
         private void ReportsMultiSelectChanged(List<string>? newValues)
@@ -250,58 +254,62 @@ namespace Training.Website.Components.Pages
 
         private void SendEmails()
         {
-            IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment.Where(u => u != null && u.Selected == true);
+            IEnumerable<AllUsers_Assignment?>? recipients = _allUsers_Assignment?.Where(u => u != null && u.Selected == true);
+
+            if (recipients != null && recipients.Any() == true)
+            {
 
 #if DEBUG || QA
-            EMailer email = new();
-            StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");
-
-            testMessageBody.Append("<br /><br />");
-            foreach (AllUsers_Assignment? recipient in recipients)
-            {
-                StringBuilder message = EMailMessage(recipient?.FirstName);
+                EMailer email = new();
+                StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");
 
                 testMessageBody.Append("<br /><br />");
-                testMessageBody.Append("-------------------------------------------------------------------------------------------------------------------------------------------------------------");
-                testMessageBody.Append("<br /><br />");
-                testMessageBody.Append($"From: {email.From?.Name} &lt{email.From?.Address}&gt");
-                testMessageBody.Append("<br />");
-                testMessageBody.Append($"To: {recipient?.UserName} &lt{recipient?.EmailAddress}&gt");
-                testMessageBody.Append("<br />");
-                testMessageBody.Append($"Subject: Training Questionnaire Available for Session #{_selectedSession?.Session_ID}");
-                testMessageBody.Append("<br /><br />");
-                testMessageBody.Append(message);
-                LogEMailingToDB(recipient);
-            }
-
-            email.BodyTextFormat = MimeKit.Text.TextFormat.Html;
-            email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
-            email.Body = testMessageBody;
-
-            AllUsers_CMS_DB? susan = _allUsers_CMS_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
-            email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
-
-            email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
-            
-            email.Send();
-#else
-            foreach (AllUsers_Assignment? recipient in recipients)
-            {
-                MailboxAddress address = new(recipient!.UserName ?? string.Empty, recipient!.EmailAddress!);
-                //string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
-
-                EMailer email = new()
+                foreach (AllUsers_Assignment? recipient in recipients)
                 {
-                    BodyTextFormat = MimeKit.Text.TextFormat.Html,
-                    Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}",
-                    Body = EMailMessage(recipient?.FirstName),
-                    To = [address]
-                };
+                    StringBuilder message = EMailMessage(recipient?.FirstName);
+
+                    testMessageBody.Append("<br /><br />");
+                    testMessageBody.Append("-------------------------------------------------------------------------------------------------------------------------------------------------------------");
+                    testMessageBody.Append("<br /><br />");
+                    testMessageBody.Append($"From: {email.From?.Name} &lt{email.From?.Address}&gt");
+                    testMessageBody.Append("<br />");
+                    testMessageBody.Append($"To: {recipient?.UserName} &lt{recipient?.EmailAddress}&gt");
+                    testMessageBody.Append("<br />");
+                    testMessageBody.Append($"Subject: Training Questionnaire Available for Session #{_selectedSession?.Session_ID}");
+                    testMessageBody.Append("<br /><br />");
+                    testMessageBody.Append(message);
+                    LogEMailingToDB(recipient);
+                }
+
+                email.BodyTextFormat = MimeKit.Text.TextFormat.Html;
+                email.Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}";
+                email.Body = testMessageBody;
+
+                AllUsers_CMS_DB? susan = _allUsers_CMS_DB?.FirstOrDefault(q => q.UserName == "Susan Eisenman");
+                email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
+
+                email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
 
                 email.Send();
-                LogEMailingToDB(recipient);
-            }
+#else
+                foreach (AllUsers_Assignment? recipient in recipients)
+                {
+                    MailboxAddress address = new(recipient!.UserName ?? string.Empty, recipient!.EmailAddress!);
+                    //string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
+
+                    EMailer email = new()
+                    {
+                        BodyTextFormat = MimeKit.Text.TextFormat.Html,
+                        Subject = $"Training Questionnaire Available for Session #{_selectedSession?.Session_ID}",
+                        Body = EMailMessage(recipient?.FirstName),
+                        To = [address]
+                    };
+
+                    email.Send();
+                    LogEMailingToDB(recipient);
+                }
 #endif
+            }
         }
 
         private void SendEmailsToSelectedAndLogToDB_Main()
