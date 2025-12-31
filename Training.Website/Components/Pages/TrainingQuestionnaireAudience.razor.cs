@@ -32,7 +32,9 @@ namespace Training.Website.Components.Pages
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
         private bool _sessionAlreadyExistsInDueDatesTable = false;
-        
+
+        private string _spanHeaderClass = "HeaderClass DisableMe";
+
         private IEnumerable<IdValue<int>?>? _roles = null;
         private List<string> _selectedRoles = [];
         
@@ -345,6 +347,8 @@ namespace Training.Website.Components.Pages
                 _dueDate = _minimumDueDate;
                 _sessionAlreadyExistsInDueDatesTable = false;
             }
+
+            _spanHeaderClass = "HeaderClass";
             StateHasChanged();
         }
 
