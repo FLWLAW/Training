@@ -28,7 +28,7 @@ namespace Training.Website.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            _allUsers = await _service.GetAllUsers(_dbCMS);
+            _allUsers = await _service.GetAllUsers_CMS_DB(_dbCMS);
         }
 
         private async Task UserSingleSelectValueChanged(string? newValue)

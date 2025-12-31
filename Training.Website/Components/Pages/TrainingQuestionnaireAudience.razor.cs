@@ -48,7 +48,8 @@ namespace Training.Website.Components.Pages
         
         private readonly DateTime _minimumDueDate = DateTime.Now.AddDays(1);
         private DateTime? _dueDate = null;
-        private AllUsers_CMS_DB[]? _allUsers_CMS_DB = null;
+        private AllUsers_CMS_DB?[]? _allUsers_CMS_DB = null;
+        private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
         private AllUsers_Assignment?[]? _allUsers_Assignment = null;
         private IEnumerable<AllUsers_Notaries?>? _notaries = null;
         private TelerikGrid<AllUsers_Assignment>? _allUsers_Assignment_ExportGrid;
@@ -56,18 +57,19 @@ namespace Training.Website.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database_OPS);
+            IEnumerable<SessionInformationModel>? sessionsInfo = await _service.GetSessionInformation(Database_OPS);
 
-            if (sessionInfo != null && sessionInfo.Any() == true)
+            if (sessionsInfo != null && sessionsInfo.Any() == true)
             {
-                _allUsers_CMS_DB = (await _service.GetAllUsers(_dbCMS))?.ToArray();
+                _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
+                _allUsers_OPS_DB = (await _service.GetAllUsers_OPS_DB(Database_OPS))?.ToArray();
                 _roles = await _service.GetAllRoles(true, _dbCMS);
                 _titles = await _service.GetAllTitles(_dbCMS);
                 _reports = await _service.GetAllReports(_dbCMS);
                 _worklistGroupsReports = await _service.GetAllWorklistGroupsWithReports(_dbCMS);
                 _notaries = await _service.GetNotaries(_allUsers_CMS_DB, Database_OPS);
 
-                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
+                _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionsInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 _dueDate = _minimumDueDate;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)

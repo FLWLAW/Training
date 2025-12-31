@@ -18,6 +18,10 @@ namespace Training.Website.Services
             return results;
         }
 
+        // MAY NEED TO MOVE TO CommonMethods
+        public async Task<IEnumerable<AllUsers_OPS_DB?>?> GetAllUsers_OPS_DB(IDatabase? database) =>
+            await database!.QueryByStatementAsync<AllUsers_OPS_DB?>("SELECT Emp_ID, UserName FROM [Employees Tbl]");
+
         public void UpsertEMailingRecord(AllUsers_Assignment? recipient, int? session_ID, string? sendingUser, IDatabase? database)
         {
             UpsertEMailings_Parameters parameters = new()
