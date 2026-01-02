@@ -10,7 +10,7 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Report_SA", "ReportID", "ReportDesc");
 
         public async Task<IEnumerable<int>?> GetAllOpsUserIDsAssignedToTasksBySessionID(int? sessionID, IDatabase? database) =>
-            await database!.QueryByStatementAsync<int>($"SELECT Emp_ID FROM [TRAINING Tasks Tbl] WHERE TRAINING_ID = {sessionID}");
+            await database!.QueryByStatementAsync<int>($"SELECT Emp_ID FROM [TRAINING Tasks Tbl] WHERE TRAINING_ID = {sessionID} AND (IsDeleted = 0 OR IsDeleted IS NULL)");
 
 
         // MAY NEED TO MOVE TO CommonMethods
