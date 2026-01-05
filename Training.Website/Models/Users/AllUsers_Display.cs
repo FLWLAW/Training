@@ -1,6 +1,6 @@
 ﻿namespace Training.Website.Models.Users
 {
-    public class AllUsers_Assignment
+    public class AllUsers_Display
     {
         public bool Selected { get; set; } = false;
         public required int? CMS_UserID { get; set; }

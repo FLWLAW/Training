@@ -26,7 +26,7 @@ namespace Training.Website.Services
             return results;
         }
 
-        public void UpsertEMailingRecord(AllUsers_Assignment? recipient, int? sessionID, string? sendingUser, IDatabase? database)
+        public void UpsertEMailingRecord(AllUsers_Display? recipient, int? sessionID, string? sendingUser, IDatabase? database)
         {
             UpsertEMailings_Parameters parameters = new()
             {
