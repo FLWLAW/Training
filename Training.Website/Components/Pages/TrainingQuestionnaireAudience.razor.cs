@@ -139,19 +139,22 @@ namespace Training.Website.Components.Pages
 
                 foreach (AllUsers_CMS_DB? user in users)
                 {
-                    AllUsers_Display? assignedUser = new()
+                    if (user != null && string.IsNullOrWhiteSpace(user.EmailAddress) == false)
                     {
-                        CMS_UserID = user?.AppUserID,
-                        OPS_UserID = OPS_ID_From_Login_ID(user?.LoginID),
-                        LoginID = user?.LoginID,
-                        UserName = user?.UserName,
-                        EmailAddress = user?.EmailAddress,
-                        RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
-                        TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
-                        FirstName = user?.FirstName,
-                        LastName = user?.LastName
-                    };
-                    usersToAssign.Add(assignedUser);
+                        AllUsers_Display? assignedUser = new()
+                        {
+                            CMS_UserID = user?.AppUserID,
+                            OPS_UserID = OPS_ID_From_Login_ID(user?.LoginID),
+                            LoginID = user?.LoginID,
+                            UserName = user?.UserName,
+                            EmailAddress = user?.EmailAddress,
+                            RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
+                            TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
+                            FirstName = user?.FirstName,
+                            LastName = user?.LastName
+                        };
+                        usersToAssign.Add(assignedUser);
+                    }
                 }
 
                 return usersToAssign;
