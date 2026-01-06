@@ -43,6 +43,11 @@ else
                         <DropDownListPopupSettings Height="180px" />
                     </DropDownListSettings>
                 </TelerikDropDownList>
+                <TelerikButton Class="UniformButton"
+                               OnClick="@(() => ClearSelectedSession() )"
+                               Enabled="true">
+                    Clear Selection
+                </TelerikButton>
             </td>
         </tr>
         <!--

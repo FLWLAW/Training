@@ -54,7 +54,7 @@ namespace Training.Website.Components.Pages
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
         private AllUsers_Display?[]? _allUsers_Display = null;
         private IEnumerable<AllUsers_Notaries?>? _notaries = null;
-        private IEnumerable<int>? _usersAssignedToTasksForSession = null;
+        //private IEnumerable<int>? _usersAssignedToTasksForSession = null;
         private TelerikGrid<AllUsers_Display>? _allUsers_Assignment_ExportGrid;
         #endregion
 
@@ -66,7 +66,7 @@ namespace Training.Website.Components.Pages
             {
                 _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
                 _allUsers_OPS_DB = (await _service.GetAllUsers_OPS_DB(Database_OPS))?.ToArray();
-                _allUsers_Display = _allUsers_CMS_DB != null ? AddAssignedUsers(_allUsers_CMS_DB!)?.ToArray() : null;
+                _allUsers_Display = _allUsers_CMS_DB != null ? ConvertToDisplayModel(_allUsers_CMS_DB!)?.ToArray() : null;
                 _roles = await _service.GetAllRoles(true, _dbCMS);
                 _titles = await _service.GetAllTitles(_dbCMS);
                 _reports = await _service.GetAllReports(_dbCMS);
@@ -82,35 +82,6 @@ namespace Training.Website.Components.Pages
         }
 
         // ================================================================================================================================================================================================================================================================================================
-
-        private List<AllUsers_Display>? AddAssignedUsers(IEnumerable<AllUsers_CMS_DB>? users)
-        {
-            if (users == null || users.Any() == false)
-                return null;
-            else
-            {
-                List<AllUsers_Display> usersToAssign = [];
-
-                foreach (AllUsers_CMS_DB? user in users)
-                {
-                    AllUsers_Display? assignedUsers = new()
-                    {
-                        CMS_UserID = user?.AppUserID,
-                        OPS_UserID = OPS_ID_From_Login_ID(user?.LoginID),
-                        LoginID = user?.LoginID,
-                        UserName = user?.UserName,
-                        EmailAddress = user?.EmailAddress,
-                        RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
-                        TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
-                        FirstName = user?.FirstName,
-                        LastName = user?.LastName
-                    };
-                    usersToAssign.Add(assignedUsers);
-                }
-
-                return usersToAssign;
-            }
-        }
 
         private void AddToLoginIDs(List<string?> loginIDs, WorklistGroupsAndReportsModel worklistGroup_Report)
         {
@@ -132,21 +103,59 @@ namespace Training.Website.Components.Pages
                     AllUsers_CMS_DB? userCMSDB = _allUsers_CMS_DB?.FirstOrDefault(q => q?.LoginID?.Equals(loginID, StringComparison.InvariantCultureIgnoreCase) == true);
 
                     if (userCMSDB != null)
-                        usersToAssign.AddRange(AddAssignedUsers([userCMSDB])!);
+                        usersToAssign.AddRange(ConvertToDisplayModel([userCMSDB])!);
                 }
             }
         }
 
+        /*
         private void ClearDropDownSelections()
         {
-            /*
             _selectedRoles.Clear();
             _selectedTitles.Clear();
             _selectedReports.Clear();
             _selectedWorklistGroups.Clear();
             _worklistGroupsBySelectedReports = [];
-            */
             _allUsers_Display = null;
+        }
+        */
+
+        private void ClearSelectedSession()
+        {
+            _selectedSessionString = null;
+            _selectedSession = null;
+            ApplicationState!.SessionID_String = null;
+            _spanHeaderClass = "HeaderClass DisableMe";
+            _allUsers_Display = _allUsers_CMS_DB != null ? ConvertToDisplayModel(_allUsers_CMS_DB!)?.ToArray() : null;
+        }
+
+        private List<AllUsers_Display>? ConvertToDisplayModel(IEnumerable<AllUsers_CMS_DB>? users)
+        {
+            if (users == null || users.Any() == false)
+                return null;
+            else
+            {
+                List<AllUsers_Display> usersToAssign = [];
+
+                foreach (AllUsers_CMS_DB? user in users)
+                {
+                    AllUsers_Display? assignedUser = new()
+                    {
+                        CMS_UserID = user?.AppUserID,
+                        OPS_UserID = OPS_ID_From_Login_ID(user?.LoginID),
+                        LoginID = user?.LoginID,
+                        UserName = user?.UserName,
+                        EmailAddress = user?.EmailAddress,
+                        RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
+                        TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
+                        FirstName = user?.FirstName,
+                        LastName = user?.LastName
+                    };
+                    usersToAssign.Add(assignedUser);
+                }
+
+                return usersToAssign;
+            }
         }
 
         private void DeSelectAllClicked()
@@ -184,6 +193,29 @@ namespace Training.Website.Components.Pages
         }
 
         private void EmailsSentCloseClicked() => _emailsSentWindowVisible = false;
+
+        private async Task<AllUsers_Display?[]?> GetAssignedUsersWithTasksForSession()
+        {
+            IEnumerable<int>? assignedIDs = await _service.GetAllOpsUserIDsAssignedToTasksBySessionID(_selectedSession?.Session_ID, Database_OPS!);
+
+            if (assignedIDs == null || assignedIDs.Any() == false)
+                return [];
+            else
+            {
+                List<AllUsers_Display>? allUsers = ConvertToDisplayModel(_allUsers_CMS_DB!);
+                List<AllUsers_Display> result = [];
+
+                foreach (int opsID in assignedIDs)
+                {
+                    AllUsers_Display? user = allUsers?.FirstOrDefault(q => q?.OPS_UserID == opsID);
+
+                    if (user != null)
+                        result.Add(user);
+                }
+
+                return (result.Count == 0) ? null : result.OrderBy(s => s?.UserName)?.ToArray();
+            }
+        }
 
         private void LogEMailingToDB(AllUsers_Display? recipient) =>
             _service.UpsertEMailingRecord(recipient, _selectedSession!.Session_ID, ApplicationState!.LoggedOnUser!.UserName, Database_OPS);
@@ -317,7 +349,7 @@ namespace Training.Website.Components.Pages
 
                 email.Send();
 #else
-                foreach (AllUsers_Assignment? recipient in recipients)
+                foreach (AllUsers_Display? recipient in recipients)
                 {
                     MailboxAddress address = new(recipient!.UserName ?? string.Empty, recipient!.EmailAddress!);
                     //string body = $"Dear {recipient?.FirstName},<br/><br/>You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>Please click on the link below to access the questionnaire:<br/><a href='https://yourtrainingwebsite.com/questionnaire?sessionId={_selectedSession?.Session_ID}'>Complete Training Questionnaire</a><br/><br/>Thank you for your participation!<br/><br/>Best regards,<br/>Compliance Team";
@@ -364,15 +396,17 @@ namespace Training.Website.Components.Pages
             }
 
             _spanHeaderClass = "HeaderClass";
-            ClearDropDownSelections();
+            //ClearDropDownSelections();
+            _allUsers_Display = await GetAssignedUsersWithTasksForSession();
 
-            _usersAssignedToTasksForSession = await _service.GetAllOpsUserIDsAssignedToTasksBySessionID(_selectedSession?.Session_ID, Database_OPS!);
+            //_usersAssignedToTasksForSession = await _service.GetAllOpsUserIDsAssignedToTasksBySessionID(_selectedSession?.Session_ID, Database_OPS!);
 
             StateHasChanged();
         }
 
         private bool SessionSelected() => _selectedSession != null && _selectedSession.Session_ID != null && _selectedSession.Session_ID > 0;
 
+        /*
         private void SetSelected()
         {
             if (_allUsers_Display != null && _usersAssignedToTasksForSession != null && _usersAssignedToTasksForSession.Any() == true)
@@ -387,6 +421,7 @@ namespace Training.Website.Components.Pages
                 }
             }
         }
+        */
         /*
         private void TitlesMultiSelectChanged(List<string>? newValues)
         {
