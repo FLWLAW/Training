@@ -201,7 +201,7 @@ else
                     <TelerikButton
                         Class="UniformButton"
                         OnClick="@(() => SendEmailsToSelectedAndLogToDB_Main() )"
-                        Enabled="true">
+                        Enabled="@_allUsers_Display.Any(q => q?.Selected == true)">
                         SEND EMAILS TO SELECTED
                     </TelerikButton>
                 </td>
