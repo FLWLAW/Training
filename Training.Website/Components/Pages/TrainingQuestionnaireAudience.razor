@@ -43,8 +43,14 @@ else
                         <DropDownListPopupSettings Height="180px" />
                     </DropDownListSettings>
                 </TelerikDropDownList>
+                <TelerikButton Class="UniformButton"
+                               OnClick="@(() => ClearSelectedSession() )"
+                               Enabled="true">
+                    Clear Selection
+                </TelerikButton>
             </td>
         </tr>
+        <!--
         <tr>
             <td class="HeaderClass HeaderClassCentered">
                 <span class="@_spanHeaderClass">Roles:</span>
@@ -110,6 +116,7 @@ else
                 </TelerikMultiSelect>
             </td>
         </tr>
+        -->
         <tr>
             <td colspan="4" class="@_spanHeaderClass" style="text-align: center;">
                 <span style="padding-right: 30px;" class="HeaderClass">Due Date:</span>
@@ -122,7 +129,7 @@ else
         </tr>
     </table>
 
-    @if (_allUsers_Assignment != null && _allUsers_Assignment.Count() > 0)
+    @if (_allUsers_Display != null && _allUsers_Display.Count() > 0)
     {
         <table width="100%">
             <tr>
@@ -134,7 +141,7 @@ else
                 <td style="width: 85%; text-align: center;">
                     <!-- DISPLAY GRID -->
                     <TelerikGrid
-                        Data="@_allUsers_Assignment"
+                        Data="@_allUsers_Display"
                         Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
                         Width="100%" Height="700px"
                         FilterMode="@GridFilterMode.None" Groupable="false"
@@ -142,11 +149,11 @@ else
                         OnRowClick="@OnRowClickHandler_AllUsers">
                         <GridColumns>
                             <!-- https://www.telerik.com/forums/checkbox-column-f1b24f092353 -->
-                            <GridColumn Field="@nameof(AllUsers_Assignment.Selected)" Title="Selected" Width="65px">
+                            <GridColumn Field="@nameof(AllUsers_Display.Selected)" Title="Selected" Width="65px">
                                 <!-- https://github.com/telerik/blazor-docs/blob/master/components/grid/templates/column.md -->
                                 <Template>
                                     @{
-                                        var item = (AllUsers_Assignment)context;
+                                        var item = (AllUsers_Display)context;
                                         if (item.Selected == true)
                                         {
                                             <label class="CheckSelected">✔</label>
@@ -158,10 +165,10 @@ else
                                     }
                                 </Template>
                             </GridColumn>
-                            <GridColumn Field="@nameof(AllUsers_Assignment.UserName)" Title="User Name" Width="300px" />
-                            <GridColumn Field="@nameof(AllUsers_Assignment.EmailAddress)" Title="Email" Width="210px" />
-                            <GridColumn Field="@nameof(AllUsers_Assignment.RoleDesc)" Title="Role" Width="180px" />
-                            <GridColumn Field="@nameof(AllUsers_Assignment.TitleDesc)" Title="Title" Width="180px" />
+                            <GridColumn Field="@nameof(AllUsers_Display.UserName)" Title="User Name" Width="300px" />
+                            <GridColumn Field="@nameof(AllUsers_Display.EmailAddress)" Title="Email" Width="210px" />
+                            <GridColumn Field="@nameof(AllUsers_Display.RoleDesc)" Title="Role" Width="180px" />
+                            <GridColumn Field="@nameof(AllUsers_Display.TitleDesc)" Title="Title" Width="180px" />
                         </GridColumns>
                         <GridExport>
                             <GridExcelExport FileName="@Globals.ExportFilename("UserList_Session", _selectedSessionString)"
@@ -170,13 +177,13 @@ else
                     </TelerikGrid>
                     <!-- EXPORT GRID -->
                     <TelerikGrid @ref="@_allUsers_Assignment_ExportGrid"
-                                 Data="@_allUsers_Assignment.Where(q => q?.Selected == true)"
+                                 Data="@_allUsers_Display.Where(q => q?.Selected == true)"
                                  Width="0px" Height="0px">
                         <GridColumns>
-                            <GridColumn Field="@nameof(AllUsers_Assignment.UserName)" Title="User Name" Width="300px" />
-                            <GridColumn Field="@nameof(AllUsers_Assignment.EmailAddress)" Title="Email" Width="210px" />
-                            <GridColumn Field="@nameof(AllUsers_Assignment.RoleDesc)" Title="Role" Width="180px" />
-                            <GridColumn Field="@nameof(AllUsers_Assignment.TitleDesc)" Title="Title" Width="180px" />
+                            <GridColumn Field="@nameof(AllUsers_Display.UserName)" Title="User Name" Width="300px" />
+                            <GridColumn Field="@nameof(AllUsers_Display.EmailAddress)" Title="Email" Width="210px" />
+                            <GridColumn Field="@nameof(AllUsers_Display.RoleDesc)" Title="Role" Width="180px" />
+                            <GridColumn Field="@nameof(AllUsers_Display.TitleDesc)" Title="Title" Width="180px" />
                         </GridColumns>
                         <GridExport>
                             <GridExcelExport FileName="@Globals.ExportFilename("UserList_Session", _selectedSessionString)"
