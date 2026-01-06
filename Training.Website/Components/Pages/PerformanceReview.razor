@@ -1,0 +1,72 @@
+﻿@page "/PerformanceReview"
+
+<table style="width: 100%">
+    <tr>
+        <td style="width: 100%; text-align: center; font-weight: 700; background-color: lightgray;">
+            <h2>@_reviewYear Performance Review</h2>
+        </td>
+    </tr>
+</table>
+
+<table style="width: 100%">
+    <tr>
+        <td style="width: 95%;">
+            <h2>@_headerInfo?.FullName</h2>
+        </td>
+        <td style="width: 5%; text-align: right; font-weight: 200; font-size: x-small; color: gray;">
+            ID #@_headerInfo?.Review_ID
+        </td>
+    </tr>
+</table>
+
+<table class="table_center">
+    <tr>
+        <td class="column134">&nbsp;&nbsp;&nbsp;</td>
+        <td class="column2">&nbsp;&nbsp;&nbsp;</td>
+        <td class="column134 borders">ADP File #:</td>
+        <td class="column134 borders">@_headerInfo?.BadgeNum</td>
+    </tr>
+    <tr>
+        <td class="column134 borders">Job Title:</td>
+        <td class="column2 borders">@_headerInfo?.JobTitleName</td>
+        <td class="column134 borders">Hire Date:</td>
+        <td class="column134 borders">@_headerInfo?.HireDate?.ToShortDateString()</td>
+    </tr>
+    <tr>
+        <td class="column134 borders">Location:</td>
+        <td class="column2 borders">@_headerInfo?.SiteName</td>
+        <td class="column134 borders">Employee Type:</td>
+        <td class="column134 borders">@_headerInfo?.EmployeeType</td>
+    </tr>
+    <tr>
+        <td class="column134 borders">Practice Group:</td>
+        <td class="column2 borders">@_headerInfo?.PracticeGroupName</td>
+        <td class="column134 borders">Shift:</td>
+        <td class="column134 borders">@_headerInfo?.Shift</td>
+    </tr>
+    <tr>
+        <td class="column134 borders">Department(s):</td>
+        <td class="column2 borders">@_headerInfo?.Departments</td>
+        <td class="column134 borders">Review Status:</td>
+        <td class="column134 borders">@_headerInfo?.Status</td>
+    </tr>
+</table>
+
+<style>
+   .table_center {
+       width: 60%;
+       margin-left: auto;
+       margin-right: auto;
+    }
+   .column134 {
+       padding-left: 6px;
+       width: 20%;
+   }
+   .column2 {
+       padding-left: 6px;
+       width: 40%;
+   }
+   .borders {
+       border: 1px black solid
+   }
+</style>

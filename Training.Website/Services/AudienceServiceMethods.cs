@@ -13,10 +13,6 @@ namespace Training.Website.Services
             await database!.QueryByStatementAsync<int>($"SELECT DISTINCT Emp_ID FROM [TRAINING Tasks Tbl] WHERE TRAINING_ID = {sessionID} AND (IsDeleted = 0 OR IsDeleted IS NULL)");
 
 
-        // MAY NEED TO MOVE TO CommonMethods
-        public async Task<IEnumerable<AllUsers_OPS_DB?>?> GetAllUsers_OPS_DB(IDatabase? database) =>
-            await database!.QueryByStatementAsync<AllUsers_OPS_DB?>("SELECT Emp_ID, UserName FROM [Employees Tbl]");
-
         public async Task<IEnumerable<WorklistGroupsAndReportsModel?>?> GetAllWorklistGroupsWithReports(IDatabase? database)
         {
             StagesReportsModel_Parameters parameters = new();   // LEAVE PROPERTIES AS NULL
