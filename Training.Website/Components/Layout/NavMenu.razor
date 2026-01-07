@@ -42,7 +42,23 @@
             </NavLink>
         </div>
     }
+
+    @if (IsTester() == true)
+    {
+        <div class="top-row ps-3 navbar navbar-dark" style="background-color: black">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="">Performance Review</a>
+            </div>
+        </div>
+
+        <div class="nav-item px-1">
+            <NavLink class="Dashboard-nav-link" href="PerformanceReview">
+                Performance Review
+            </NavLink>
+        </div>
+    }
 </div>
+
 
 <style>
     .WSD_Header {
