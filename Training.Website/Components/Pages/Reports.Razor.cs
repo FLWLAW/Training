@@ -30,7 +30,7 @@ namespace Training.Website.Components.Pages
         private IEnumerable<AllUsers_CMS_DB?>? _allUsers_CMS = null;
         private AllUsers_Notaries?[]? _notaries = null;
         private IEnumerable<ResultsModel?>? _results = null;
-        private readonly EmailReportServiceMethods _service = new();
+        private readonly ReportServiceMethods _service = new();
         private TelerikGrid<EMailReportBySessionIdModel?>? _emailedReports = null;
         
         private readonly SqlDatabase _database_CMS = new(Configuration.DatabaseConnectionString_CMS()!);

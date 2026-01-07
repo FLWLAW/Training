@@ -3,9 +3,8 @@
 
 <table width="100%" style="background-color: lightgray;">
     <tr>
-        <td class="HeaderClass" style="width: 100%;">
-            <span class="HeaderClass">Session ID#</span>
-            <br />
+        <td style="text-align: right; padding-right: 30px; width: 70%;">
+            <span style="font-weight: 700;">Session ID#: </span>
             <TelerikDropDownList
                 Data="@_sessions"
                 Value="_selectedSessionString"
@@ -17,17 +16,21 @@
                 </DropDownListSettings>
             </TelerikDropDownList>
         </td>
+        <td style="text-align: center;">
+            <span style="font-weight: 700; padding-right: 15px;">Total # of Users:</span>
+            <span style="background-color: white;">@(_emailedUsers?.Count())</span>
+        </td>
     </tr>
     @if (_dueDate != null)
     {
         <tr>
-            <td style="text-align: center">
+            <td colspan="2" style="text-align: center">
                 Due Date: @_dueDate!.Value.ToShortDateString()
             </td>
         </tr>
     }
     <tr>
-        <td style="text-align: center; background-color: white; padding-top: 6px; padding-bottom: 6px;">
+        <td colspan="2" style="text-align: center; background-color: white; padding-top: 6px; padding-bottom: 6px;">
             <TelerikButton Class="UniformButton"
                            OnClick="@(async() => await Globals.ExportToExcelFile(_emailedReports) )"
                            Enabled="true">
@@ -36,7 +39,7 @@
         </td>
     </tr>
     <tr>
-        <td>
+        <td colspan="2">
             <TelerikGrid
                 @ref="@_emailedReports"
                 Data="@_emailedUsers"
