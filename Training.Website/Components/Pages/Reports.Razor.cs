@@ -7,7 +7,7 @@ using Training.Website.Services;
 
 namespace Training.Website.Components.Pages
 {
-    public partial class EmailReports
+    public partial class Reports
     {
         #region CASCADING PARAMETERS
         [CascadingParameter]
