@@ -12,7 +12,6 @@ namespace Training.Website.Services
         public async Task<IEnumerable<int>?> GetAllOpsUserIDsAssignedToTasksBySessionID(int? sessionID, IDatabase? database) =>
             await database!.QueryByStatementAsync<int>($"SELECT DISTINCT Emp_ID FROM [TRAINING Tasks Tbl] WHERE TRAINING_ID = {sessionID} AND (IsDeleted = 0 OR IsDeleted IS NULL)");
 
-
         public async Task<IEnumerable<WorklistGroupsAndReportsModel?>?> GetAllWorklistGroupsWithReports(IDatabase? database)
         {
             StagesReportsModel_Parameters parameters = new();   // LEAVE PROPERTIES AS NULL
@@ -27,11 +26,12 @@ namespace Training.Website.Services
             UpsertEMailings_Parameters parameters = new()
             {
                 CMS_User_ID = recipient!.CMS_UserID!.Value,
+                OPS_User_ID = recipient.OPS_UserID!.Value,
                 Session_ID = sessionID!.Value,
                 SendingUser = sendingUser!,
                 EMailedUserLastName = recipient.LastName!,
                 EMailedUserFirstName = recipient.FirstName!,
-                EMailedUserLogin_ID = recipient.UserName!
+                EMailedUserLogin_ID = recipient.LoginID!
             };
 
             database!.NonQueryByStoredProcedure("usp_Training_Questionnaire_UpsertEMailings", parameters);

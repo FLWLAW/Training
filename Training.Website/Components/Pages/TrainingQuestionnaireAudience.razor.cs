@@ -139,15 +139,16 @@ namespace Training.Website.Components.Pages
 
                 foreach (AllUsers_CMS_DB? user in users)
                 {
-                    if (user != null && string.IsNullOrWhiteSpace(user.EmailAddress) == false)
+                    if (user != null)
                     {
+                        int? opsID = OPS_ID_From_Login_ID(user?.LoginID);
                         AllUsers_Display? assignedUser = new()
                         {
                             CMS_UserID = user?.AppUserID,
-                            OPS_UserID = OPS_ID_From_Login_ID(user?.LoginID),
+                            OPS_UserID = opsID,
                             LoginID = user?.LoginID,
                             UserName = user?.UserName,
-                            EmailAddress = user?.EmailAddress,
+                            EmailAddress = user?.EmailAddress ?? _allUsers_OPS_DB?.FirstOrDefault(q => q?.Emp_ID == opsID)?.Email,
                             RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
                             TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
                             FirstName = user?.FirstName,

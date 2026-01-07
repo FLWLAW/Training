@@ -3,6 +3,7 @@
     public class UpsertEMailings_Parameters
     {
         public required int CMS_User_ID { get; set; }
+        public required int OPS_User_ID { get; set; }
         public required int Session_ID { get; set; }
         public required string SendingUser { get; set; }
         public required string EMailedUserLastName { get; set; }
