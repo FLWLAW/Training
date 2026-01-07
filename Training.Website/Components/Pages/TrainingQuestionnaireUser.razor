@@ -123,9 +123,9 @@ else if (_testEligibility != null && _testEligibility.NoMore == false && _select
                 @_questions?[_currentQuestionIndex].Question
             </td>
         </tr>
-        @if (_currentAnswerFormat == Globals.MultipleChoice)
+        @if (_currentAnswerFormat == Globals.MultipleChoice && _currentMultipleChoiceAnswers != null) //IF _currentMultipleChoiceAnswers == null, SCREEN SHOULD REFRESH
         {
-            foreach(AnswerChoicesModel? answerChoice in _currentMultipleChoiceAnswers!)
+            foreach(AnswerChoicesModel? answerChoice in _currentMultipleChoiceAnswers)
             {
                 <tr>
                     <td class="LeftSide">@answerChoice?.AnswerLetter)</td>
