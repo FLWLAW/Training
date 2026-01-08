@@ -67,6 +67,7 @@ namespace Training.Website.Components.Pages
                     user_OPS.Status = GetStatus(noAttempts, today, user_OPS.WhenUserLastSubmitted, scores);
                     user_OPS.Role = GetRoleName(user_OPS.CMS_User_ID);
                     user_OPS.Title = GetTitleName(user_OPS.CMS_User_ID);
+                    user_OPS.DueDate = _dueDate;
                 }
             }
 

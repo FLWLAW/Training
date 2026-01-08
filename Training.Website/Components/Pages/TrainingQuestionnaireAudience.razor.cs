@@ -186,7 +186,7 @@ namespace Training.Website.Components.Pages
             StringBuilder message = new();
 
             message.Append($"Dear {firstName},<br/><br/>");
-            message.Append($"You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>");
+            message.Append($"You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}) with a deadline of {_dueDate?.ToString()}.<br/><br/>");
             message.Append("Please click on the link below to access the questionnaire:<br/>");
             message.Append($"<a href='{baseURL}/?SessionID={_selectedSession?.Session_ID}'>Training Questionnaire</a><br/><br/>");
             message.Append("Thank you for your participation!<br/><br/>");
@@ -319,7 +319,6 @@ namespace Training.Website.Components.Pages
 
             if (recipients != null && recipients.Any() == true)
             {
-
 #if DEBUG || QA
                 EMailer email = new();
                 StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");

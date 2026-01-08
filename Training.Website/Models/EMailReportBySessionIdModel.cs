@@ -17,5 +17,6 @@
         public DateTime? WhenUserLastSubmitted { get; set; }
         public string? Role { get; set; }
         public string? Title { get; set; }
+        public DateTime? DueDate { get; set; }
     }
 }
