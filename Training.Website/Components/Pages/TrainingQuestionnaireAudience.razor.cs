@@ -48,7 +48,7 @@ namespace Training.Website.Components.Pages
         //private IEnumerable<string?>? _worklistGroupsBySelectedReports = [];
         //private List<String> _selectedWorklistGroups = [];
 
-        private readonly DateTime _minimumDueDate = DateTime.Now.AddDays(1);
+        private readonly DateTime _minimumDueDate = DateTime.Today.AddDays(2).AddSeconds(-1);
         private DateTime? _dueDate = null;
         private AllUsers_CMS_DB?[]? _allUsers_CMS_DB = null;
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
@@ -139,15 +139,16 @@ namespace Training.Website.Components.Pages
 
                 foreach (AllUsers_CMS_DB? user in users)
                 {
-                    if (user != null && string.IsNullOrWhiteSpace(user.EmailAddress) == false)
+                    if (user != null)
                     {
+                        int? opsID = OPS_ID_From_Login_ID(user?.LoginID);
                         AllUsers_Display? assignedUser = new()
                         {
                             CMS_UserID = user?.AppUserID,
-                            OPS_UserID = OPS_ID_From_Login_ID(user?.LoginID),
+                            OPS_UserID = opsID,
                             LoginID = user?.LoginID,
                             UserName = user?.UserName,
-                            EmailAddress = user?.EmailAddress,
+                            EmailAddress = user?.EmailAddress ?? _allUsers_OPS_DB?.FirstOrDefault(q => q?.Emp_ID == opsID)?.Email,
                             RoleDesc = _roles?.FirstOrDefault(q => q?.ID == user?.RoleID)?.Value,
                             TitleDesc = _titles?.FirstOrDefault(q => q?.ID == user?.TitleID)?.Value,
                             FirstName = user?.FirstName,
@@ -185,7 +186,7 @@ namespace Training.Website.Components.Pages
             StringBuilder message = new();
 
             message.Append($"Dear {firstName},<br/><br/>");
-            message.Append($"You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}).<br/><br/>");
+            message.Append($"You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}) with a deadline of {_dueDate?.ToString()}.<br/><br/>");
             message.Append("Please click on the link below to access the questionnaire:<br/>");
             message.Append($"<a href='{baseURL}/?SessionID={_selectedSession?.Session_ID}'>Training Questionnaire</a><br/><br/>");
             message.Append("Thank you for your participation!<br/><br/>");
@@ -318,7 +319,6 @@ namespace Training.Website.Components.Pages
 
             if (recipients != null && recipients.Any() == true)
             {
-
 #if DEBUG || QA
                 EMailer email = new();
                 StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");

@@ -1,11 +1,10 @@
-﻿@page "/EmailReports"
+﻿@page "/Reports"
 @using Training.Website.Models
 
 <table width="100%" style="background-color: lightgray;">
     <tr>
-        <td class="HeaderClass" style="width: 100%;">
-            <span class="HeaderClass">Session ID#</span>
-            <br />
+        <td style="text-align: right; padding-right: 30px; width: 70%;">
+            <span style="font-weight: 700;">Session ID#: </span>
             <TelerikDropDownList
                 Data="@_sessions"
                 Value="_selectedSessionString"
@@ -17,17 +16,21 @@
                 </DropDownListSettings>
             </TelerikDropDownList>
         </td>
+        <td style="text-align: left; padding-left: 60px;">
+            <span style="font-weight: 700; padding-right: 15px;">Total # of Users:</span>
+            <span style="font-weight: 500;">@(_emailedUsers?.Count())</span>
+        </td>
     </tr>
     @if (_dueDate != null)
     {
         <tr>
-            <td style="text-align: center">
+            <td colspan="2" style="text-align: center">
                 Due Date: @_dueDate!.Value.ToShortDateString()
             </td>
         </tr>
     }
     <tr>
-        <td style="text-align: center; background-color: white; padding-top: 6px; padding-bottom: 6px;">
+        <td colspan="2" style="text-align: center; background-color: white; padding-top: 6px; padding-bottom: 6px;">
             <TelerikButton Class="UniformButton"
                            OnClick="@(async() => await Globals.ExportToExcelFile(_emailedReports) )"
                            Enabled="true">
@@ -36,7 +39,7 @@
         </td>
     </tr>
     <tr>
-        <td>
+        <td colspan="2">
             <TelerikGrid
                 @ref="@_emailedReports"
                 Data="@_emailedUsers"
@@ -55,11 +58,12 @@
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.Email)" Title="Email" Width="180px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.Role)" Title="Role" Width="90px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.Title)" Title="Title" Width="150px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.DueDate)" Title="Due Date" Width="105px" DisplayFormat="{0:MM/dd/yyyy}" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoFirstSent)" Title="First Sent By" Width="200px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="150px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastUpdated)" Title="Last Updated By" Width="200px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastUpdated)" Title="When Last Updated" Width="150px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenUserLastSubmitted)" Title="When Last Submitted" Width="150px" />
                 </GridColumns>
                 <DetailTemplate>

@@ -217,7 +217,7 @@ namespace Training.Website.Components.Pages
 
                         if (deadline != null)
                         {
-                            messageLine1 = $"The deadline to re-take this questionnaire expired on {deadline.Value}.";
+                            messageLine1 = $"The deadline to re-take this questionnaire expired on {deadline.Value.Date.ToShortDateString()}.";
                             noMore = true;
                         }
                     }
@@ -239,7 +239,9 @@ namespace Training.Website.Components.Pages
                             noMore = true;
                         }
                         else
-                            messageLine2 = $"Please review and retake the questionnaire by {_whenMustRetakeTestBy}.";
+                            messageLine2 = (_whenMustRetakeTestBy != null)
+                                ? $"Please review and retake the questionnaire by {_whenMustRetakeTestBy.Value.Date.ToShortDateString()}."
+                                : $"Please review and retake the questionnaire within {Globals.RetakeTestDeadlineDays} days.";      // NOTE: THIS "ELSE" LINE SHOULD NEVER EXECUTE.
                     }
                 }
             }
@@ -368,7 +370,9 @@ namespace Training.Website.Components.Pages
                 {
                     int currentAttempt = await GetPreviousAttempts() + 1;
 
-                    _whenMustRetakeTestBy = (currentAttempt < Globals.MaximumTestAttemptsPerSession) ? DateTime.Now.AddDays(Globals.RetakeTestDeadlineDays) : null;
+                    _whenMustRetakeTestBy = (currentAttempt < Globals.MaximumTestAttemptsPerSession)
+                        ? DateTime.Today.AddDays(Globals.RetakeTestDeadlineDays + 1).AddSeconds(-1)
+                        : null;
 
                     _testAttemptID = await _service.InsertTestResult
                         (
