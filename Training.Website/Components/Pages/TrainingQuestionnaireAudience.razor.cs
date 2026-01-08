@@ -48,7 +48,7 @@ namespace Training.Website.Components.Pages
         //private IEnumerable<string?>? _worklistGroupsBySelectedReports = [];
         //private List<String> _selectedWorklistGroups = [];
 
-        private readonly DateTime _minimumDueDate = DateTime.Now.AddDays(1);
+        private readonly DateTime _minimumDueDate = DateTime.Today.AddDays(2).AddSeconds(-1);
         private DateTime? _dueDate = null;
         private AllUsers_CMS_DB?[]? _allUsers_CMS_DB = null;
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;

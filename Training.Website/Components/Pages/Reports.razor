@@ -16,9 +16,9 @@
                 </DropDownListSettings>
             </TelerikDropDownList>
         </td>
-        <td style="text-align: center;">
+        <td style="text-align: left; padding-left: 60px;">
             <span style="font-weight: 700; padding-right: 15px;">Total # of Users:</span>
-            <span style="background-color: white;">@(_emailedUsers?.Count())</span>
+            <span style="font-weight: 500;">@(_emailedUsers?.Count())</span>
         </td>
     </tr>
     @if (_dueDate != null)
@@ -58,7 +58,7 @@
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.Email)" Title="Email" Width="180px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.Role)" Title="Role" Width="90px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.Title)" Title="Title" Width="150px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.DueDate)" Title="Due Date" Width="180px" />
+                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.DueDate)" Title="Due Date" Width="105px" DisplayFormat="{0:MM/dd/yyyy}" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoFirstSent)" Title="First Sent By" Width="200px" />
                     <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="150px" />
