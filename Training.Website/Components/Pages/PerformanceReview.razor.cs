@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
+using Training.Website.Models;
 using Training.Website.Models.Reviews;
 using Training.Website.Services;
 
@@ -20,7 +21,11 @@ namespace Training.Website.Components.Pages
         #region PRIVATE FIELDS
         private const int _userID = 296;        // TEMP
         private const int _reviewYear = 2025;   // TEMP
+        private int _selectedRadioChoiceID = -1;
+        private Dictionary<int, string>? _answerFormats = null;
         private EmployeeInformationModel? _headerInfo = null;
+        private PerformanceReviewQuestionModel?[]? _questions = null;
+        private RadioChoiceModel?[]? _radioChoices = null;
         private PerformanceReviewServiceMethods _service = new();
 
 
@@ -30,9 +35,22 @@ namespace Training.Website.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database);
             _headerInfo = await _service.GetEmployeeInformation(_userID, _reviewYear, Database);
+            _questions = (await _service.GetPerformanceReviewQuestions(_reviewYear, Database))?.ToArray();
         }
 
+        private void RadioChoiceHandler(object newValue)
+        {
+            RadioChoiceModel? radioChoice = _radioChoices?.FirstOrDefault(q => q?.RadioChoice_ID == _selectedRadioChoiceID);
+            PerformanceReviewQuestionModel? question = _questions?.FirstOrDefault(q => q?.Question_ID == radioChoice?.ReviewQuestion_ID);
 
+            question!.Answer = radioChoice?.RadioChoice_Text;
+        }
+
+        private void SubmitReview()
+        {
+
+        }
     }
 }

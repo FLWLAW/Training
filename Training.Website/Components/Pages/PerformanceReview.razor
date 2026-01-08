@@ -1,5 +1,7 @@
 ﻿@page "/PerformanceReview"
 
+@using Models.Reviews
+
 <table style="width: 100%">
     <tr>
         <td style="width: 100%; text-align: center; font-weight: 700; background-color: lightgray;">
@@ -52,6 +54,55 @@
     </tr>
 </table>
 
+@if (_questions != null && _answerFormats != null)
+{
+    <table style="width: 100%; padding-top: 30px;">
+        @foreach (PerformanceReviewQuestionModel? question in _questions)
+        {
+            if (question != null)
+            {
+                <tr>
+                    <td style="width: 20%; text-align: right; padding-right: 20px;">
+                        @question?.QuestionNumber)
+                    </td>
+                    <td>
+                        @question?.Question
+                    </td>
+                </tr>
+                <tr>
+                    <td />
+                    <td>
+                        @if(question?.AnswerFormat != null && question.Question_ID != null)
+                        {
+                            @if(_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
+                            {
+                                _radioChoices = (_service.GetRadioButtonChoicesByID(question.Question_ID.Value, Database))?.ToArray(); 
+                                <TelerikRadioGroup
+                                    Data="@_radioChoices"
+                                    @bind-Value="_selectedRadioChoiceID"
+                                    Layout="RadioGroupLayout.Vertical"
+                                    OnChange="@RadioChoiceHandler"
+                                    ValueField="@nameof(RadioChoiceModel.RadioChoice_ID)"
+                                    TextField="@nameof(RadioChoiceModel.RadioChoice_Text)"
+                                />
+                            }
+                            else if(_answerFormats[question.AnswerFormat.Value] == Globals.TextArea)
+                            {
+                                <TelerikTextArea
+                                    @bind-Value="@question.Answer"
+                                    MaxLength="4096"
+                                    Rows="20" />
+                            }
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        <tr>
+            <TelerikButton OnClick="@SubmitReview">Submit Review</TelerikButton>
+        </tr>
+    </table>
+}
 <style>
    .table_center {
        width: 60%;
