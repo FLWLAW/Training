@@ -1,0 +1,19 @@
+﻿namespace Training.Website.Models.Reviews
+{
+    public class UsersForManagerModel
+    {
+        public required string? LastName { get; set; }
+        public required string? FirstName { get; set; }
+        
+        public string FullName
+        {
+            get
+            {
+                return string.Concat(FirstName, ' ', LastName);
+            }
+        }
+        
+        public required int? CMS_UserID { get; set; }
+        public required int? OPS_UserID { get; set; }
+    }
+}

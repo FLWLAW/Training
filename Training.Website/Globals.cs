@@ -1,6 +1,7 @@
 ﻿using SqlServerDatabaseAccessLibrary;
 using System.Text;
 using Telerik.Blazor.Components;
+using Telerik.Windows.Documents.Flow.Model;
 using Training.Website.Models;
 
 namespace Training.Website
@@ -14,6 +15,8 @@ namespace Training.Website
         public const string YesNo = "Yes/No";
         public const string TrueFalse = "True/False";
         public const string MultipleChoice = "Multiple Choice";
+        public const string RadioButtons = "Radio Buttons";
+        public const string TextArea = "Text Area";
         public const string CurrentAnswerFormatError = "Invalid current answer format in PopulateCorrectAnswerDropDown()";
         public static readonly string[] YesNo_Choices = ["Yes", "No"];
         public static readonly string[] TrueFalse_Choices = ["True", "False"];
