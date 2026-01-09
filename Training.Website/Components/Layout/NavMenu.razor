@@ -50,7 +50,10 @@
                 <a class="navbar-brand" href="">Performance Review</a>
             </div>
         </div>
+    }
 
+    @if (IsTester() == true || IsManager() == true)
+    {
         <div class="nav-item px-1">
             <NavLink class="Dashboard-nav-link" href="PerformanceReview">
                 Performance Review

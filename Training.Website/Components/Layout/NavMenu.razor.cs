@@ -17,28 +17,35 @@ namespace Training.Website.Components.Layout
         #endregion
 
         #region PRIVATE FIELDS
+        private readonly SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
         private readonly NavMenuServiceMethods _service = new();
         private IEnumerable<string>? _testers = null;
         private IEnumerable<string?>? _administrators = null;
+        private IEnumerable<int?>? _managerIDs = null;
         #endregion
 
         protected override void OnInitialized()
         {
             _testers = _service.Testers();
             _administrators =_service.Administrator_LoginIDs(Database_OPS);
+            _managerIDs = _service.Managers(_dbCMS);
         }
 
         private bool IsAdministrator() => ApplicationState != null && ApplicationState.LoggedOnUser != null && _administrators != null
             ? _administrators!.Contains(ApplicationState!.LoggedOnUser!.LoginID?.ToLower())
             : false;
 
-        private bool IsTester() => 
-            #if ! RELEASE
-                ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.LoginID != null && _testers != null
-                    ? _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower())
-                    : false;
-            #else
-                false;
-            #endif
+        //TODO: REMOVE CONDITIONAL COMPILE AFTER DATABASE OBJECTS DEPLOYED TO PRODUCTION
+#if DEBUG
+        private bool IsManager() => ApplicationState != null && ApplicationState.LoggedOnUser != null &&_managerIDs != null
+            ? _managerIDs!.Contains(ApplicationState!.LoggedOnUser!.AppUserID)
+            : false;
+#else
+        private bool IsManager() => false;
+#endif
+        private bool IsTester() =>
+            ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.LoginID != null && _testers != null
+                ? _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower())
+                : false;
     }
 }

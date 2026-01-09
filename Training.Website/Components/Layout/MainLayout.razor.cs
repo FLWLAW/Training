@@ -104,7 +104,7 @@ namespace Training.Website.Components.Layout
             SqlDatabase dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
             MainLayoutDataService service = new();
 
-            ApplicationState!.LoggedOnUser = await service.GetUser(authstate, Database, dbCMS);
+            ApplicationState!.LoggedOnUser = await service.GetUser(authstate, Database_OPS, dbCMS);
             await Task.Delay(2000);
         }
 */
