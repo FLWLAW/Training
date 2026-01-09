@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
+using System.Threading.Tasks;
 using Training.Website.Models;
 using Training.Website.Models.Reviews;
 using Training.Website.Services;
@@ -19,7 +20,8 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
-        private const int _userID = 296;        // TEMP
+        private const int _userID_OPS = 296;        // TEMP
+        private const int _userID_CMS = 2134;      // TEMP
         private const int _reviewYear = 2025;   // TEMP
         private int _selectedRadioChoiceID = -1;
         private Dictionary<int, string>? _answerFormats = null;
@@ -36,7 +38,7 @@ namespace Training.Website.Components.Pages
         protected override async Task OnInitializedAsync()
         {
             _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database);
-            _headerInfo = await _service.GetEmployeeInformation(_userID, _reviewYear, Database);
+            _headerInfo = await _service.GetEmployeeInformation(_userID_OPS, _reviewYear, Database);
             _questions = (await _service.GetPerformanceReviewQuestions(_reviewYear, Database))?.ToArray();
         }
 
@@ -48,9 +50,17 @@ namespace Training.Website.Components.Pages
             question!.Answer = radioChoice?.RadioChoice_Text;
         }
 
-        private void SubmitReview()
+        private async Task SubmitReviewClicked()
         {
+            if (_questions != null)
+            {
+                foreach (PerformanceReviewQuestionModel? question in _questions)
+                    if (question != null && question.Question_ID != null && question.Answer != null)
+                        await _service.InsertPerformanceReviewAnswer
+                            (question.Question_ID.Value, ApplicationState!.LoggedOnUser!.EmpID!.Value, _userID_OPS, question.Answer, ApplicationState!.LoggedOnUser!.AppUserID, _userID_CMS, Database);
 
+                StateHasChanged();
+            }
         }
     }
 }

@@ -57,5 +57,23 @@ namespace Training.Website.Services
         public IEnumerable<RadioChoiceModel?> GetRadioButtonChoicesByID(int reviewQuestionID, IDatabase? database) =>
             database!.QueryByStoredProcedure<RadioChoiceModel?, object?>
                 ("usp_Performance_Review_GetRadioButtonChoicesByID", new { ReviewQuestion_ID = reviewQuestionID });
+
+        public async Task InsertPerformanceReviewAnswer
+            (int questionID, int opsUserID_Reviewer, int opsUserID_Reviewee, string answer, int? cmsUserID_Reviewer, int? cmsUserID_Reviewee, IDatabase? database)
+        {
+            PerformanceReviewAnswerModel_Parameters parameters =
+                new()
+                {
+                    Question_ID = questionID,
+                    OPS_User_ID_Reviewer = opsUserID_Reviewer,
+                    OPS_User_ID_Reviewee = opsUserID_Reviewee,
+                    Answer = answer,
+                    CMS_User_ID_Reviewer = cmsUserID_Reviewer,
+                    CMS_User_ID_Reviewee = cmsUserID_Reviewee
+                };
+
+            await database!.NonQueryByStoredProcedureAsync<PerformanceReviewAnswerModel_Parameters>
+                ("usp_Performance_Review_InsertAnswer", parameters);
+        }
     }
 }
