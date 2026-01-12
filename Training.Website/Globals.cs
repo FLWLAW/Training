@@ -24,6 +24,13 @@ namespace Training.Website
         public const string SelectAll_Verbiage = "-- Select All --";
         public const string Notary = "Notary";
 
+#if DEBUG
+        public const string BaseURL = "http://drosenblum-elitedesk:83";
+#elif QA
+        public const string BaseURL = "http://drosenblum-elitedesk:8484";
+#else
+        public const string BaseURL = "http://training.efwlaw.com";
+#endif
 
         public static int CMS_UserID(AppState? appState) =>
             appState?.LoggedOnUser?.AppUserID ?? 0;

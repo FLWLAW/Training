@@ -178,19 +178,12 @@ namespace Training.Website.Components.Pages
 
         private StringBuilder EMailMessage(string? firstName)
         {
-#if DEBUG
-            const string baseURL = "http://drosenblum-elitedesk:83";
-#elif QA
-            const string baseURL = "http://drosenblum-elitedesk:8484";
-#else
-            const string baseURL = "http://training.efwlaw.com";
-#endif
             StringBuilder message = new();
 
             message.Append($"Dear {firstName},<br/><br/>");
             message.Append($"You have been selected to complete the training questionnaire for the training session \"{_selectedSession?.DocTitle}\" (Session ID: {_selectedSession?.Session_ID}) with a deadline of {_dueDate?.ToString()}.<br/><br/>");
             message.Append("Please click on the link below to access the questionnaire:<br/>");
-            message.Append($"<a href='{baseURL}/?SessionID={_selectedSession?.Session_ID}'>Training Questionnaire</a><br/><br/>");
+            message.Append($"<a href='{Globals.BaseURL}/?SessionID={_selectedSession?.Session_ID}'>Training Questionnaire</a><br/><br/>");
             message.Append("Thank you for your participation!<br/><br/>");
             message.Append("Best regards,<br/>");
             message.Append("Compliance Team");
@@ -323,7 +316,7 @@ namespace Training.Website.Components.Pages
             {
 #if DEBUG || QA
                 EMailer email = new();
-                StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WOULD LOOK LIKE IN PRODUCTION MODE:");
+                StringBuilder testMessageBody = new("HERE ARE WHAT THE EMAILS WILL LOOK LIKE IN PRODUCTION MODE:");
 
                 testMessageBody.Append("<br /><br />");
                 foreach (AllUsers_Display? recipient in recipients)
