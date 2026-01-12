@@ -1,102 +1,145 @@
 ﻿@page "/Reports"
 @using Training.Website.Models
 
-<table width="100%" style="background-color: lightgray;">
-    <tr>
-        <td style="text-align: right; padding-right: 30px; width: 70%;">
-            <span style="font-weight: 700;">Session ID#: </span>
-            <TelerikDropDownList
-                Data="@_sessions"
-                Value="_selectedSessionString"
-                ValueChanged="@(async (string newValue) => await SessionChanged(newValue))"
-                Enabled="true"
-                Width="900px">
-                <DropDownListSettings>
-                    <DropDownListPopupSettings Height="180px" />
-                </DropDownListSettings>
-            </TelerikDropDownList>
-        </td>
-        <td style="text-align: left; padding-left: 60px;">
-            <span style="font-weight: 700; padding-right: 15px;">Total # of Users:</span>
-            <span style="font-weight: 500;">@(_emailedUsers?.Count())</span>
-        </td>
-    </tr>
-    @if (_dueDate != null)
-    {
+@if(ApplicationState == null)
+{
+    <p><strong>Error: ApplicationState is null...</strong></p>
+}
+else
+{
+    <TelerikWindow
+        Modal="true"
+        Visible="@_reminderEmailsSentWindowVisible"
+        CloseOnOverlayClick="false"
+        Width="800px"
+        Height="200px">
+        <WindowContent>
+            <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
+                <tr>
+                    <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
+                        REMINDER EMAIL(S) SENT
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <TelerikButton Class="Close" OnClick="@(() => EmailsSentCloseClicked())">Close</TelerikButton>
+                    </td>
+                </tr>
+            </table>
+        </WindowContent>
+    </TelerikWindow>
+    <table width="100%" style="background-color: lightgray;">
         <tr>
-            <td colspan="2" style="text-align: center">
-                Due Date: @_dueDate!.Value.ToShortDateString()
+            <td style="text-align: right; font-weight: 700; width: 10%; padding-left: 15px;">
+                Session ID#:
+            </td>
+            <td style="width: 40%;">
+                <TelerikDropDownList
+                    Data="@_sessions"
+                    Value="_selectedSessionString"
+                    ValueChanged="@(async (string newValue) => await SessionChanged(newValue))"
+                    Width="900px"
+                    Enabled="true">
+                    <DropDownListSettings>
+                        <DropDownListPopupSettings Height="180px" />
+                    </DropDownListSettings>
+                </TelerikDropDownList>
+            </td>
+            <td style="width: 25%; text-align: right; font-weight: 700;">Total # of Users:</td>
+            <td style="width: 25%; text-align: left; padding-left: 15px; font-weight: 500;">@(_emailedUsers?.Count())</td>
+        </tr>
+        @if (_dueDate != null)
+        {
+            <tr>
+                <td colspan="4" style="text-align: center">
+                    Due Date: @_dueDate!.Value.ToShortDateString()
+                </td>
+            </tr>
+        }
+    </table>
+    <table width="100%">
+        <tr>
+            <td style="text-align: right; padding-right: 6px; padding-top: 6px; padding-bottom: 6px;">
+                <TelerikButton Class="UniformButton"
+                               OnClick="@(() => SendReminderEmails())"
+                               Enabled="true">
+                    Send Reminder Email
+                </TelerikButton>
+            </td>
+            <td style="text-align: left; padding-left: 6px; padding-top: 6px; padding-bottom: 6px;">
+                <TelerikButton Class="UniformButton"
+                               OnClick="@(async() => await Globals.ExportToExcelFile(_emailedReports) )"
+                               Enabled="true">
+                    EXPORT TO EXCEL
+                </TelerikButton>
             </td>
         </tr>
-    }
-    <tr>
-        <td colspan="2" style="text-align: center; background-color: white; padding-top: 6px; padding-bottom: 6px;">
-            <TelerikButton Class="UniformButton"
-                           OnClick="@(async() => await Globals.ExportToExcelFile(_emailedReports) )"
-                           Enabled="true">
-                EXPORT TO EXCEL
-            </TelerikButton>
-        </td>
-    </tr>
-    <tr>
-        <td colspan="2">
-            <TelerikGrid
-                @ref="@_emailedReports"
-                Data="@_emailedUsers"
-                Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
-                Width="100%" Height="800px"
-                FilterMode="@GridFilterMode.None" Groupable="false"
-                SelectionMode="GridSelectionMode.None">
-                <GridColumns>
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Session_ID)" Title="Session ID" Width="90px" />
-                    <!--
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.OPS_Emp_ID)" Title="OPS ID" Visible="true" Width="90px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.CMS_User_ID)" Title="CMS ID" Visible="true" Width="90px"  />
-                    -->
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.FirstName)" Title="First Name" Width="90px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.LastName)" Title="Last Name" Width="120px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Email)" Title="Email" Width="180px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Role)" Title="Role" Width="90px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Title)" Title="Title" Width="150px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.DueDate)" Title="Due Date" Width="105px" DisplayFormat="{0:MM/dd/yyyy}" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoFirstSent)" Title="First Sent By" Width="200px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="150px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastUpdated)" Title="Last Sent By" Width="200px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastUpdated)" Title="Latest Email Sent On" Width="150px" />
-                    <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenUserLastSubmitted)" Title="When User Last Submitted" Width="150px" />
-                </GridColumns>
-                <DetailTemplate>
-                    @{
-                        var row = context as EMailReportBySessionIdModel;
+    </table>
+    <table width="100%">
+        <tr>
+            <td style="width: 100%;">
+                <TelerikGrid
+                    @ref="@_emailedReports"
+                    Data="@_emailedUsers"
+                    Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                    Width="1600px" Height="750px"
+                    FilterMode="@GridFilterMode.None" Groupable="false"
+                    SelectionMode="GridSelectionMode.None">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.Session_ID)" Title="Session ID" Width="90px" />
+                        <!--
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.OPS_Emp_ID)" Title="OPS ID" Visible="true" Width="90px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.CMS_User_ID)" Title="CMS ID" Visible="true" Width="90px"  />
+                        -->
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.FirstName)" Title="First Name" Width="90px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.LastName)" Title="Last Name" Width="120px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.Email)" Title="Email" Width="180px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.Role)" Title="Role" Width="90px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.Title)" Title="Title" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.DueDate)" Title="Due Date" Width="105px" DisplayFormat="{0:MM/dd/yyyy}" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoFirstSent)" Title="First Sent By" Width="200px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastUpdated)" Title="Last Sent By" Width="200px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastUpdated)" Title="Latest Email Sent On" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenUserLastSubmitted)" Title="When User Last Submitted" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastReminderEmailSent)" Title="Reminder Email Sent On" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastReminderEmailSent)" Title="Reminder Email Sent By" Width="200px" />
+                    </GridColumns>
+                    <DetailTemplate>
+                        @{
+                            var row = context as EMailReportBySessionIdModel;
 
-                        <TelerikGrid
-                            Data="@_results?.Where(q => q?.OPS_User_ID == row?.OPS_Emp_ID || (row?.OPS_Emp_ID == null && row?.CMS_User_ID == row?.CMS_User_ID) ).OrderBy(s => s?.QuestionnaireNumber)"
-                            Height="120px"
-                            Pageable="false"
-                            Sortable="true"
-                            PageSize="@Globals.MaximumTestAttemptsPerSession">
-                            <GridColumns>
-                                <GridColumn Field="@nameof(ResultsModel.TestAttempt_ID)" Title="Test Attempt ID" Visible="false" />
-                                <GridColumn Field="@nameof(ResultsModel.QuestionnaireNumber)" Title="Questionnaire #" Width="120px" />
-                                <GridColumn Field="@nameof(ResultsModel.Score)" Title="Score" Width="90px" />
-                                <GridColumn Field="@nameof(ResultsModel.WhenSubmitted)" Title="When Submitted" Width="150px" />
-                                <GridColumn Field="@nameof(ResultsModel.WhenMustRetakeBy)" Title="When Must Retake By" Width="150px" />
-                            </GridColumns>
-                        </TelerikGrid>
-                    }
-                </DetailTemplate>
-                <GridExport>
-                    <GridExcelExport FileName="@Globals.ExportFilename("EmailedUsers_Session", _selectedSessionString)"
-                                     AllPages="false" />
-                </GridExport>
-            </TelerikGrid>
-        </td>
-    </tr>
-</table>
-
+                            <TelerikGrid
+                                Data="@_results?.Where(q => q?.OPS_User_ID == row?.OPS_Emp_ID || (row?.OPS_Emp_ID == null && row?.CMS_User_ID == row?.CMS_User_ID) ).OrderBy(s => s?.QuestionnaireNumber)"
+                                Height="120px"
+                                Pageable="false"
+                                Sortable="true"
+                                PageSize="@Globals.MaximumTestAttemptsPerSession">
+                                <GridColumns>
+                                    <GridColumn Field="@nameof(ResultsModel.TestAttempt_ID)" Title="Test Attempt ID" Visible="false" />
+                                    <GridColumn Field="@nameof(ResultsModel.QuestionnaireNumber)" Title="Questionnaire #" Width="120px" />
+                                    <GridColumn Field="@nameof(ResultsModel.Score)" Title="Score" Width="90px" />
+                                    <GridColumn Field="@nameof(ResultsModel.WhenSubmitted)" Title="When Submitted" Width="150px" />
+                                    <GridColumn Field="@nameof(ResultsModel.WhenMustRetakeBy)" Title="When Must Retake By" Width="150px" />
+                                </GridColumns>
+                            </TelerikGrid>
+                        }
+                    </DetailTemplate>
+                    <GridExport>
+                        <GridExcelExport FileName="@Globals.ExportFilename("EmailedUsers_Session", _selectedSessionString)"
+                                         AllPages="false" />
+                    </GridExport>
+                </TelerikGrid>
+            </td>
+        </tr>
+    </table>
+}
 
 <style>
+    .UniformButton {
+        width: 180px;
+    }
     span.HeaderClass {
         height: 30px;
     }

@@ -18,5 +18,7 @@
         public string? Role { get; set; }
         public string? Title { get; set; }
         public DateTime? DueDate { get; set; }
+        public DateTime? WhenLastReminderEmailSent { get; set; }
+        public string? WhoLastReminderEmailSent { get; set; }
     }
 }
