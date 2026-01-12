@@ -108,6 +108,18 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private void ChangeSelectAll(bool setting)
+        {
+            if (_allUsers_Display != null && _allUsers_Display.Length > 0)
+            {
+                foreach (AllUsers_Display? assignedUser in _allUsers_Display)
+                    if (assignedUser != null)
+                        assignedUser.Selected = setting;
+
+                StateHasChanged();
+            }
+        }
+
         /*
         private void ClearDropDownSelections()
         {
@@ -162,17 +174,7 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private void DeSelectAllClicked()
-        {
-            if (_allUsers_Display != null && _allUsers_Display.Length > 0)
-            {
-                foreach (AllUsers_Display? assignedUser in _allUsers_Display)
-                    if (assignedUser != null)
-                        assignedUser.Selected = false;
-
-                StateHasChanged();
-            }
-        }
+        private void DeSelectAllClicked() => ChangeSelectAll(false);
 
         private StringBuilder EMailMessage(string? firstName)
         {
@@ -408,6 +410,8 @@ namespace Training.Website.Components.Pages
         }
 
         private bool SessionSelected() => _selectedSession != null && _selectedSession.Session_ID != null && _selectedSession.Session_ID > 0;
+
+        private void SelectAllClicked() => ChangeSelectAll(true);
 
         /*
         private void SetSelected()
