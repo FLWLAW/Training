@@ -9,6 +9,7 @@ using Telerik.Windows.Documents.Flow.Model;
 using Telerik.Windows.Documents.Flow.Model.Styles;
 using Training.Website.Models;
 using Training.Website.Services;
+using Training.Website.Services.WordDocument;
 
 namespace Training.Website.Components.Pages
 {
@@ -174,30 +175,15 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private async Task ExportDocument(RadFlowDocument document)
-        {
-            DocxFormatProvider formatProvider = new();
-
-            using (MemoryStream ms = new())
-            {
-                string filename = $"Questionnaire Export Session {_selectedSession!.Session_ID!.Value}.docx";
-
-                formatProvider.Export(document, ms, null);
-
-                ms.Position = 0;    // VERY IMPORTANT!!!!!
-                using var streamRef = new DotNetStreamReference(stream: ms);
-                await JS!.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-            }
-        }
-
         private async Task ExportToWordClicked()
         {
             // https://www.google.com/search?q=telerik+blazor+export+to+word&rlz=1C1GCEU_enUS1109US1109&oq=telerik+blazor+export+to+word&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQIRigATIHCAIQIRigATIHCAMQIRigATIHCAQQIRigATIHCAUQIRigATIHCAYQIRirAjIHCAcQIRirAjIHCAgQIRifBTIHCAkQIRifBdIBCjEwNjI0ajBqMTWoAgiwAgHxBa1fxYxW5ZVS&sourceid=chrome&ie=UTF-8
             
             CreateQuestionnairesInWordClass wordCreator = new(_service, _selectedSession, _selectedSessionString, Database);
             RadFlowDocument document = await wordCreator.Create();
-
-            await ExportDocument(document);
+            string filename = $"Questionnaire Export Session {_selectedSession!.Session_ID!.Value}.docx";
+            
+            await Globals.ExportToWordFile(document, filename, JS);
         }
 
         private async Task<List<QuestionsModel>?> GetQuestionsBySessionIDandQuestionnaireNumber_Main() =>

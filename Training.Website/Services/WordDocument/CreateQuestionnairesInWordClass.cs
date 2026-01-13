@@ -7,9 +7,9 @@ using Telerik.Windows.Documents.Flow.Model.Styles;
 using Training.Website.Models;
 using Training.Website.Services;
 
-namespace Training.Website.Components.Pages
+namespace Training.Website.Services.WordDocument
 {
-    public class CreateQuestionnairesInWordClass
+    public class CreateQuestionnairesInWordClass : IWordDocumentCreate
     {
         private readonly AdministratorServiceMethods _service;
         private readonly SessionInformationModel? _selectedSession;

@@ -57,7 +57,7 @@ namespace Training.Website.Components.Layout
             int count = 1;
             AuthenticationState? authstate;
             SqlDatabase dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
-            MainLayoutDataService service = new();
+            MainLayoutServiceMethods service = new();
 
             do
             {
