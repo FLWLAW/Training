@@ -1,4 +1,5 @@
 ﻿using SqlServerDatabaseAccessLibrary;
+using System.Collections;
 using Training.Website.Models;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
@@ -7,6 +8,27 @@ namespace Training.Website.Services
 {
     public class PerformanceReviewServiceMethods : CommonServiceMethods
     {
+        public async Task<IEnumerable<RadioChoiceModel?>?> GetAllRadioButtonChoicesByYear(int reviewYear, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<RadioChoiceModel?, object?>
+                ("usp_Performance_Review_GetAllRadioButtonChoicesByYear", new { ReviewYear = reviewYear });
+
+        public async Task<IEnumerable<AnswersByReviewYearOpsReviewerOpsRevieweeModel?>?> GetAnswersByReviewYearOpsReviewerOpsReviewee
+            (int reviewYear, int opsReviewerID, int opsRevieweeID, IDatabase? database)
+        {
+            AnswersByReviewYearOpsReviewerOpsReviewee_Parameters parameters = new()
+            {
+                ReviewYear = reviewYear,
+                OPS_User_ID_Reviewer = opsReviewerID,
+                OPS_User_ID_Reviewee = opsRevieweeID
+            };
+
+            IEnumerable<AnswersByReviewYearOpsReviewerOpsRevieweeModel?>? result =
+                await database!.QueryByStoredProcedureAsync<AnswersByReviewYearOpsReviewerOpsRevieweeModel?, AnswersByReviewYearOpsReviewerOpsReviewee_Parameters>
+                    ("usp_Performance_Review_GetAnswersByReviewYearOpsReviewerOpsReviewee", parameters);
+
+            return result;
+        }
+
         public async Task<EmployeeInformationModel?> GetEmployeeInformation(int OPS_Emp_ID, int reviewYear, IDatabase? database)
         {
             EmployeeInformationModel? employeeInfo =
