@@ -4,7 +4,7 @@ using Training.Website.Models.Users;
 
 namespace Training.Website.Services
 {
-    public class MainLayoutDataService : CommonServiceMethods
+    public class MainLayoutServiceMethods : CommonServiceMethods
     {
         public async Task<AllUsers_Authentication?> GetUser(AuthenticationState? authState, IDatabase? database_OPS, IDatabase? database_CMS)
         {

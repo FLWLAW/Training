@@ -1,6 +1,9 @@
-﻿using SqlServerDatabaseAccessLibrary;
+﻿using Microsoft.JSInterop;
+using SqlServerDatabaseAccessLibrary;
 using System.Text;
 using Telerik.Blazor.Components;
+using Telerik.SvgIcons;
+using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
 using Telerik.Windows.Documents.Flow.Model;
 using Training.Website.Models;
 
@@ -98,6 +101,22 @@ namespace Training.Website
         }
 
         public static async Task ExportToExcelFile<T>(TelerikGrid<T>? grid) => await grid!.SaveAsExcelFileAsync();
+
+        public static async Task ExportToWordFile(RadFlowDocument document, string filename, IJSRuntime? JS)
+        {
+            DocxFormatProvider formatProvider = new();
+
+            using (MemoryStream ms = new())
+            {
+                formatProvider.Export(document, ms, null);
+
+                ms.Position = 0;    // VERY IMPORTANT!!!!!
+                using var streamRef = new DotNetStreamReference(stream: ms);
+                await JS!.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+            }
+        }
+
+
 
         public static IdValue<string> SelectAll(string id) =>
             new()
