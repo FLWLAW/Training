@@ -35,9 +35,9 @@
             <td style="width: 100%; text-align: center;">
                 <TelerikDropDownList Class="UniformWidth_DropDown"
                                      Width="200px"
-                                     Data="@_allUsersForManager?.Select(q => q?.FullName)"
+                                     Data="@_allUsersForDropDown?.Select(q => q?.FullName)"
                                      Enabled="true"
-                                     ValueChanged="@(async (string newValue) => await UserForManagerChanged(newValue))">
+                                     ValueChanged="@(async (string newValue) => await UserForDropDownChanged(newValue))">
                     <DropDownListSettings>
                         <DropDownListPopupSettings Height="360px" />
                     </DropDownListSettings>
@@ -46,7 +46,7 @@
         </tr>
     </table>
 
-    @if (_allUsersForManager != null && _selectedUserForManager != null)
+    @if (_allUsersForDropDown != null && _selectedUser != null)
     {
         <!--
         <table style="width: 100%">
