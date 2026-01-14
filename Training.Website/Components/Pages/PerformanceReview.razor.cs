@@ -23,7 +23,9 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
-        private const int _reviewYear = 2025;   // TEMP
+        private const int _firstReviewYear = 2025;
+        private int? _selectedReviewYear = null;
+        private string[]? _reviewYears = null;
         private int? _opsReviewerID = null;
         private bool _loading = false;
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
@@ -34,9 +36,7 @@ namespace Training.Website.Components.Pages
         private EmployeeInformationModel? _headerInfo = null;
         private PerformanceReviewQuestionModel?[]? _questions = null;
         private RadioChoiceModel?[]? _allRadioChoices = null;
-        //private RadioChoiceModel?[]? _radioChoices = null;
         private AnswersByReviewYearOpsReviewerOpsRevieweeModel?[]? _answers = null;
-        private bool _subReviewEnabled = false;
         private readonly SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
         private PerformanceReviewServiceMethods _service = new();
         #endregion
@@ -52,11 +52,20 @@ namespace Training.Website.Components.Pages
                 throw new NoNullAllowedException("_opsReviewerID cannot be null in OnInitializedAsync() method.");
             else
             {
-                _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
-                _allUsersForManager = await _service.GetUsersForManager_CMS_DB(_allUsers_CMS_DB, _allUsers_OPS_DB, ApplicationState!.LoggedOnUser!.AppUserID, _dbCMS);
-                _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
-                _questions = (await _service.GetPerformanceReviewQuestions(_reviewYear, Database_OPS))?.ToArray();
-                _allRadioChoices = (await _service.GetAllRadioButtonChoicesByYear(_reviewYear, Database_OPS))?.ToArray();
+                _reviewYears = ReviewYears();
+                if (_reviewYears == null || _reviewYears.Length == 0)
+                    throw new NoNullAllowedException("_reviewYears cannot be null in OnInitializedAsync()");
+                else
+                {
+                    if (int.TryParse(_reviewYears[0], out int selectedReviewYear) == false)
+                        throw new NoNullAllowedException("_reviewYears[0] must be an integer in OnItializedAsync()");
+                    else
+                    {
+                        _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
+                        _allUsersForManager = await _service.GetUsersForManager_CMS_DB(_allUsers_CMS_DB, _allUsers_OPS_DB, ApplicationState!.LoggedOnUser!.AppUserID, _dbCMS);
+                        _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
+                    }
+                }
             }
         }
 
@@ -83,6 +92,33 @@ namespace Training.Website.Components.Pages
                 return _allRadioChoices?.Where(q => q?.ReviewQuestion_ID == questionID).OrderBy(q => q?.RadioChoice_Sequence);
             else
                 return null;
+        }
+
+        private async Task ReviewYearChanged(string newValue)
+        {
+            if (int.TryParse(newValue, out int selectedReviewYear) == true)
+            {
+                _selectedReviewYear = selectedReviewYear;
+                _questions = (await _service.GetPerformanceReviewQuestions(_selectedReviewYear.Value, Database_OPS))?.ToArray();
+                _allRadioChoices = (await _service.GetAllRadioButtonChoicesByYear(_selectedReviewYear.Value, Database_OPS))?.ToArray();
+                _selectedUserForManager = null;
+                _headerInfo = null;
+                _answers = null;
+                StateHasChanged();
+            }
+        }
+
+        private string[]? ReviewYears()
+        {
+            // FOR POPULATING "REVIEW YEAR" DROPDOWN
+
+            int mostRecentPastReviewYear = DateTime.Now.Year - 1;
+            List<string> reviewYears = [];
+
+            for (int year = mostRecentPastReviewYear; year >= _firstReviewYear; year--)
+                reviewYears.Add(year.ToString());
+
+            return [.. reviewYears];
         }
 
         private async Task SubmitReviewClicked()
@@ -118,9 +154,9 @@ namespace Training.Website.Components.Pages
                 {
                     if (_selectedUserForManager.OPS_UserID != null)
                     {
-                        _headerInfo = await _service.GetEmployeeInformation(_selectedUserForManager.OPS_UserID.Value, _reviewYear, Database_OPS);
+                        _headerInfo = await _service.GetEmployeeInformation(_selectedUserForManager.OPS_UserID.Value, _selectedReviewYear!.Value, Database_OPS);
                         _answers =
-                            (await _service.GetAnswersByReviewYearOpsReviewerOpsReviewee(_reviewYear, _opsReviewerID!.Value, _selectedUserForManager!.OPS_UserID.Value, Database_OPS))?.ToArray();
+                            (await _service.GetAnswersByReviewYearOpsReviewerOpsReviewee(_selectedReviewYear!.Value, _opsReviewerID!.Value, _selectedUserForManager!.OPS_UserID.Value, Database_OPS))?.ToArray();
 
                         if (_questions != null)
                         {

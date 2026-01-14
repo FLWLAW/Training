@@ -1,140 +1,161 @@
 ﻿@page "/PerformanceReview"
-
 @using Models.Reviews
-
-<table style="width: 100%">
-    <tr>
-        <td style="width: 100%; text-align: center; font-weight: 700; background-color: lightgray;">
-            <h2>@_reviewYear Performance Review</h2>
-        </td>
-    </tr>
-</table>
 
 <table style="width: 100%; padding-top: 45px;">
     <tr>
-        <td style="width: 100%; text-align: center;">
+        <td style="width: 50%; text-align: right; padding-right: 6px; font-weight: 700;">
+            Select Review Year:
+        </td>
+        <td style="width: 50%; text-align: left; padding-left: 6px;">
             <TelerikDropDownList Class="UniformWidth_DropDown"
                                  Width="200px"
-                                 Data="@_allUsersForManager?.Select(q => q?.FullName)"
+                                 Data="_reviewYears"
                                  Enabled="true"
-                                 ValueChanged="@(async (string newValue) => await UserForManagerChanged(newValue))">
+                                 ValueChanged="@(async (string newValue) => await ReviewYearChanged(newValue))">
                 <DropDownListSettings>
-                    <DropDownListPopupSettings Height="360px" />
+                    <DropDownListPopupSettings Height="180px" />
                 </DropDownListSettings>
             </TelerikDropDownList>
         </td>
     </tr>
 </table>
 
-@if (_allUsersForManager != null && _selectedUserForManager != null)
+@if (_selectedReviewYear != null)
 {
-    <!--
     <table style="width: 100%">
         <tr>
-            <td style="width: 95%;">
-                <h2>@_selectedUserForManager?.FullName</h2>
-            </td>
-            <td style="width: 5%; text-align: right; font-weight: 200; font-size: x-small; color: gray;">
-                ID #@_headerInfo?.Review_ID
+            <td style="width: 100%; text-align: center; font-weight: 700; background-color: lightgray;">
+                <h2>@_selectedReviewYear Performance Review</h2>
             </td>
         </tr>
     </table>
-    -->
-    @if (_loading == true)
+
+    <table style="width: 100%; padding-top: 45px;">
+        <tr>
+            <td style="width: 100%; text-align: center;">
+                <TelerikDropDownList Class="UniformWidth_DropDown"
+                                     Width="200px"
+                                     Data="@_allUsersForManager?.Select(q => q?.FullName)"
+                                     Enabled="true"
+                                     ValueChanged="@(async (string newValue) => await UserForManagerChanged(newValue))">
+                    <DropDownListSettings>
+                        <DropDownListPopupSettings Height="360px" />
+                    </DropDownListSettings>
+                </TelerikDropDownList>
+            </td>
+        </tr>
+    </table>
+
+    @if (_allUsersForManager != null && _selectedUserForManager != null)
     {
-        <table style="width: 100%; padding-top: 30px;">
+        <!--
+        <table style="width: 100%">
             <tr>
-                <td style="width: 100%; text-align: center; font-style: italic; font-weight: 700; font-size: x-large;">
-                    Loading...
+                <td style="width: 95%;">
+                    <h2>@_selectedUserForManager?.FullName</h2>
+                </td>
+                <td style="width: 5%; text-align: right; font-weight: 200; font-size: x-small; color: gray;">
+                    ID #@_headerInfo?.Review_ID
                 </td>
             </tr>
         </table>
-    }
+        -->
+        @if (_loading == true)
+        {
+            <table style="width: 100%; padding-top: 30px;">
+                <tr>
+                    <td style="width: 100%; text-align: center; font-style: italic; font-weight: 700; font-size: x-large; background-color: lightyellow;">
+                        Loading...
+                    </td>
+                </tr>
+            </table>
+        }
 
-    <table class="table_center">
-        <tr>
-            <td class="column134">&nbsp;&nbsp;&nbsp;</td>
-            <td class="column2">&nbsp;&nbsp;&nbsp;</td>
-            <td class="column134 borders">ADP File #:</td>
-            <td class="column134 borders">@_headerInfo?.BadgeNum</td>
-        </tr>
-        <tr>
-            <td class="column134 borders">Job Title:</td>
-            <td class="column2 borders">@_headerInfo?.JobTitleName</td>
-            <td class="column134 borders">Hire Date:</td>
-            <td class="column134 borders">@_headerInfo?.HireDate?.ToShortDateString()</td>
-        </tr>
-        <tr>
-            <td class="column134 borders">Location:</td>
-            <td class="column2 borders">@_headerInfo?.SiteName</td>
-            <td class="column134 borders">Employee Type:</td>
-            <td class="column134 borders">@_headerInfo?.EmployeeType</td>
-        </tr>
-        <tr>
-            <td class="column134 borders">Practice Group:</td>
-            <td class="column2 borders">@_headerInfo?.PracticeGroupName</td>
-            <td class="column134 borders">Shift:</td>
-            <td class="column134 borders">@_headerInfo?.Shift</td>
-        </tr>
-        <tr>
-            <td class="column134 borders">Department(s):</td>
-            <td class="column2 borders">@_headerInfo?.Departments</td>
-            <td class="column134 borders">Review Status:</td>
-            <td class="column134 borders">@_headerInfo?.Status</td>
-        </tr>
-    </table>
+        <table class="table_center">
+            <tr>
+                <td class="column134">&nbsp;&nbsp;&nbsp;</td>
+                <td class="column2">&nbsp;&nbsp;&nbsp;</td>
+                <td class="column134 borders">ADP File #:</td>
+                <td class="column134 borders">@_headerInfo?.BadgeNum</td>
+            </tr>
+            <tr>
+                <td class="column134 borders">Job Title:</td>
+                <td class="column2 borders">@_headerInfo?.JobTitleName</td>
+                <td class="column134 borders">Hire Date:</td>
+                <td class="column134 borders">@_headerInfo?.HireDate?.ToShortDateString()</td>
+            </tr>
+            <tr>
+                <td class="column134 borders">Location:</td>
+                <td class="column2 borders">@_headerInfo?.SiteName</td>
+                <td class="column134 borders">Employee Type:</td>
+                <td class="column134 borders">@_headerInfo?.EmployeeType</td>
+            </tr>
+            <tr>
+                <td class="column134 borders">Practice Group:</td>
+                <td class="column2 borders">@_headerInfo?.PracticeGroupName</td>
+                <td class="column134 borders">Shift:</td>
+                <td class="column134 borders">@_headerInfo?.Shift</td>
+            </tr>
+            <tr>
+                <td class="column134 borders">Department(s):</td>
+                <td class="column2 borders">@_headerInfo?.Departments</td>
+                <td class="column134 borders">Review Status:</td>
+                <td class="column134 borders">@_headerInfo?.Status</td>
+            </tr>
+        </table>
 
-    @if (_questions != null && _answerFormats != null)
-    {
-        <table style="width: 100%; padding-top: 30px;">
-            @foreach (PerformanceReviewQuestionModel? question in _questions)
-            {
-                if (question != null)
+        @if (_questions != null && _answerFormats != null)
+        {
+            <table style="width: 100%; padding-top: 30px;">
+                @foreach (PerformanceReviewQuestionModel? question in _questions)
                 {
-                    <tr>
-                        <td style="width: 20%; text-align: right; padding-right: 20px; padding-top: 15px;">
-                            @question?.QuestionNumber)
-                        </td>
-                        <td style="padding-top: 15px;">
-                            @question?.Question
-                        </td>
-                    </tr>
-                    <tr>
-                        <td />
-                        <td>
-                            @if(question?.AnswerFormat != null && question.Question_ID != null)
-                            {
-                                @if(_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
+                    if (question != null)
+                    {
+                        <tr>
+                            <td style="width: 20%; text-align: right; padding-right: 20px; padding-top: 15px;">
+                                @question?.QuestionNumber)
+                            </td>
+                            <td style="padding-top: 15px;">
+                                @question?.Question
+                            </td>
+                        </tr>
+                        <tr>
+                            <td />
+                            <td>
+                                @if(question?.AnswerFormat != null && question.Question_ID != null)
                                 {
-                                    <TelerikRadioGroup
-                                        Data="@RadioChoicesForQuestion(question.Question_ID)"
-                                        @bind-Value="question.RadioChoice_ID"
-                                        Layout="RadioGroupLayout.Vertical"
-                                        OnChange="@RadioChoiceHandler"
-                                        ValueField="@nameof(RadioChoiceModel.RadioChoice_ID)"
-                                        TextField="@nameof(RadioChoiceModel.RadioChoice_Text)"
-                                    />
+                                    @if(_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
+                                    {
+                                        <TelerikRadioGroup
+                                            Data="@RadioChoicesForQuestion(question.Question_ID)"
+                                            @bind-Value="question.RadioChoice_ID"
+                                            Layout="RadioGroupLayout.Vertical"
+                                            OnChange="@RadioChoiceHandler"
+                                            ValueField="@nameof(RadioChoiceModel.RadioChoice_ID)"
+                                            TextField="@nameof(RadioChoiceModel.RadioChoice_Text)"
+                                        />
+                                    }
+                                    else if(_answerFormats[question.AnswerFormat.Value] == Globals.TextArea)
+                                    {
+                                        <TelerikTextArea
+                                            @bind-Value="@question.Answer"
+                                            MaxLength="4000"
+                                            Rows="20" />
+                                    }
                                 }
-                                else if(_answerFormats[question.AnswerFormat.Value] == Globals.TextArea)
-                                {
-                                    <TelerikTextArea
-                                        @bind-Value="@question.Answer"
-                                        MaxLength="4000"
-                                        Rows="20" />
-                                }
-                            }
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                    }
                 }
-            }
-            <tr>
-                <td colspan="2" style="align-content: center; align-items: center; text-align: center;">
-                    <TelerikButton OnClick="@SubmitReviewClicked" Enabled="@SubmitReviewEnabled()">
-                        <span style="font-size: xx-large; font-weight: 700; width: 400px;">Submit Review</span>
-                    </TelerikButton>
-                </td>
-            </tr>
-        </table>
+                <tr>
+                    <td colspan="2" style="align-content: center; align-items: center; text-align: center;">
+                        <TelerikButton OnClick="@SubmitReviewClicked" Enabled="@SubmitReviewEnabled()">
+                            <span style="font-size: xx-large; font-weight: 700; width: 400px;">Submit Review</span>
+                        </TelerikButton>
+                    </td>
+                </tr>
+            </table>
+        }
     }
 }
 <style>
