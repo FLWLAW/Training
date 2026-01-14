@@ -34,15 +34,16 @@ namespace Training.Website.Components.Pages
         private async Task UserSingleSelectValueChanged(string? newValue)
         {
             AllUsers_CMS_DB? user = _allUsers?.FirstOrDefault(q => q?.UserName?.Equals(newValue, StringComparison.InvariantCultureIgnoreCase) == true);
-
+            string? loginID = user?.LoginID;
             ApplicationState!.LoggedOnUser = new()
             {
                 AppUserID = user?.AppUserID,
-                EmpID = await _service.GetOPS_DB_UserID(user?.LoginID, Database),
+                EmpID = await _service.GetOPS_DB_UserID(loginID, Database),
                 RoleID = user?.RoleID,
                 TitleID = user?.TitleID,
                 UserName = user?.UserName,
-                LoginID = user?.LoginID
+                LoginID = user?.LoginID,
+                Administrator = await _service.IsPerformanceReviewAdministrator(user?.LoginID, Database)
             };
             NavManager?.NavigateTo("/");
         }

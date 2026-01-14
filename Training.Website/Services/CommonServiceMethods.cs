@@ -1,5 +1,7 @@
 ﻿using SqlServerDatabaseAccessLibrary;
+using Telerik.SvgIcons;
 using Training.Website.Models;
+using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
 
 namespace Training.Website.Services
@@ -86,6 +88,9 @@ namespace Training.Website.Services
         public async Task<int?> GetOPS_DB_UserID(string? loginID, IDatabase? database_OPS) =>
             (await database_OPS!.QueryByStatementAsync<int?>($"SELECT TOP 1 Emp_ID FROM [Employees Tbl] WHERE UserName = '{loginID}'"))?.FirstOrDefault();
 
+        public int? GetOPS_ID_From_Login_ID(AllUsers_OPS_DB?[]? allUsers_OPS_DB, string? loginID) =>
+            allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(loginID, StringComparison.InvariantCultureIgnoreCase) == true)?.Emp_ID;
+
         public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionIDandQuestionnaireNumber(int sessionID, int questionnaireNumber, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
                 ("usp_Training_Questionnaire_GetQuestionsBySessionIDandQuestionnaireNumber", new { Session_ID = sessionID, QuestionnaireNumber = questionnaireNumber });
@@ -96,5 +101,23 @@ namespace Training.Website.Services
 
         public async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");
+
+        public async Task<bool> IsPerformanceReviewAdministrator(string? loginID, IDatabase? database_OPS)
+        {
+            if (string.IsNullOrEmpty(loginID) == true)
+                throw new ArgumentNullException("'loginID' cannot be null in IsPerformanceReviewAdministrator().");
+            else
+            {
+                PerformanceReviewAdministratorModel? administrator =
+                    (
+                        await database_OPS!.QueryByStoredProcedureAsync
+                            <PerformanceReviewAdministratorModel?, object?>
+                            ("usp_Performance_Review_GetAdministratorByLoginID", new { Login_ID = loginID })
+                    )?.FirstOrDefault();
+
+                return (administrator != null);
+            }
+        }
+
     }
 }

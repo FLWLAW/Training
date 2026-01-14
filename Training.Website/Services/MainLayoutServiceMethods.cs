@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using SqlServerDatabaseAccessLibrary;
+using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
 
 namespace Training.Website.Services
@@ -15,6 +16,7 @@ namespace Training.Website.Services
                 string? loginID = authState?.User?.Identity?.Name?[(backSlash.Value + 1)..];
                 AllUsers_CMS_DB? userCMS_DB = await GetCMS_DB_UserInfo(loginID, database_CMS);
                 int? OPS_ID = await GetOPS_DB_UserID(loginID, database_OPS);
+                bool isAdministrator = await IsPerformanceReviewAdministrator(loginID, database_OPS);
 
                 return new AllUsers_Authentication()
                 {
@@ -23,7 +25,8 @@ namespace Training.Website.Services
                     LoginID = loginID,
                     RoleID = userCMS_DB?.RoleID,
                     TitleID = userCMS_DB?.TitleID,
-                    UserName = userCMS_DB?.UserName
+                    UserName = userCMS_DB?.UserName,
+                    Administrator = isAdministrator
                 };
             }
             else

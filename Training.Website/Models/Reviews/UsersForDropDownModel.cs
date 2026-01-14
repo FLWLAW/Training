@@ -1,6 +1,6 @@
 ﻿namespace Training.Website.Models.Reviews
 {
-    public class UsersForManagerModel
+    public class UsersForDropDownModel
     {
         public required string? LastName { get; set; }
         public required string? FirstName { get; set; }
