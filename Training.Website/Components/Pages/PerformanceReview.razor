@@ -40,6 +40,16 @@
         </tr>
     </table>
     -->
+    @if (_loading == true)
+    {
+        <table style="width: 100%; padding-top: 30px;">
+            <tr>
+                <td style="width: 100%; text-align: center; font-style: italic; font-weight: 700; font-size: x-large;">
+                    Loading...
+                </td>
+            </tr>
+        </table>
+    }
 
     <table class="table_center">
         <tr>
@@ -96,10 +106,9 @@
                             {
                                 @if(_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
                                 {
-                                    _radioChoices = (_service.GetRadioButtonChoicesByID(question.Question_ID.Value, Database_OPS))?.ToArray(); 
                                     <TelerikRadioGroup
-                                        Data="@_radioChoices"
-                                        @bind-Value="_selectedRadioChoiceID"
+                                        Data="@RadioChoicesForQuestion(question.Question_ID)"
+                                        @bind-Value="question.RadioChoice_ID"
                                         Layout="RadioGroupLayout.Vertical"
                                         OnChange="@RadioChoiceHandler"
                                         ValueField="@nameof(RadioChoiceModel.RadioChoice_ID)"

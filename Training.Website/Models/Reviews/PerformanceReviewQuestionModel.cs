@@ -7,5 +7,6 @@
         public string? Question { get; set; }
         public int? AnswerFormat { get; set; }
         public string? Answer { get; set; }
+        public int? RadioChoice_ID { get; set; }
     }
 }
