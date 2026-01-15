@@ -19,6 +19,6 @@
         public required int? RoleID { get; set; }
         public required int? TitleID { get; set; }
         //public string? HomeState { get; set; }
-        public required bool Administrator { get; set; }
+        public required bool IsPerformanceReviewAdministrator { get; set; }
     }
 }

@@ -65,6 +65,7 @@ namespace Training.Website.Services
                     await database!.QueryByStoredProcedureAsync<EmployeeInformationModel?, object?>("usp_Performance_Review_Employee_Information", new { OPS_Emp_ID = OPS_Emp_ID })
                 )?.FirstOrDefault();
 
+            /*
             if (employeeInfo != null)
             {
                 ReviewStatusModel? reviewAndStatus =
@@ -79,6 +80,7 @@ namespace Training.Website.Services
                     employeeInfo.Review_ID = reviewAndStatus.Review_ID;
                 }
             }
+            */
 
             return employeeInfo;
         }
@@ -104,6 +106,24 @@ namespace Training.Website.Services
         public async Task<IEnumerable<PerformanceReviewQuestionModel?>?> GetPerformanceReviewQuestions(int reviewYear, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<PerformanceReviewQuestionModel?, object?>
                 ("usp_Performance_Review_GetPerformanceReviewQuestionsByReviewYear", new { ReviewYear = reviewYear });
+
+        public async Task<Dictionary<int, string>?> GetPerformanceReviewStatuses(IDatabase? database)
+        {
+            IEnumerable<PerformanceReviewStatusModel?>? data =
+                await database!.QueryByStoredProcedureAsync<PerformanceReviewStatusModel?>("usp_Performance_Review_GetStatuses");
+
+            if (data == null)
+                return null;
+            else
+            {
+                Dictionary<int, string> reviewStatuses = [];
+
+                foreach (PerformanceReviewStatusModel? row in data)
+                    reviewStatuses.Add(row!.ID!.Value, row.Name!);
+
+                return reviewStatuses;
+            }
+        }
 
         /*
         // KEEP ASYNCHRONOUS

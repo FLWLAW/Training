@@ -22,7 +22,7 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Title_SA", "TitleID", "TitleDesc");
 
         public async Task<IEnumerable<AllUsers_CMS_DB>?> GetAllUsers_CMS_DB(IDatabase? database) =>
-            await database!.QueryByStoredProcedureAsync<AllUsers_CMS_DB>("usp_AppUser_SAActiveUserForProductivity");
+            await database!.QueryByStoredProcedureAsync<AllUsers_CMS_DB>("usp_AppUser_SA");
 
         public async Task<Dictionary<int, string>?> GetAnswerFormats(IDatabase? database)
         {
@@ -108,6 +108,11 @@ namespace Training.Website.Services
                 throw new ArgumentNullException("'loginID' cannot be null in IsPerformanceReviewAdministrator().");
             else
             {
+                //TODO: FIX THIS
+#if ! DEBUG
+                await Task.Delay(1);
+                return false;
+#else
                 PerformanceReviewAdministratorModel? administrator =
                     (
                         await database_OPS!.QueryByStoredProcedureAsync
@@ -116,6 +121,7 @@ namespace Training.Website.Services
                     )?.FirstOrDefault();
 
                 return (administrator != null);
+#endif
             }
         }
 

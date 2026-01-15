@@ -60,19 +60,25 @@ namespace Training.Website.Components.Pages
                         throw new NoNullAllowedException("_opsReviewerID cannot be null in OnInitializedAsync() method.");
                     else
                     {
-                        _reviewYears = ReviewYears();
-                        if (_reviewYears == null || _reviewYears.Length == 0)
-                            throw new NoNullAllowedException("_reviewYears cannot be null in OnInitializedAsync()");
+                        _reviewStatuses = await _service.GetPerformanceReviewStatuses(Database_OPS);
+                        if (_reviewStatuses == null)
+                            throw new NoNullAllowedException("_reviewStatuses cannot be null in OnInitializedSync()");
                         else
                         {
-                            if (int.TryParse(_reviewYears[0], out int selectedReviewYear) == false)
-                                throw new NoNullAllowedException("_reviewYears[0] must be an integer in OnItializedAsync()");
+                            _reviewYears = ReviewYears();
+                            if (_reviewYears == null || _reviewYears.Length == 0)
+                                throw new NoNullAllowedException("_reviewYears cannot be null in OnInitializedAsync()");
                             else
                             {
-                                _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
-                                _allUsersForDropDown = await GetUsers_Main();
-                                _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
-                                _reviewStatuses = await _service.GetPerformanceReviewStatuses(Database_OPS);
+                                if (int.TryParse(_reviewYears[0], out int selectedReviewYear) == false)
+                                    throw new NoNullAllowedException("_reviewYears[0] must be an integer in OnItializedAsync()");
+                                else
+                                {
+                                    _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
+                                    _allUsersForDropDown = await GetUsers_Main();
+                                    _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
+                                    _reviewStatuses = await _service.GetPerformanceReviewStatuses(Database_OPS);
+                                }
                             }
                         }
                     }
@@ -94,7 +100,7 @@ namespace Training.Website.Components.Pages
                 throw new NoNullAllowedException("_allUsers_OPS_DB cannot be null or empty in GetUsers_Main() method.");
             else
                 return
-                    ApplicationState!.LoggedOnUser!.Administrator == false
+                    ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == false
                         ? await _service.GetUsersForManager_CMS_DB(_allUsers_CMS_DB, _allUsers_OPS_DB, cmsUserID, _dbCMS)
                         : await _service.GetAllUsersExceptUserLoggedOn(_allUsers_CMS_DB, _allUsers_OPS_DB, cmsUserID);
         }

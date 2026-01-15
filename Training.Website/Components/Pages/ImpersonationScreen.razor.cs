@@ -43,7 +43,7 @@ namespace Training.Website.Components.Pages
                 TitleID = user?.TitleID,
                 UserName = user?.UserName,
                 LoginID = user?.LoginID,
-                Administrator = await _service.IsPerformanceReviewAdministrator(user?.LoginID, Database)
+                IsPerformanceReviewAdministrator = await _service.IsPerformanceReviewAdministrator(user?.LoginID, Database)
             };
             NavManager?.NavigateTo("/");
         }
