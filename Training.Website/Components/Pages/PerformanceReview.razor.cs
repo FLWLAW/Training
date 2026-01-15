@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
-using System.Threading.Tasks;
-using Telerik.SvgIcons;
-using Training.Website.Models;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
 using Training.Website.Services;
@@ -26,6 +23,7 @@ namespace Training.Website.Components.Pages
         private const int _firstReviewYear = 2025;
         private int? _selectedReviewYear = null;
         private string[]? _reviewYears = null;
+        private int? _cmsReviewerID = null;
         private int? _opsReviewerID = null;
         private bool _loading = false;
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
@@ -33,40 +31,49 @@ namespace Training.Website.Components.Pages
         private IEnumerable<UsersForDropDownModel?>? _allUsersForDropDown = null;
         private UsersForDropDownModel? _selectedUser = null;
         private Dictionary<int, string>? _answerFormats = null;
+        private Dictionary<int, string>? _reviewStatuses = null;
+        private ReviewModel? _selectedReview = null;
         private EmployeeInformationModel? _headerInfo = null;
         private PerformanceReviewQuestionModel?[]? _questions = null;
         private RadioChoiceModel?[]? _allRadioChoices = null;
-        private AnswersByReviewYearOpsReviewerOpsRevieweeModel?[]? _answers = null;
+        private AnswersByReviewIdModel?[]? _answers = null;
         private readonly SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
         private PerformanceReviewServiceMethods _service = new();
         #endregion
 
         protected override async Task OnInitializedAsync()
         {
-            _allUsers_OPS_DB = (await _service.GetAllUsers_OPS_DB(Database_OPS))?.ToArray();
-
-            if (_allUsers_OPS_DB == null || _allUsers_OPS_DB.Length == 0)
-                throw new NoNullAllowedException("_allUsers_OPS_DB cannot be null or empty in OnInitializedAsync() method.");
+            _cmsReviewerID = ApplicationState?.LoggedOnUser?.AppUserID;
+            if (_cmsReviewerID == null)
+                throw new NoNullAllowedException("_cmsReviewerID cannot be null in OnInitializedAsync() method.");
             else
             {
-                _opsReviewerID = ApplicationState?.LoggedOnUser?.EmpID;
+                _allUsers_OPS_DB = (await _service.GetAllUsers_OPS_DB(Database_OPS))?.ToArray();
 
-                if (_opsReviewerID == null)
-                    throw new NoNullAllowedException("_opsReviewerID cannot be null in OnInitializedAsync() method.");
+                if (_allUsers_OPS_DB == null || _allUsers_OPS_DB.Length == 0)
+                    throw new NoNullAllowedException("_allUsers_OPS_DB cannot be null or empty in OnInitializedAsync() method.");
                 else
                 {
-                    _reviewYears = ReviewYears();
-                    if (_reviewYears == null || _reviewYears.Length == 0)
-                        throw new NoNullAllowedException("_reviewYears cannot be null in OnInitializedAsync()");
+                    _opsReviewerID = ApplicationState?.LoggedOnUser?.EmpID;
+
+                    if (_opsReviewerID == null)
+                        throw new NoNullAllowedException("_opsReviewerID cannot be null in OnInitializedAsync() method.");
                     else
                     {
-                        if (int.TryParse(_reviewYears[0], out int selectedReviewYear) == false)
-                            throw new NoNullAllowedException("_reviewYears[0] must be an integer in OnItializedAsync()");
+                        _reviewYears = ReviewYears();
+                        if (_reviewYears == null || _reviewYears.Length == 0)
+                            throw new NoNullAllowedException("_reviewYears cannot be null in OnInitializedAsync()");
                         else
                         {
-                            _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
-                            _allUsersForDropDown = await GetUsers_Main();
-                            _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
+                            if (int.TryParse(_reviewYears[0], out int selectedReviewYear) == false)
+                                throw new NoNullAllowedException("_reviewYears[0] must be an integer in OnItializedAsync()");
+                            else
+                            {
+                                _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
+                                _allUsersForDropDown = await GetUsers_Main();
+                                _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
+                                _reviewStatuses = await _service.GetPerformanceReviewStatuses(Database_OPS);
+                            }
                         }
                     }
                 }
@@ -145,10 +152,9 @@ namespace Training.Website.Components.Pages
             {
                 foreach (PerformanceReviewQuestionModel? question in _questions)
                     if (question != null && question.Question_ID != null && question.Answer != null)
-                        await _service.InsertPerformanceReviewAnswer
-                            (question.Question_ID.Value, ApplicationState!.LoggedOnUser!.EmpID!.Value, _selectedUser!.OPS_UserID!.Value, question.Answer, ApplicationState!.LoggedOnUser!.AppUserID, _selectedUser.CMS_UserID, Database_OPS);
+                        await _service.InsertPerformanceReviewAnswer(_selectedReview!.ID!.Value, question.Question_ID.Value, question.Answer, Database_OPS);
+                //(question.Question_ID.Value, ApplicationState!.LoggedOnUser!.EmpID!.Value, _selectedUser!.OPS_UserID!.Value, question.Answer, ApplicationState!.LoggedOnUser!.AppUserID, _selectedUser.CMS_UserID, Database_OPS);
 
-                //_selectedRadioChoiceID = -1;
                 _selectedUser = null;
 
                 StateHasChanged();
@@ -160,27 +166,52 @@ namespace Training.Website.Components.Pages
 
         private async Task UserForDropDownChanged(string newValue)
         {
-            _loading = true;
-            StateHasChanged();
-            await Task.Delay(2000);
-
-            if (_answerFormats != null && _answerFormats.Count() > 0)
+            if (_questions != null)
             {
-                _selectedUser = _allUsersForDropDown?.FirstOrDefault(q => q?.FullName == newValue);
+                _loading = true;
+                StateHasChanged();
 
-                if (_selectedUser != null)
+                await Task.Delay(2000);
+
+                if (_answerFormats == null || _answerFormats.Count() == 0)
+                    throw new NoNullAllowedException("_answerFormats cannot be null or empty in UserForManagerChanged() method..");
+                else
                 {
-                    if (_selectedUser.OPS_UserID != null)
-                    {
-                        _headerInfo = await _service.GetEmployeeInformation(_selectedUser.OPS_UserID.Value, _selectedReviewYear!.Value, Database_OPS);
-                        _answers =
-                            (await _service.GetAnswersByReviewYearOpsReviewerOpsReviewee(_selectedReviewYear!.Value, _opsReviewerID!.Value, _selectedUser!.OPS_UserID.Value, Database_OPS))?.ToArray();
+                    _selectedUser = _allUsersForDropDown?.FirstOrDefault(q => q?.FullName == newValue);
 
-                        if (_questions != null)
+                    if (_selectedUser != null)
+                    {
+                        if (_selectedUser.OPS_UserID == null)
+                            throw new NoNullAllowedException(".OPS_User_ID cannot be null in UserForManagerChanged() method.");
+                        else
                         {
+                            _headerInfo = await _service.GetEmployeeInformation(_selectedUser.OPS_UserID.Value, _selectedReviewYear!.Value, Database_OPS);
+                            _selectedReview = await _service.GetReviewByReviewerIdAndRevieweeId
+                                                (
+                                                    _selectedReviewYear!.Value,
+                                                    _opsReviewerID!.Value, _selectedUser!.OPS_UserID!.Value,
+                                                    _cmsReviewerID!.Value, _selectedUser!.CMS_UserID!.Value,
+                                                    Database_OPS
+                                                );
+                            if (_selectedReview == null)
+                            {
+                                int? reviewID = await _service.InsertReview
+                                    (
+                                        _selectedReviewYear!.Value,
+                                        _opsReviewerID!.Value, _selectedUser!.OPS_UserID!.Value,
+                                        _cmsReviewerID!.Value, _selectedUser!.CMS_UserID!.Value,
+                                        Database_OPS
+                                    );
+
+                                if (reviewID == null)
+                                    throw new NoNullAllowedException("reviewID cannot be null in UserForManagerChanged() method after InsertReview().");
+                                else
+                                    _selectedReview = await _service.GetReviewByReviewID(reviewID!.Value, Database_OPS);
+                            }
+                            _answers = (await _service.GetAnswersByReviewID(_selectedReview!.ID!.Value, Database_OPS))?.ToArray();
                             if (_answers != null && _answers.Any() == true)
                             {
-                                foreach (AnswersByReviewYearOpsReviewerOpsRevieweeModel? answer in _answers)
+                                foreach (AnswersByReviewIdModel? answer in _answers)
                                 {
                                     if (answer != null)
                                     {
@@ -213,15 +244,76 @@ namespace Training.Website.Components.Pages
                             }
                         }
                     }
-                    else
-                        throw new NoNullAllowedException(".OPS_User_ID cannot be null in UserForManagerChanged() method.");
                 }
-            }
-            else
-                throw new NoNullAllowedException("_answerFormats cannot be null or empty in UserForManagerChanged() method..");
 
-            _loading = false;
-            StateHasChanged();
+                /*
+                private async Task UserForDropDownChanged(string newValue)
+                {
+                    _loading = true;
+                    StateHasChanged();
+                    await Task.Delay(2000);
+
+                    if (_answerFormats != null && _answerFormats.Count() > 0)
+                    {
+                        _selectedUser = _allUsersForDropDown?.FirstOrDefault(q => q?.FullName == newValue);
+
+                        if (_selectedUser != null)
+                        {
+                            if (_selectedUser.OPS_UserID != null)
+                            {
+                                _headerInfo = await _service.GetEmployeeInformation(_selectedUser.OPS_UserID.Value, _selectedReviewYear!.Value, Database_OPS);
+                                _answers =
+                                    (await _service.GetAnswersByReviewYearOpsReviewerOpsReviewee(_selectedReviewYear!.Value, _opsReviewerID!.Value, _selectedUser!.OPS_UserID.Value, Database_OPS))?.ToArray();
+
+                                if (_questions != null)
+                                {
+                                    if (_answers != null && _answers.Any() == true)
+                                    {
+                                        foreach (AnswersByReviewYearOpsReviewerOpsRevieweeModel? answer in _answers)
+                                        {
+                                            if (answer != null)
+                                            {
+                                                PerformanceReviewQuestionModel? question = _questions.FirstOrDefault(q => q?.Question_ID == answer.Question_ID);
+
+                                                if (question == null)
+                                                    throw new NoNullAllowedException("[question] cannot be NULL in UserForManagerChanged().");
+                                                else if (question.AnswerFormat == null)
+                                                    throw new NoNullAllowedException("question.AnswerFormat cannot be NULL in UserForManagearChanged().");
+                                                else
+                                                {
+                                                    question.Answer = answer.Answer;
+                                                    if (_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
+                                                        question.RadioChoice_ID = _allRadioChoices?.FirstOrDefault
+                                                            (
+                                                                q => q?.ReviewQuestion_ID == question.Question_ID &&
+                                                                q?.RadioChoice_Text == answer.Answer
+                                                            )?.RadioChoice_ID;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        foreach (PerformanceReviewQuestionModel? question in _questions)
+                                        {
+                                            question!.Answer = null;
+                                            question!.RadioChoice_ID = null;
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                                throw new NoNullAllowedException(".OPS_User_ID cannot be null in UserForManagerChanged() method.");
+                        }
+                    }
+                    else
+                        throw new NoNullAllowedException("_answerFormats cannot be null or empty in UserForManagerChanged() method..");
+
+                    _loading = false;
+                    StateHasChanged();
+                }
+                */
+            }
         }
     }
 }
