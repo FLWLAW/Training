@@ -32,6 +32,20 @@ namespace Training.Website.Components.Layout
         //protected async override Task OnInitializedAsync()
         protected override void OnInitialized()
         {
+//#if QA
+/*
+            ApplicationState!.LoggedOnUser = new()
+            {
+                AppUserID = 2117,
+                IsPerformanceReviewAdministrator = false,
+                EmpID = 944,
+                LoginID = "MRattray",
+                RoleID = 3,
+                TitleID = 3,
+                UserName = "Melva Rattray"
+            };
+*/
+//#else
             /*
             ApplicationState!.LoggedOnUser = new()
             {
@@ -46,6 +60,7 @@ namespace Training.Website.Components.Layout
 
             //await GetLoggedOnUser();
             Task.Run(GetLoggedOnUser).Wait();
+//#endif
         }
 
         // ================================================================================================================================================================================================================================================================================================

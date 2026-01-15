@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Remove="GlobalMethods.cs" />
     <Compile Remove="Models\Reports_Username_ReportDesc_StageName_Model.cs" />
+    <Compile Remove="Models\Reviews\AnswersByReviewYearOpsReviewerOpsRevieweeModel.cs" />
   </ItemGroup>
 
   <ItemGroup>

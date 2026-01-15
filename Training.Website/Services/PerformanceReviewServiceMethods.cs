@@ -1,4 +1,5 @@
-﻿using SqlServerDatabaseAccessLibrary;
+﻿using Dapper;
+using SqlServerDatabaseAccessLibrary;
 using Training.Website.Models;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
@@ -31,6 +32,11 @@ namespace Training.Website.Services
             return result;
         }
 
+        public async Task<IEnumerable<AnswersByReviewIdModel?>?> GetAnswersByReviewID(int? reviewID, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<AnswersByReviewIdModel?, object?>
+                ("usp_Performance_Review_GetAnswersByReviewID", new { Review_ID = reviewID });
+
+        /*
         public async Task<IEnumerable<AnswersByReviewYearOpsReviewerOpsRevieweeModel?>?> GetAnswersByReviewYearOpsReviewerOpsReviewee
             (int reviewYear, int opsReviewerID, int opsRevieweeID, IDatabase? database)
         {
@@ -47,14 +53,19 @@ namespace Training.Website.Services
 
             return result;
         }
+        */
+
 
         public async Task<EmployeeInformationModel?> GetEmployeeInformation(int OPS_Emp_ID, int reviewYear, IDatabase? database)
         {
+            //TODO: CHANGE THIS TO READ OFF OF NEW STATUS TABLE - PROBABLY GET RID OF usp_Performance_Review_GetStatusAndID
+
             EmployeeInformationModel? employeeInfo =
                 (
                     await database!.QueryByStoredProcedureAsync<EmployeeInformationModel?, object?>("usp_Performance_Review_Employee_Information", new { OPS_Emp_ID = OPS_Emp_ID })
                 )?.FirstOrDefault();
 
+            /*
             if (employeeInfo != null)
             {
                 ReviewStatusModel? reviewAndStatus =
@@ -69,6 +80,7 @@ namespace Training.Website.Services
                     employeeInfo.Review_ID = reviewAndStatus.Review_ID;
                 }
             }
+            */
 
             return employeeInfo;
         }
@@ -95,10 +107,48 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureAsync<PerformanceReviewQuestionModel?, object?>
                 ("usp_Performance_Review_GetPerformanceReviewQuestionsByReviewYear", new { ReviewYear = reviewYear });
 
+        public async Task<Dictionary<int, string>?> GetPerformanceReviewStatuses(IDatabase? database)
+        {
+            IEnumerable<PerformanceReviewStatusModel?>? data =
+                await database!.QueryByStoredProcedureAsync<PerformanceReviewStatusModel?>("usp_Performance_Review_GetStatuses");
+
+            if (data == null)
+                return null;
+            else
+            {
+                Dictionary<int, string> reviewStatuses = [];
+
+                foreach (PerformanceReviewStatusModel? row in data)
+                    reviewStatuses.Add(row!.ID!.Value, row.Name!);
+
+                return reviewStatuses;
+            }
+        }
+
+        /*
         // KEEP ASYNCHRONOUS
         public IEnumerable<RadioChoiceModel?> GetRadioButtonChoicesByID(int reviewQuestionID, IDatabase? database) =>
             database!.QueryByStoredProcedure<RadioChoiceModel?, object?>
                 ("usp_Performance_Review_GetRadioButtonChoicesByID", new { ReviewQuestion_ID = reviewQuestionID });
+        */
+
+        public async Task<ReviewModel?> GetReviewByReviewerIdAndRevieweeId
+            (int reviewYear, int opsReviewerID, int opsRevieweeID, int cmsReviewerID, int cmsRevieweeID, IDatabase? database)
+        {
+            ReviewModel_Parameters parameters =
+                ReviewModelParameters(reviewYear, opsReviewerID, opsRevieweeID, cmsReviewerID, cmsRevieweeID);
+
+            ReviewModel? result =
+                (
+                    await database!.QueryByStoredProcedureAsync<ReviewModel?, ReviewModel_Parameters>
+                        ("usp_Performance_Review_GetReviewByReviewerIdAndRevieweeId", parameters)
+                )?.FirstOrDefault();
+
+            return result;
+        }
+
+        public async Task<ReviewModel?> GetReviewByReviewID(int reviewID, IDatabase? database) =>
+            (await database!.QueryByStoredProcedureAsync<ReviewModel, object?>("usp_Performance_Review_GetReviewByReviewID", new { Review_ID = reviewID }))?.FirstOrDefault();
 
         public async Task<IEnumerable<UsersForDropDownModel?>?> GetUsersForManager_CMS_DB
             (AllUsers_CMS_DB?[]? allUsers_CMS_DB, AllUsers_OPS_DB?[]? allUsers_OPS_DB, int? cmsDB_ManagerID, IDatabase? database)
@@ -132,22 +182,35 @@ namespace Training.Website.Services
             }
         }
 
-        public async Task InsertPerformanceReviewAnswer
-            (int questionID, int opsUserID_Reviewer, int opsUserID_Reviewee, string answer, int? cmsUserID_Reviewer, int? cmsUserID_Reviewee, IDatabase? database)
+        public async Task InsertPerformanceReviewAnswer(int reviewID, int questionID, string answer, IDatabase? database)
         {
             PerformanceReviewAnswerModel_Parameters parameters =
                 new()
                 {
+                    Review_ID = reviewID,
                     Question_ID = questionID,
-                    OPS_User_ID_Reviewer = opsUserID_Reviewer,
-                    OPS_User_ID_Reviewee = opsUserID_Reviewee,
                     Answer = answer,
-                    CMS_User_ID_Reviewer = cmsUserID_Reviewer,
-                    CMS_User_ID_Reviewee = cmsUserID_Reviewee
                 };
 
             await database!.NonQueryByStoredProcedureAsync<PerformanceReviewAnswerModel_Parameters>
                 ("usp_Performance_Review_InsertAnswer", parameters);
+        }
+
+        public async Task<int?> InsertReview(int reviewYear, int opsReviewerID, int opsRevieweeID, int cmsReviewerID, int cmsRevieweeID, IDatabase? database)
+        {
+            DynamicParameters parameters = new();
+
+            parameters.Add("@ReviewYear", value: reviewYear, dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Input);
+            parameters.Add("@OPS_User_ID_Reviewer", value: opsReviewerID, dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Input);
+            parameters.Add("@OPS_User_ID_Reviewee", value: opsRevieweeID, dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Input);
+            parameters.Add("@CMS_User_ID_Reviewer", value: cmsReviewerID, dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Input);
+            parameters.Add("@CMS_User_ID_Reviewee", value: cmsRevieweeID, dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Input);
+            parameters.Add("@Review_ID", dbType: System.Data.DbType.Int32, direction: System.Data.ParameterDirection.Output);
+
+            int? reviewID = await database!.NonQueryByStoredProcedureOutputParameterAsync<int?>
+                ("usp_Performance_Review_InsertReview", "@Review_ID", parameters);
+
+            return reviewID;
         }
 
         // =============================================================================================================================================================================================================================================================================================================================================================================================================
@@ -161,5 +224,15 @@ namespace Training.Website.Services
                 OPS_UserID = GetOPS_ID_From_Login_ID(allUsers_OPS_DB, user?.LoginID)
             };
 
+        private ReviewModel_Parameters ReviewModelParameters
+            (int reviewYear, int opsReviewerID, int opsRevieweeID, int cmsReviewerID, int cmsRevieweeID) =>
+                new()
+                {
+                    ReviewYear = reviewYear,
+                    OPS_User_ID_Reviewer = opsReviewerID,
+                    OPS_User_ID_Reviewee = opsRevieweeID,
+                    CMS_User_ID_Reviewer = cmsReviewerID,
+                    CMS_User_ID_Reviewee = cmsRevieweeID
+                };
     }
 }
