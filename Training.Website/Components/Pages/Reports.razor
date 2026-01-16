@@ -101,41 +101,24 @@ else
                         -->
                         <GridColumn Field="@nameof(EMailReportBySessionIdModel.FirstName)" Title="First Name" Width="90px" />
                         <GridColumn Field="@nameof(EMailReportBySessionIdModel.LastName)" Title="Last Name" Width="120px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.QuestionnaireNumber)" Title="Questionnaire #" Width="130px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.DueDate)" Title="Due Date" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.Score)" Title="Score" Width="90px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenUserLastSubmitted)" Title="When User Submitted" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoFirstSent)" Title="First Sent By" Width="200px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenMustRetakeBy)" Title="When Must Retake By" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastReminderEmailSent)" Title="Reminder Email Sent On" Width="150px" />
+                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastReminderEmailSent)" Title="Reminder Email Sent By" Width="200px" />
                         <GridColumn Field="@nameof(EMailReportBySessionIdModel.Email)" Title="Email" Width="180px" />
                         <GridColumn Field="@nameof(EMailReportBySessionIdModel.Role)" Title="Role" Width="90px" />
                         <GridColumn Field="@nameof(EMailReportBySessionIdModel.Title)" Title="Title" Width="150px" />
-                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.DueDate)" Title="Due Date" Width="105px" DisplayFormat="{0:MM/dd/yyyy}" />
-                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.Status)" Title="Status" Width="105px" />
-                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoFirstSent)" Title="First Sent By" Width="200px" />
-                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenFirstSent)" Title="When First Sent" Width="150px" />
+                        <!--
                         <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastUpdated)" Title="Last Sent By" Width="200px" />
                         <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastUpdated)" Title="Latest Email Sent On" Width="150px" />
-                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenUserLastSubmitted)" Title="When User Last Submitted" Width="150px" />
-                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhenLastReminderEmailSent)" Title="Reminder Email Sent On" Width="150px" />
-                        <GridColumn Field="@nameof(EMailReportBySessionIdModel.WhoLastReminderEmailSent)" Title="Reminder Email Sent By" Width="200px" />
+                        -->
                     </GridColumns>
-                    <DetailTemplate>
-                        @{
-                            var row = context as EMailReportBySessionIdModel;
-
-                            <!-- Data="@_results?.Where(q => q?.OPS_User_ID == row?.OPS_Emp_ID || (row?.OPS_Emp_ID == null && row?.CMS_User_ID == row?.CMS_User_ID)).OrderBy(s => s?.QuestionnaireNumber)" -->
-
-                            <TelerikGrid
-                                Data="@Tests(row)"
-                                Height="120px"
-                                Pageable="false"
-                                Sortable="true"
-                                PageSize="@Globals.MaximumTestAttemptsPerSession">
-                                <GridColumns>
-                                    <GridColumn Field="@nameof(ResultsModel.TestAttempt_ID)" Title="Test Attempt ID" Visible="false" />
-                                    <GridColumn Field="@nameof(ResultsModel.QuestionnaireNumber)" Title="Questionnaire #" Width="120px" />
-                                    <GridColumn Field="@nameof(ResultsModel.Score)" Title="Score" Width="90px" />
-                                    <GridColumn Field="@nameof(ResultsModel.WhenSubmitted)" Title="When Submitted" Width="150px" />
-                                    <GridColumn Field="@nameof(ResultsModel.WhenMustRetakeBy)" Title="When Must Retake By" Width="150px" />
-                                </GridColumns>
-                            </TelerikGrid>
-                        }
-                    </DetailTemplate>
                     <GridExport>
                         <GridExcelExport FileName="@Globals.ExportFilename("EmailedUsers_Session", _selectedSessionString)"
                                          AllPages="false" />
@@ -145,33 +128,6 @@ else
         </tr>
     </table>
 }
-
-<script>
-/*
-    function downloadFile(filename, content) {
-        var element = document.createElement('a');
-        element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
-        element.setAttribute('download', filename);
-        element.style.display = 'none';
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-    }
-*/
-/*
-    window.downloadFileFromStream = async (fileName, contentStreamReference) => {
-      const arrayBuffer = await contentStreamReference.arrayBuffer();
-      const blob = new Blob([arrayBuffer]);
-      const url = URL.createObjectURL(blob);
-      const anchorElement = document.createElement('a');
-      anchorElement.href = url;
-      anchorElement.download = fileName ?? '';
-      anchorElement.click();
-      anchorElement.remove();
-      URL.revokeObjectURL(url);
-    }
-*/
-</script>
 
 <style>
     .UniformButton {
