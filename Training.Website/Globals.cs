@@ -115,15 +115,14 @@ namespace Training.Website
                 await JS!.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
             }
         }
-
-
-
+        /*
         public static IdValue<string> SelectAll(string id) =>
             new()
             {
                 ID = id,
                 Value = SelectAll_Verbiage
             };
+        */
 
         public static int OPS_UserID(AppState? appState) =>
             appState?.LoggedOnUser?.EmpID ?? 0;

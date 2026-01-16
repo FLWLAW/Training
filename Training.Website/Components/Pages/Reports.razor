@@ -72,6 +72,14 @@ else
                                Enabled="true">
                     EXPORT TO EXCEL
                 </TelerikButton>
+                <!--
+                <TelerikButton Class="UniformButton"
+                               OnClick="@(async() => await SpecialExportExcelMain() )"
+                               Enabled="true">
+                    EXPORT TO EXCEL
+                </TelerikButton>
+                -->
+
             </td>
         </tr>
     </table>
@@ -110,8 +118,10 @@ else
                         @{
                             var row = context as EMailReportBySessionIdModel;
 
+                            <!-- Data="@_results?.Where(q => q?.OPS_User_ID == row?.OPS_Emp_ID || (row?.OPS_Emp_ID == null && row?.CMS_User_ID == row?.CMS_User_ID)).OrderBy(s => s?.QuestionnaireNumber)" -->
+
                             <TelerikGrid
-                                Data="@_results?.Where(q => q?.OPS_User_ID == row?.OPS_Emp_ID || (row?.OPS_Emp_ID == null && row?.CMS_User_ID == row?.CMS_User_ID) ).OrderBy(s => s?.QuestionnaireNumber)"
+                                Data="@Tests(row)"
                                 Height="120px"
                                 Pageable="false"
                                 Sortable="true"
@@ -135,6 +145,33 @@ else
         </tr>
     </table>
 }
+
+<script>
+/*
+    function downloadFile(filename, content) {
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
+        element.setAttribute('download', filename);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+*/
+/*
+    window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+      const arrayBuffer = await contentStreamReference.arrayBuffer();
+      const blob = new Blob([arrayBuffer]);
+      const url = URL.createObjectURL(blob);
+      const anchorElement = document.createElement('a');
+      anchorElement.href = url;
+      anchorElement.download = fileName ?? '';
+      anchorElement.click();
+      anchorElement.remove();
+      URL.revokeObjectURL(url);
+    }
+*/
+</script>
 
 <style>
     .UniformButton {

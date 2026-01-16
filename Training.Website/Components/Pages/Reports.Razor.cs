@@ -1,9 +1,15 @@
 ﻿using FLWLAW_Email.Library;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MimeKit;
 using SqlServerDatabaseAccessLibrary;
+using System.Data;
+using System.Data.Common;
 using System.Text;
 using Telerik.Blazor.Components;
+using Telerik.Documents.SpreadsheetStreaming;
+using Telerik.SvgIcons;
+using Telerik.Windows.Documents.Spreadsheet.Model;
 using Training.Website.Models;
 using Training.Website.Models.Users;
 using Training.Website.Services;
@@ -20,6 +26,9 @@ namespace Training.Website.Components.Pages
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
         private IDatabase? Database_OPS { get; set; }
+
+        [Inject]
+        private IJSRuntime? JS { get; set; }
         #endregion
 
         #region PRIVATE FIELDS
@@ -183,10 +192,10 @@ namespace Training.Website.Components.Pages
                 email.BodyTextFormat = MimeKit.Text.TextFormat.Html;
                 email.Subject = $"Reminder: Training Questionnaire Available for Session #{_selectedSessionString}";
                 email.Body = testMessageBody;
-#if QA
+    #if QA
                 AllUsers_CMS_DB? susan = _allUsers_CMS?.FirstOrDefault(q => q?.UserName == "Susan Eisenman");
                 email.To.Add(new MailboxAddress(susan?.UserName, susan?.EmailAddress));
-#endif
+    #endif
                 email.To.Add(new MailboxAddress("David Rosenblum", "drosenblum@bluetrackdevelopment.com"));
                 email.Send();
                 _reminderEmailsSentWindowVisible = true;
@@ -229,6 +238,237 @@ namespace Training.Website.Components.Pages
 
             StateHasChanged();
         }
+        /*
+        private void SetCellValue(IRowExporter row, object? value)
+        {
+            using (ICellExporter cell = row.CreateCellExporter())
+            {
+                if (value == null)
+                    cell.SetValue(string.Empty);
+                else if (value is bool boolValue)
+                    cell.SetValue(boolValue);
+                else if (value is DateTime dateTimeValue)
+                {
+                    string format = (dateTimeValue.TimeOfDay.TotalSeconds > 0) ? "mm/dd/yyyy hh:mm:ss AM/PM" : "mm/dd/yyyy";
+
+                    cell.SetFormat(new SpreadCellFormat { NumberFormat = format });
+                    cell.SetValue(dateTimeValue);
+                }
+                else if (value is decimal decValue)
+                    cell.SetValue((double)decValue);
+                else if (value is double dblValue)
+                    cell.SetValue(dblValue);
+                else if (value is long longValue)
+                    cell.SetValue(longValue);
+                else if (value is int intValue)
+                    cell.SetValue(intValue);
+                else if (value is string stringValue)
+                    cell.SetValue(stringValue);
+                else
+                    cell.SetValue(value.ToString()!);
+            }
+        }
+
+        private void SetDataChildRow(IWorksheetExporter worksheet, ResultsModel? test)
+        {
+            if (test != null)
+            {
+                using (IRowExporter childDataRow = worksheet.CreateRowExporter())
+                {
+                    childDataRow.SkipCells(1);
+                    SetCellValue(childDataRow, test.QuestionnaireNumber);
+                    childDataRow.SkipCells(1);
+                    SetCellValue(childDataRow, test.Score);
+                    childDataRow.SkipCells(1);
+                    SetCellValue(childDataRow, test.WhenSubmitted);
+                    childDataRow.SkipCells(1);
+                    SetCellValue(childDataRow, test.WhenMustRetakeBy);
+                }
+            }
+        }
+
+        private void SetDataParentRow(IWorksheetExporter worksheet, EMailReportBySessionIdModel? row)
+        {
+            if (row != null)
+            {
+                using (IRowExporter dataRow = worksheet.CreateRowExporter())
+                {
+                    SetCellValue(dataRow, row.Session_ID);
+                    SetCellValue(dataRow, row.FirstName);
+                    SetCellValue(dataRow, row.LastName);
+                    SetCellValue(dataRow, row.Email);
+                    SetCellValue(dataRow, row.Role);
+                    SetCellValue(dataRow, row.Title);
+                    SetCellValue(dataRow, row.DueDate);
+                    SetCellValue(dataRow, row.Status);
+                    SetCellValue(dataRow, row.WhoFirstSent);      // First Sent By
+                    SetCellValue(dataRow, row.WhenFirstSent);     // When First Sent
+                    SetCellValue(dataRow, row.WhoLastUpdated);    // Last Sent By
+                    SetCellValue(dataRow, row.WhenLastUpdated);   // Latest Email ASent On
+                    SetCellValue(dataRow, row.WhenUserLastSubmitted); // WHen User Last Submitted
+                    SetCellValue(dataRow, row.WhenLastReminderEmailSent);     // Reminder Email Sent On
+                    SetCellValue(dataRow, row.WhoLastReminderEmailSent);      // Reminder Email Sent By
+                }
+            }
+        }
+
+        private void SetHeader(IRowExporter row, string header) // USED FOR SECTION OR COLUMN HEADERS
+        {
+            using (ICellExporter cell = row.CreateCellExporter())
+            {
+                cell.SetFormat(new SpreadCellFormat { IsBold = true, Fill = SpreadPatternFill.CreateSolidFill(new SpreadColor(211, 211, 211)) });
+                cell.SetValue(header);
+            }
+        }
+
+        private void SetMainHeaders(IWorksheetExporter worksheet)
+        {
+            using (IRowExporter headerRow = worksheet.CreateRowExporter())
+            {
+                SetHeader(headerRow, "Session ID");
+                SetHeader(headerRow, "First Name");
+                SetHeader(headerRow, "Last Name");
+                SetHeader(headerRow, "Email");
+                SetHeader(headerRow, "Role");
+                SetHeader(headerRow, "Title");
+                SetHeader(headerRow, "Due Date");
+                SetHeader(headerRow, "Status");
+                SetHeader(headerRow, "First Sent By");
+                SetHeader(headerRow, "When First Sent");
+                SetHeader(headerRow, "Last Sent By");
+                SetHeader(headerRow, "Latest Email Sent On");
+                SetHeader(headerRow, "When User Last Submitted");
+                SetHeader(headerRow, "Reminder Email Sent On");
+                SetHeader(headerRow, "Reminder Email Sent By");
+            }
+        }
+
+
+
+        private void SetSubHeaders(IWorksheetExporter worksheet)
+        {
+            using (IRowExporter subHeaderRow = worksheet.CreateRowExporter())
+            {
+                subHeaderRow.SkipCells(1);
+                SetHeader(subHeaderRow, "Questionnaire #");
+                subHeaderRow.SkipCells(1);
+                SetHeader(subHeaderRow, "Score");
+                subHeaderRow.SkipCells(1);
+                SetHeader(subHeaderRow, "When Submitted");
+                subHeaderRow.SkipCells(1);
+                SetHeader(subHeaderRow, "When Must Retake By");
+            }
+        }
+
+        private async Task SpecialExportExcelMain()
+        {
+            using (MemoryStream stream = await SpecialExportExcelXLSX())
+            {
+                string filename = $"TestResults_Session_{_selectedSession!.Session_ID}.xlsx";
+
+                stream.Position = 0;    // VERY IMPORTANT!!!!!
+                using var streamRef = new DotNetStreamReference(stream: stream);
+                await JS!.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+            }
+        }
+
+        private async Task<MemoryStream> SpecialExportExcelXLSX()
+        {
+            if (_emailedUsers != null)
+            {
+                MemoryStream stream = new();    // CANNOT USE "using" HERE, BECAUSE "using" WILL CLOSE THE STREAM BEFORE IT IS RETURNED
+
+                using (IWorkbookExporter workbook = SpreadExporter.CreateWorkbookExporter(SpreadDocumentFormat.Xlsx, stream))
+                {
+                    string name = $"Reports_{_selectedSession!.Session_ID}";
+
+                    using (IWorksheetExporter worksheet = workbook.CreateWorksheetExporter(name))
+                    {
+                        SetMainHeaders(worksheet);
+                        foreach (EMailReportBySessionIdModel? row in _emailedUsers)
+                        {
+                            if (row != null)
+                            {
+                                SetDataParentRow(worksheet, row);
+                                IOrderedEnumerable<ResultsModel?>? tests = Tests(row);
+
+                                if (tests != null && tests.Any() == true)
+                                {
+                                    SetSubHeaders(worksheet);
+                                    foreach (ResultsModel? test in tests)
+                                        SetDataChildRow(worksheet, test);
+                                }
+                            }
+                        }
+                    }
+                }
+                return await Task.FromResult(stream);
+            }
+            else
+                throw new NoNullAllowedException("_emailedUsers cannot be null in SPecialExcportExcelXLSX().");
+        }
+        
+        private async Task SpecialExportExcelCSV()
+        {
+            if (_emailedUsers != null)
+            {
+                StringBuilder sheet = new();
+
+                sheet.AppendLine("Session ID,First Name,Last Name,Email,Role,Title,Due Date,Status,First Sent By,When First Sent,Last Sent By,Latest Email Sent On,When User Last Submitted,Reminder Email Sent On,Reminder Email Sent By");
+                foreach (EMailReportBySessionIdModel? row in _emailedUsers)
+                {
+                    if (row != null)
+                    {
+                        AppendToLine(sheet, row.Session_ID);
+                        AppendToLine(sheet, row.FirstName);
+                        AppendToLine(sheet, row.LastName);
+                        AppendToLine(sheet, row.Email);
+                        AppendToLine(sheet, row.Role);
+                        AppendToLine(sheet, row.Title);
+                        AppendToLine(sheet, row.DueDate);
+                        AppendToLine(sheet, row.Status);
+                        AppendToLine(sheet, row.WhoFirstSent);      // First Sent By
+                        AppendToLine(sheet, row.WhenFirstSent);     // When First Sent
+                        AppendToLine(sheet, row.WhoLastUpdated);    // Last Sent By
+                        AppendToLine(sheet, row.WhenLastUpdated);   // Latest Email ASent On
+                        AppendToLine(sheet, row.WhenUserLastSubmitted); // WHen User Last Submitted
+                        AppendToLine(sheet, row.WhenLastReminderEmailSent);     // Reminder Email Sent On
+                        AppendToLine(sheet, row.WhoLastReminderEmailSent, true);      // Reminder Email Sent By
+
+                        IOrderedEnumerable<ResultsModel?>? tests = Tests(row);
+                        if (tests != null && tests.Any() == true)
+                        {
+                            sheet.AppendLine(",Questionnaire #,,Score,,When Submitted,,When Must Retake By");
+                            foreach (ResultsModel? test in tests)
+                                if (test != null)
+                                    sheet.AppendLine($",{test.QuestionnaireNumber},,{test.Score},,{test.WhenSubmitted},,{test.WhenMustRetakeBy}");
+                        }
+                    }
+                }
+
+                string csvFilename = $"TestResults_Session_{_selectedSession!.Session_ID}";
+                await JS!.InvokeVoidAsync("downloadFile", csvFilename, sheet.ToString());
+            }
+        }
+        */
+
+        private IOrderedEnumerable<ResultsModel?>? Tests(EMailReportBySessionIdModel? row) =>
+            _results?.Where(q => q?.OPS_User_ID == row?.OPS_Emp_ID || (row?.OPS_Emp_ID == null && row?.CMS_User_ID == row?.CMS_User_ID)).OrderBy(s => s?.QuestionnaireNumber);
+        
+        /*
+        private void AppendToLine(StringBuilder sheet, object? value, bool lastFieldInLine = false, int separators = 1)
+        {
+            string? valueStr = value?.ToString();
+
+            if (valueStr != null && (valueStr.Contains(',') || valueStr.Contains("\"") || valueStr.Contains('\n')))
+                valueStr = $"\"{valueStr.Replace("\"", "\"\"")}\"";
+
+            if (lastFieldInLine == false)
+                sheet.Append($"{valueStr},");
+            else
+                sheet.AppendLine(valueStr);
+        }
+        */  
 
         private string Subject() =>
             $"Subject: Reminder: Training Questionnaire Available for Session #{_selectedSessionString}";
