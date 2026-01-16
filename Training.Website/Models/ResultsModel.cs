@@ -1,6 +1,6 @@
 ﻿namespace Training.Website.Models
 {
-    public class ResultsModel
+    public record ResultsModel
     {
         public int? TestAttempt_ID { get; set; }
         public int? OPS_User_ID { get; set; }

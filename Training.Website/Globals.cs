@@ -27,6 +27,10 @@ namespace Training.Website
         public const string SelectAll_Verbiage = "-- Select All --";
         public const string Notary = "Notary";
 
+        public const string Failed = "Failed";
+        public const string Passed = "Passed";
+
+
 #if DEBUG
         public const string BaseURL = "http://drosenblum-elitedesk:83";
 #elif QA
@@ -115,6 +119,7 @@ namespace Training.Website
                 await JS!.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
             }
         }
+
         /*
         public static IdValue<string> SelectAll(string id) =>
             new()

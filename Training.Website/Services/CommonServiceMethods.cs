@@ -1,5 +1,4 @@
 ﻿using SqlServerDatabaseAccessLibrary;
-using Telerik.SvgIcons;
 using Training.Website.Models;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
@@ -124,6 +123,5 @@ namespace Training.Website.Services
 #endif
             }
         }
-
     }
 }
