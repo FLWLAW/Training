@@ -251,74 +251,8 @@ namespace Training.Website.Components.Pages
                         }
                     }
                 }
-
-                /*
-                private async Task UserForDropDownChanged(string newValue)
-                {
-                    _loading = true;
-                    StateHasChanged();
-                    await Task.Delay(2000);
-
-                    if (_answerFormats != null && _answerFormats.Count() > 0)
-                    {
-                        _selectedUser = _allUsersForDropDown?.FirstOrDefault(q => q?.FullName == newValue);
-
-                        if (_selectedUser != null)
-                        {
-                            if (_selectedUser.OPS_UserID != null)
-                            {
-                                _headerInfo = await _service.GetEmployeeInformation(_selectedUser.OPS_UserID.Value, _selectedReviewYear!.Value, Database_OPS);
-                                _answers =
-                                    (await _service.GetAnswersByReviewYearOpsReviewerOpsReviewee(_selectedReviewYear!.Value, _opsReviewerID!.Value, _selectedUser!.OPS_UserID.Value, Database_OPS))?.ToArray();
-
-                                if (_questions != null)
-                                {
-                                    if (_answers != null && _answers.Any() == true)
-                                    {
-                                        foreach (AnswersByReviewYearOpsReviewerOpsRevieweeModel? answer in _answers)
-                                        {
-                                            if (answer != null)
-                                            {
-                                                PerformanceReviewQuestionModel? question = _questions.FirstOrDefault(q => q?.Question_ID == answer.Question_ID);
-
-                                                if (question == null)
-                                                    throw new NoNullAllowedException("[question] cannot be NULL in UserForManagerChanged().");
-                                                else if (question.AnswerFormat == null)
-                                                    throw new NoNullAllowedException("question.AnswerFormat cannot be NULL in UserForManagearChanged().");
-                                                else
-                                                {
-                                                    question.Answer = answer.Answer;
-                                                    if (_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
-                                                        question.RadioChoice_ID = _allRadioChoices?.FirstOrDefault
-                                                            (
-                                                                q => q?.ReviewQuestion_ID == question.Question_ID &&
-                                                                q?.RadioChoice_Text == answer.Answer
-                                                            )?.RadioChoice_ID;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (PerformanceReviewQuestionModel? question in _questions)
-                                        {
-                                            question!.Answer = null;
-                                            question!.RadioChoice_ID = null;
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                                throw new NoNullAllowedException(".OPS_User_ID cannot be null in UserForManagerChanged() method.");
-                        }
-                    }
-                    else
-                        throw new NoNullAllowedException("_answerFormats cannot be null or empty in UserForManagerChanged() method..");
-
-                    _loading = false;
-                    StateHasChanged();
-                }
-                */
+                _loading = false;
+                StateHasChanged();
             }
         }
     }
