@@ -6,10 +6,12 @@ using System.Data;
 using Telerik.Blazor.Components;
 using Telerik.Documents.SpreadsheetStreaming;
 using Telerik.SvgIcons;
+using Telerik.Windows.Documents.Flow.Model;
 using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
 using Training.Website.Services;
+using Training.Website.Services.WordDocument;
 
 namespace Training.Website.Components.Pages
 {
@@ -115,12 +117,21 @@ namespace Training.Website.Components.Pages
                 return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
         }
 
-        private async Task ExportReviewStatusHistoryToExcel_Main()
+        private async Task ExportPerformanceReviewToWord_Main()
+        {
+            CreatePerformanceReviewInWordClass export = new CreatePerformanceReviewInWordClass(_selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo);
+            RadFlowDocument document = await export.Create();
+            string filename = $"{_selectedReviewYear.Value} Performance Review - {_selectedUser?.FirstName} {_selectedUser?.LastName}.docx";
+
+            await Globals.ExportToWordFile(document, filename, JS);
+        }
+
+        private async Task ExportPerformanceReviewStatusHistoryToExcel_Main()
         {
             string sheetName = $"Review Status History {_selectedReviewYear} {_selectedUser?.FullName}";
 
             PerformanceReviewExcelExport export =
-                new(_selectedReviewYear!.Value, sheetName, _selectedUser, _selectedReview, _allUsers_OPS_DB, _allUsers_CMS_DB, _service, Database_OPS);
+                new(sheetName, _selectedUser, _selectedReview, _allUsers_OPS_DB, _allUsers_CMS_DB, _service, Database_OPS);
 
             using (MemoryStream? stream = await export.Go())
             {

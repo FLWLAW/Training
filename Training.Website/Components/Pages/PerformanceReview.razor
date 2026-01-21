@@ -182,10 +182,12 @@
             <!-- "New Review Status" HEADERS DROP DOWN -->
             <table class="table_center">
                 <tr>
-                    <td style="width: 50%; text-align: right; padding-top: 9px; padding-right: 9px;">
+                    <td style="width: 100%; text-align: center; padding-top: 9px; padding-right: 9px;">
                         New Review Status:
                     </td>
-                    <td style="width: 50%; text-align: left; padding-top: 3px; padding-left: 9px;">
+                </tr>
+                <tr>
+                    <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
                         <TelerikDropDownList Class="UniformWidth_DropDown"
                                              Width="200px"
                                              Data="@ReviewStatuses()"
@@ -195,8 +197,19 @@
                                 <DropDownListPopupSettings Height="180px" />
                             </DropDownListSettings>
                         </TelerikDropDownList>
-                        <TelerikButton OnClick="@(async() => await ExportReviewStatusHistoryToExcel_Main() )" Enabled="true">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
+                        <TelerikButton OnClick="@(async() => await ExportPerformanceReviewStatusHistoryToExcel_Main() )" Enabled="true">
                             Export Status History to Excel
+                        </TelerikButton>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
+                        <TelerikButton OnClick="@(async() => await ExportPerformanceReviewToWord_Main() )" Enabled="true">
+                            Export Performance Review to Word
                         </TelerikButton>
                     </td>
                 </tr>

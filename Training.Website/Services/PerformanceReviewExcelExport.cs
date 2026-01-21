@@ -2,13 +2,12 @@
 using Telerik.Documents.SpreadsheetStreaming;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
-using Training.Website.Services;
 
-namespace Training.Website.Components.Pages
+namespace Training.Website.Services
 {
     public class PerformanceReviewExcelExport
     {
-        private readonly int _selectedReviewYear;
+        //private readonly int _selectedReviewYear;
         private readonly string _sheetName;
         private readonly UsersForDropDownModel? _selectedUser;
         private readonly ReviewModel? _selectedReview;
@@ -19,7 +18,7 @@ namespace Training.Website.Components.Pages
 
         public PerformanceReviewExcelExport
             (
-                int selectedReviewYear,
+                //int selectedReviewYear,
                 string sheetName,
                 UsersForDropDownModel? selectedUser,
                 ReviewModel? selectedReview,
@@ -29,7 +28,7 @@ namespace Training.Website.Components.Pages
                 IDatabase? database_OPS
             )
         {
-            _selectedReviewYear = selectedReviewYear;
+            //_selectedReviewYear = selectedReviewYear;
             _sheetName = sheetName;
             _selectedUser = selectedUser;
             _selectedReview = selectedReview;
