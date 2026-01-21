@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
+using Telerik.Blazor.Components;
+using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
 using Training.Website.Services;
@@ -21,6 +23,9 @@ namespace Training.Website.Components.Pages
 
         #region PRIVATE FIELDS
         private const int _firstReviewYear = 2025;
+
+        private bool _areQuestionsDirty = false;
+        private bool _reviewNotStatusNotChangedWindow_Visible = false;
         private int? _selectedReviewYear = null;
         private string[]? _reviewYears = null;
         private int? _cmsReviewerID = null;
@@ -31,7 +36,8 @@ namespace Training.Website.Components.Pages
         private IEnumerable<UsersForDropDownModel?>? _allUsersForDropDown = null;
         private UsersForDropDownModel? _selectedUser = null;
         private Dictionary<int, string>? _answerFormats = null;
-        private Dictionary<int, string>? _reviewStatuses = null;
+        //private Dictionary<int, string>? _reviewStatuses = null;
+        private string? _selectedNewReviewStatus = null;
         private ReviewModel? _selectedReview = null;
         private EmployeeInformationModel? _headerInfo = null;
         private PerformanceReviewQuestionModel?[]? _questions = null;
@@ -60,25 +66,18 @@ namespace Training.Website.Components.Pages
                         throw new NoNullAllowedException("_opsReviewerID cannot be null in OnInitializedAsync() method.");
                     else
                     {
-                        _reviewStatuses = await _service.GetPerformanceReviewStatuses(Database_OPS);
-                        if (_reviewStatuses == null)
-                            throw new NoNullAllowedException("_reviewStatuses cannot be null in OnInitializedSync()");
+                        _reviewYears = ReviewYears();
+                        if (_reviewYears == null || _reviewYears.Length == 0)
+                            throw new NoNullAllowedException("_reviewYears cannot be null in OnInitializedAsync()");
                         else
                         {
-                            _reviewYears = ReviewYears();
-                            if (_reviewYears == null || _reviewYears.Length == 0)
-                                throw new NoNullAllowedException("_reviewYears cannot be null in OnInitializedAsync()");
+                            if (int.TryParse(_reviewYears[0], out int selectedReviewYear) == false)
+                                throw new NoNullAllowedException("_reviewYears[0] must be an integer in OnItializedAsync()");
                             else
                             {
-                                if (int.TryParse(_reviewYears[0], out int selectedReviewYear) == false)
-                                    throw new NoNullAllowedException("_reviewYears[0] must be an integer in OnItializedAsync()");
-                                else
-                                {
-                                    _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
-                                    _allUsersForDropDown = await GetUsers_Main();
-                                    _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
-                                    _reviewStatuses = await _service.GetPerformanceReviewStatuses(Database_OPS);
-                                }
+                                _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
+                                _allUsersForDropDown = await GetUsers_Main();
+                                _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
                             }
                         }
                     }
@@ -87,6 +86,34 @@ namespace Training.Website.Components.Pages
         }
 
         // =====================================================================================================================================================================================================================================================================================================================================================================================================
+
+        private bool AllQuestionsAnswered() =>
+            _questions != null && _questions.All(q => q != null && !string.IsNullOrWhiteSpace(q.Answer));
+
+        private async Task GetCurrentReviewStatusByReviewID_Main()
+        {
+            if (_selectedReview != null && _selectedReview.ID != null && _selectedReview.Status_ID == null)
+            {
+                string? statusID_String = await _service.GetCurrentReviewStatusByReviewID(_selectedReview.ID!.Value, Database_OPS);
+
+                foreach (KeyValuePair<Globals.ReviewStatusType, string> status in Globals.ReviewStatuses)
+                {
+                    if (status.Value.Equals(statusID_String, StringComparison.InvariantCultureIgnoreCase) == true)
+                    {
+                        _selectedReview.Status_ID = (int)status.Key;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private bool CanEditAnswer()
+        {
+            if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true)
+                return true;
+            else
+                return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending;
+        }
 
         private async Task<IEnumerable<UsersForDropDownModel?>?> GetUsers_Main()
         {
@@ -105,6 +132,28 @@ namespace Training.Website.Components.Pages
                         : await _service.GetAllUsersExceptUserLoggedOn(_allUsers_CMS_DB, _allUsers_OPS_DB, cmsUserID);
         }
 
+        private async Task InsertAndGetReview()
+        {
+            // NOTE: DOES NOT GET REVIEW STATUS - THAT IS A SEPARATE QUERY.
+
+            if (_selectedReview == null)
+            {
+                int? reviewID = await _service.InsertReviewAndFirstStatusChange
+                    (
+                        _selectedReviewYear!.Value,
+                        _opsReviewerID!.Value, _selectedUser!.OPS_UserID!.Value,
+                        _cmsReviewerID!.Value, _selectedUser!.CMS_UserID!.Value,
+                        ApplicationState!.LoggedOnUser!.LoginID!, _selectedUser.OPS_LoginID!,
+                        Database_OPS
+                    );
+
+                if (reviewID == null)
+                    throw new NoNullAllowedException("[reviewID] cannot be null in InsertAndGetReview().");
+                else
+                    _selectedReview = await _service.GetReviewByReviewID(reviewID!.Value, Database_OPS);
+            }
+        }
+
         private void RadioChoiceHandler(object? newValue)
         {
             if (newValue != null && int.TryParse(newValue.ToString(), out int selectedRadioChoiceID) == true)
@@ -114,6 +163,7 @@ namespace Training.Website.Components.Pages
 
                 question!.Answer = radioChoice?.RadioChoice_Text;
                 question!.RadioChoice_ID = radioChoice?.RadioChoice_ID;
+                _areQuestionsDirty = true;
             }
         }
 
@@ -123,6 +173,32 @@ namespace Training.Website.Components.Pages
                 return _allRadioChoices?.Where(q => q?.ReviewQuestion_ID == questionID).OrderBy(q => q?.RadioChoice_Sequence);
             else
                 return null;
+        }
+
+        private void ReviewStatusChanged(string newValue)
+        {
+            _selectedNewReviewStatus = newValue;
+            StateHasChanged();
+        }
+
+        private void ReviewStatusNotChangedWindowClicked()
+        {
+            _reviewNotStatusNotChangedWindow_Visible = false;
+            StateHasChanged();
+        }
+
+        private string?[]? ReviewStatuses()
+        {
+            IOrderedEnumerable<Globals.ReviewStatusType> keys = Globals.ReviewStatuses.Keys.Order();
+            List<string?> reviewStatuses = [];
+
+            foreach(Globals.ReviewStatusType key in keys)
+            {
+                string? status = Globals.ReviewStatuses[key];
+                reviewStatuses.Add(status);
+            }
+
+            return [.. reviewStatuses];
         }
 
         private async Task ReviewYearChanged(string newValue)
@@ -152,23 +228,69 @@ namespace Training.Website.Components.Pages
             return [.. reviewYears];
         }
 
-        private async Task SubmitReviewClicked()
+        private async Task SaveAnswers()
+        {
+            foreach (PerformanceReviewQuestionModel? question in _questions!)
+                if (question != null && question.Question_ID != null && question.Answer != null)
+                    await _service.UpsertPerformanceReviewAnswer_Main
+                        (
+                            _selectedReview!.ID!.Value,
+                            question.Question_ID.Value, question.Answer,
+                            _cmsReviewerID!.Value!, _opsReviewerID!.Value!, ApplicationState!.LoggedOnUser!.LoginID,
+                            ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator,
+                            Database_OPS
+                        );
+
+            _areQuestionsDirty = false;
+        }
+
+        private async Task SaveAnswersClicked()
         {
             if (_questions != null)
             {
-                foreach (PerformanceReviewQuestionModel? question in _questions)
-                    if (question != null && question.Question_ID != null && question.Answer != null)
-                        await _service.InsertPerformanceReviewAnswer(_selectedReview!.ID!.Value, question.Question_ID.Value, question.Answer, Database_OPS);
-                //(question.Question_ID.Value, ApplicationState!.LoggedOnUser!.EmpID!.Value, _selectedUser!.OPS_UserID!.Value, question.Answer, ApplicationState!.LoggedOnUser!.AppUserID, _selectedUser.CMS_UserID, Database_OPS);
-
-                _selectedUser = null;
-
+                await SaveAnswers();
+                _areQuestionsDirty = false;
                 StateHasChanged();
             }
         }
 
+        private bool SaveAnswersEnabled()
+        {
+            if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true)
+                return true;
+            else if (_selectedReview?.Status_ID_Type == Globals.ReviewStatusType.InReview)
+                return false;
+            else
+                return true;
+        }
+
+        private async Task SubmitReviewClicked()
+        {
+            if (WasReviewStatusChanged() == true)
+            {
+                await _service.InsertReviewStatusChangeOnly
+                    (
+                        _selectedReview?.ID,
+                        _opsReviewerID, _cmsReviewerID, ApplicationState!.LoggedOnUser!.LoginID,
+                        Globals.ReviewStatuses[_selectedReview!.Status_ID_Type],
+                        _selectedNewReviewStatus!, Database_OPS
+                    );
+
+                _selectedNewReviewStatus = null;
+                _selectedReview = null;
+                _selectedUser = null;
+                _areQuestionsDirty = false;
+            }
+            else
+                _reviewNotStatusNotChangedWindow_Visible = true;
+
+            StateHasChanged();
+        }
+
         private bool SubmitReviewEnabled() =>
-            _questions != null && _questions.All(q => q != null && !string.IsNullOrWhiteSpace(q.Answer));
+            (AllQuestionsAnswered() == true && _selectedNewReviewStatus != null && _areQuestionsDirty == false) || WasReviewStatusChanged() == true;
+
+        private void TextBoxAreaChanged() => _areQuestionsDirty = true;
 
         private async Task UserForDropDownChanged(string newValue)
         {
@@ -192,29 +314,23 @@ namespace Training.Website.Components.Pages
                         else
                         {
                             _headerInfo = await _service.GetEmployeeInformation(_selectedUser.OPS_UserID.Value, _selectedReviewYear!.Value, Database_OPS);
+                            _selectedReview = await _service.GetReviewByReviewYearAndRevieweeID
+                                (_selectedReviewYear!.Value, _selectedUser.OPS_UserID, _selectedUser.CMS_UserID, _selectedUser.OPS_LoginID, Database_OPS);
+/*
                             _selectedReview = await _service.GetReviewByReviewerIdAndRevieweeId
                                                 (
                                                     _selectedReviewYear!.Value,
                                                     _opsReviewerID!.Value, _selectedUser!.OPS_UserID!.Value,
                                                     _cmsReviewerID!.Value, _selectedUser!.CMS_UserID!.Value,
+                                                    ApplicationState!.LoggedOnUser!.LoginID,
                                                     Database_OPS
                                                 );
-                            if (_selectedReview == null)
-                            {
-                                int? reviewID = await _service.InsertReview
-                                    (
-                                        _selectedReviewYear!.Value,
-                                        _opsReviewerID!.Value, _selectedUser!.OPS_UserID!.Value,
-                                        _cmsReviewerID!.Value, _selectedUser!.CMS_UserID!.Value,
-                                        Database_OPS
-                                    );
-
-                                if (reviewID == null)
-                                    throw new NoNullAllowedException("reviewID cannot be null in UserForManagerChanged() method after InsertReview().");
-                                else
-                                    _selectedReview = await _service.GetReviewByReviewID(reviewID!.Value, Database_OPS);
-                            }
+*/
+                            await InsertAndGetReview();
+                            await GetCurrentReviewStatusByReviewID_Main();
                             _answers = (await _service.GetAnswersByReviewID(_selectedReview!.ID!.Value, Database_OPS))?.ToArray();
+
+                            // ASSIGN ANSWER INFORMATION TO _questions ARRAY
                             if (_answers != null && _answers.Any() == true)
                             {
                                 foreach (AnswersByReviewIdModel? answer in _answers)
@@ -229,12 +345,12 @@ namespace Training.Website.Components.Pages
                                             throw new NoNullAllowedException("question.AnswerFormat cannot be NULL in UserForManagearChanged().");
                                         else
                                         {
-                                            question.Answer = answer.Answer;
+                                            question.Answer = answer.ManagerAnswer;
                                             if (_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
                                                 question.RadioChoice_ID = _allRadioChoices?.FirstOrDefault
                                                     (
                                                         q => q?.ReviewQuestion_ID == question.Question_ID &&
-                                                        q?.RadioChoice_Text == answer.Answer
+                                                        q?.RadioChoice_Text == answer.ManagerAnswer
                                                     )?.RadioChoice_ID;
                                         }
                                     }
@@ -255,5 +371,9 @@ namespace Training.Website.Components.Pages
                 StateHasChanged();
             }
         }
+
+        private bool WasReviewStatusChanged() =>
+            string.IsNullOrWhiteSpace(_selectedNewReviewStatus) == false &&
+            _selectedNewReviewStatus.Equals(Globals.ReviewStatuses[_selectedReview!.Status_ID_Type], StringComparison.InvariantCultureIgnoreCase) == false;
     }
 }

@@ -15,5 +15,7 @@
         
         public required int? CMS_UserID { get; set; }
         public required int? OPS_UserID { get; set; }
+        public required string? CMS_LoginID { get; set; }
+        public required string? OPS_LoginID { get; set; }
     }
 }

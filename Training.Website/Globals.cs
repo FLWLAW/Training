@@ -30,6 +30,22 @@ namespace Training.Website
         public const string Failed = "Failed";
         public const string Passed = "Passed";
 
+        public enum ReviewStatusType : int
+        {
+            ERROR = 0,
+            Pending = 1,
+            InReview,
+            Submitted,
+            SentToHR
+        }
+
+        public static readonly Dictionary<ReviewStatusType, string> ReviewStatuses = new()
+        {
+            { ReviewStatusType.Pending, "Pending" },
+            { ReviewStatusType.InReview, "In Review" },
+            { ReviewStatusType.Submitted, "Submitted" },
+            { ReviewStatusType.SentToHR, "Sent to HR" }
+        };
 
 #if DEBUG
         public const string BaseURL = "http://drosenblum-elitedesk:83";
