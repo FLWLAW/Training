@@ -29,6 +29,7 @@ namespace Training.Website
 
         public const string Failed = "Failed";
         public const string Passed = "Passed";
+        public const string CheckMark = "✔";
 
         public enum ReviewStatusType : int
         {

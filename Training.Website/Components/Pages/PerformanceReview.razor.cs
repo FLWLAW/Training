@@ -119,7 +119,9 @@ namespace Training.Website.Components.Pages
 
         private async Task ExportPerformanceReviewToWord_Main()
         {
-            CreatePerformanceReviewInWordClass export = new CreatePerformanceReviewInWordClass(_selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo);
+            CreatePerformanceReviewInWordClass export =
+                new (_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices);
+
             RadFlowDocument document = await export.Create();
             string filename = $"{_selectedReviewYear.Value} Performance Review - {_selectedUser?.FirstName} {_selectedUser?.LastName}.docx";
 
