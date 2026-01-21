@@ -139,13 +139,18 @@ namespace Training.Website.Services
                 Login_ID_Reviewee = loginID_Reviewee,
             };
 
-            return
+            ReviewModel? result = 
                 (
                     await database!.QueryByStoredProcedureAsync
                         <ReviewModel, PerformanceReviewByReviewYearAndID_Parameters>
                             ("usp_Performance_Review_GetReviewByReviewYearAndRevieweeID", parameters)
                 )?.FirstOrDefault();
+
+            return result;
         }
+
+        public async Task<IEnumerable<StatusHistoryModel?>?> GetReviewStatusHistoryByReviewID(int reviewID, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<StatusHistoryModel?, object?>("usp_Performance_Review_GetReviewStatusHistoryByReviewID", new { Review_ID = reviewID });
 
         public async Task<IEnumerable<UsersForDropDownModel?>?> GetUsersForManager_CMS_DB
             (AllUsers_CMS_DB?[]? allUsers_CMS_DB, AllUsers_OPS_DB?[]? allUsers_OPS_DB, int? cmsDB_ManagerID, IDatabase? database)

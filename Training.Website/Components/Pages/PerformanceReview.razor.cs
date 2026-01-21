@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
 using Telerik.Blazor.Components;
+using Telerik.Documents.SpreadsheetStreaming;
+using Telerik.SvgIcons;
 using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
@@ -20,6 +23,9 @@ namespace Training.Website.Components.Pages
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
         private IDatabase? Database_OPS { get; set; }
+
+        [Inject]
+        private IJSRuntime? JS { get; set; }
         #endregion
 
         #region PRIVATE FIELDS
@@ -99,6 +105,34 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
+        private bool CanEditAnswer()
+        {
+            if (_selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.SentToHR)
+                return false;
+            else if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true)
+                return true;
+            else
+                return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
+        }
+
+        private async Task ExportReviewStatusHistoryToExcel_Main()
+        {
+            string sheetName = $"Review Status History {_selectedReviewYear} {_selectedUser?.FullName}";
+
+            PerformanceReviewExcelExport export =
+                new(_selectedReviewYear!.Value, sheetName, _selectedUser, _selectedReview, _allUsers_OPS_DB, _allUsers_CMS_DB, _service, Database_OPS);
+
+            using (MemoryStream? stream = await export.Go())
+            {
+                if (stream != null)
+                {
+                    stream.Position = 0;    // VERY IMPORTANT!!!!!
+                    using var streamRef = new DotNetStreamReference(stream: stream);
+                    await JS!.InvokeVoidAsync("downloadFileFromStream", $"{sheetName}.xlsx", streamRef);
+                }
+            }
+        }
+
         private async Task GetCurrentReviewStatusByReviewID_Main()
         {
             if (_selectedReview != null && _selectedReview.ID != null && _selectedReview.Status_ID == null)
@@ -114,16 +148,6 @@ namespace Training.Website.Components.Pages
                     }
                 }
             }
-        }
-
-        private bool CanEditAnswer()
-        {
-            if (_selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.SentToHR)
-                return false;
-            else if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true)
-                return true;
-            else
-                return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
         }
 
         private async Task<IEnumerable<UsersForDropDownModel?>?> GetUsers_Main()
@@ -342,22 +366,12 @@ namespace Training.Website.Components.Pages
                             _headerInfo = await _service.GetEmployeeInformation(_selectedUser.OPS_UserID.Value, _selectedReviewYear!.Value, Database_OPS);
                             _selectedReview = await _service.GetReviewByReviewYearAndRevieweeID
                                 (_selectedReviewYear!.Value, _selectedUser.OPS_UserID, _selectedUser.CMS_UserID, _selectedUser.OPS_LoginID, Database_OPS);
-/*
-                            _selectedReview = await _service.GetReviewByReviewerIdAndRevieweeId
-                                                (
-                                                    _selectedReviewYear!.Value,
-                                                    _opsReviewerID!.Value, _selectedUser!.OPS_UserID!.Value,
-                                                    _cmsReviewerID!.Value, _selectedUser!.CMS_UserID!.Value,
-                                                    ApplicationState!.LoggedOnUser!.LoginID,
-                                                    Database_OPS
-                                                );
-*/
                             await InsertAndGetReview();
                             await GetCurrentReviewStatusByReviewID_Main();
                             _answers = (await _service.GetAnswersByReviewID(_selectedReview!.ID!.Value, Database_OPS))?.ToArray();
 
                             // ASSIGN ANSWER INFORMATION TO _questions ARRAY
-                            if (_answers != null && _answers.Any() == true)
+                            if (_answers != null && _answers.Length > 0)
                             {
                                 foreach (AnswersByReviewIdModel? answer in _answers)
                                 {

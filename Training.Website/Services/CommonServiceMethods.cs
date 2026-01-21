@@ -42,7 +42,7 @@ namespace Training.Website.Services
         }
 
         public async Task<IEnumerable<AllUsers_OPS_DB?>?> GetAllUsers_OPS_DB(IDatabase? database) =>
-            await database!.QueryByStatementAsync<AllUsers_OPS_DB?>("SELECT Emp_ID, UserName, Email FROM [Employees Tbl]");
+            await database!.QueryByStatementAsync<AllUsers_OPS_DB?>("SELECT Emp_ID, UserName, Email, FirstName, LastName FROM [Employees Tbl]");
 
         //NOTE: LEAVE AS SYNCHRONOUS
         public IEnumerable<AnswerChoicesModel>? GetAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
