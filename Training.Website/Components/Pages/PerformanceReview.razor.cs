@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
 using Telerik.Blazor.Components;
@@ -26,6 +27,8 @@ namespace Training.Website.Components.Pages
 
         private bool _areQuestionsDirty = false;
         private bool _reviewNotStatusNotChangedWindow_Visible = false;
+        private bool _reviewSubmittedWindow_Visible = false;
+        private bool _answersSavedWindow_Visible = false;
         private int? _selectedReviewYear = null;
         private string[]? _reviewYears = null;
         private int? _cmsReviewerID = null;
@@ -90,6 +93,12 @@ namespace Training.Website.Components.Pages
         private bool AllQuestionsAnswered() =>
             _questions != null && _questions.All(q => q != null && !string.IsNullOrWhiteSpace(q.Answer));
 
+        private void AnswersSavedWindowClicked()
+        {
+            _answersSavedWindow_Visible = false;
+            StateHasChanged();
+        }
+
         private async Task GetCurrentReviewStatusByReviewID_Main()
         {
             if (_selectedReview != null && _selectedReview.ID != null && _selectedReview.Status_ID == null)
@@ -109,10 +118,12 @@ namespace Training.Website.Components.Pages
 
         private bool CanEditAnswer()
         {
-            if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true)
+            if (_selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.SentToHR)
+                return false;
+            else if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true)
                 return true;
             else
-                return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending;
+                return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
         }
 
         private async Task<IEnumerable<UsersForDropDownModel?>?> GetUsers_Main()
@@ -181,24 +192,37 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
+        private bool ReviewStatusEnabled() =>
+            _areQuestionsDirty == false && AllQuestionsAnswered() == true && _selectedReview != null && _selectedReview.Status_ID_Type != Globals.ReviewStatusType.SentToHR;
+
+        private string?[]? ReviewStatuses()
+        {
+            bool isAdministrator = ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator;
+            IOrderedEnumerable<Globals.ReviewStatusType> keys = Globals.ReviewStatuses.Keys.Order();
+            List<string?> reviewStatuses = [];
+
+            foreach(Globals.ReviewStatusType key in keys)
+            {
+                if (isAdministrator == true || (int?)key > _selectedReview?.Status_ID)  // DON'T ALLOW MANAGERS TO BACKTRACK THE REVIEW STATUS, BUT ADMINISTRATORS CAN DO IT.
+                {
+                    string? status = Globals.ReviewStatuses[key];
+                    reviewStatuses.Add(status);
+                }
+            }
+
+            return [.. reviewStatuses];
+        }
+
         private void ReviewStatusNotChangedWindowClicked()
         {
             _reviewNotStatusNotChangedWindow_Visible = false;
             StateHasChanged();
         }
 
-        private string?[]? ReviewStatuses()
+        private void ReviewSubmittedWindowClicked()
         {
-            IOrderedEnumerable<Globals.ReviewStatusType> keys = Globals.ReviewStatuses.Keys.Order();
-            List<string?> reviewStatuses = [];
-
-            foreach(Globals.ReviewStatusType key in keys)
-            {
-                string? status = Globals.ReviewStatuses[key];
-                reviewStatuses.Add(status);
-            }
-
-            return [.. reviewStatuses];
+            _reviewSubmittedWindow_Visible = false;
+            StateHasChanged();
         }
 
         private async Task ReviewYearChanged(string newValue)
@@ -231,7 +255,7 @@ namespace Training.Website.Components.Pages
         private async Task SaveAnswers()
         {
             foreach (PerformanceReviewQuestionModel? question in _questions!)
-                if (question != null && question.Question_ID != null && question.Answer != null)
+                if (question != null && question.Question_ID != null && string.IsNullOrWhiteSpace(question.Answer) == false)
                     await _service.UpsertPerformanceReviewAnswer_Main
                         (
                             _selectedReview!.ID!.Value,
@@ -250,18 +274,19 @@ namespace Training.Website.Components.Pages
             {
                 await SaveAnswers();
                 _areQuestionsDirty = false;
+                _answersSavedWindow_Visible = true;
                 StateHasChanged();
             }
         }
 
         private bool SaveAnswersEnabled()
         {
+            if (_selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.SentToHR)
+                return false;
             if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true)
                 return true;
-            else if (_selectedReview?.Status_ID_Type == Globals.ReviewStatusType.InReview)
-                return false;
             else
-                return true;
+                return _selectedReview?.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
         }
 
         private async Task SubmitReviewClicked()
@@ -280,6 +305,7 @@ namespace Training.Website.Components.Pages
                 _selectedReview = null;
                 _selectedUser = null;
                 _areQuestionsDirty = false;
+                _reviewSubmittedWindow_Visible = true;
             }
             else
                 _reviewNotStatusNotChangedWindow_Visible = true;
@@ -288,7 +314,7 @@ namespace Training.Website.Components.Pages
         }
 
         private bool SubmitReviewEnabled() =>
-            (AllQuestionsAnswered() == true && _selectedNewReviewStatus != null && _areQuestionsDirty == false) || WasReviewStatusChanged() == true;
+            _areQuestionsDirty == false && ((AllQuestionsAnswered() == true && string.IsNullOrWhiteSpace(_selectedNewReviewStatus) == false) || WasReviewStatusChanged() == true);
 
         private void TextBoxAreaChanged() => _areQuestionsDirty = true;
 
@@ -345,12 +371,13 @@ namespace Training.Website.Components.Pages
                                             throw new NoNullAllowedException("question.AnswerFormat cannot be NULL in UserForManagearChanged().");
                                         else
                                         {
-                                            question.Answer = answer.ManagerAnswer;
+                                            string? answerToUse = (string.IsNullOrWhiteSpace(answer.AdministratorAnswer) == false) ? answer.AdministratorAnswer : answer.ManagerAnswer;
+                                            question.Answer = answerToUse;
                                             if (_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
                                                 question.RadioChoice_ID = _allRadioChoices?.FirstOrDefault
                                                     (
                                                         q => q?.ReviewQuestion_ID == question.Question_ID &&
-                                                        q?.RadioChoice_Text == answer.ManagerAnswer
+                                                        q?.RadioChoice_Text == answerToUse
                                                     )?.RadioChoice_ID;
                                         }
                                     }

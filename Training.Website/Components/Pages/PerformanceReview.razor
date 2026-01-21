@@ -22,6 +22,49 @@
     </WindowContent>
 </TelerikWindow>
 
+<TelerikWindow Modal="true"
+               Visible="@_reviewSubmittedWindow_Visible"
+               CloseOnOverlayClick="false"
+               Width="800px"
+               Height="200px">
+    <WindowContent>
+        <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
+            <tr>
+                <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
+                    REVIEW SUBMITTED
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">
+                    <TelerikButton Class="Close" OnClick="@(() => ReviewSubmittedWindowClicked())">Close</TelerikButton>
+                </td>
+            </tr>
+        </table>
+    </WindowContent>
+</TelerikWindow>
+
+
+<TelerikWindow Modal="true"
+               Visible="@_answersSavedWindow_Visible"
+               CloseOnOverlayClick="false"
+               Width="800px"
+               Height="200px">
+    <WindowContent>
+        <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
+            <tr>
+                <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
+                    ANSWER(S) SAVED
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">
+                    <TelerikButton Class="Close" OnClick="@(() => AnswersSavedWindowClicked())">Close</TelerikButton>
+                </td>
+            </tr>
+        </table>
+    </WindowContent>
+</TelerikWindow>
+
 
 <!-- SELECT REVIEW YEAR -->
 <table style="width: 100%; padding-top: 45px;">
@@ -58,10 +101,10 @@
     <table style="width: 100%;">
         <tr>
             <td style="width: 100%; text-align: center; color: blue; font-size: larger; font-weight: 700;">
-                CLICK "Save Changes" ON BOTTOM TO SAVE CHANGES.<br />
+                CLICK "Save Changes" ON BOTTOM TO SAVE CHANGES TO QUESTIONS.<br />
                 CLICK "Submit Review" ON BOTTOM TO SUBMIT A REVIEW.<br />
-                MANAGERS MUST ANSWER ALL QUESTIONS TO CHANGE A REVIEW STATUS.<br />
-                FOR MANAGERS TO SUBMIT A REVIEW, ALL QUESTIONS MUST BE ANSWERED AND SAVED, AND REVIEW STATUS MUST BE CHANGED.
+                MANAGERS MUST ANSWER AND SAVE ALL QUESTIONS TO CHANGE A REVIEW STATUS.<br />
+                FOR MANAGERS TO SUBMIT A REVIEW, ALL QUESTIONS MUST BE ANSWERED AND SAVED, AND THE REVIEW STATUS MUST BE UPDATED.
             </td>
         </tr>
     </table>
@@ -146,7 +189,7 @@
                         <TelerikDropDownList Class="UniformWidth_DropDown"
                                              Width="200px"
                                              Data="@ReviewStatuses()"
-                                             Enabled="@AllQuestionsAnswered()"
+                                             Enabled="@ReviewStatusEnabled()"
                                              ValueChanged="@((string newValue) => ReviewStatusChanged(newValue) )">
                             <DropDownListSettings>
                                 <DropDownListPopupSettings Height="180px" />
