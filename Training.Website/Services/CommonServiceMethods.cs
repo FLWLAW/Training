@@ -107,11 +107,6 @@ namespace Training.Website.Services
                 throw new ArgumentNullException("'loginID' cannot be null in IsPerformanceReviewAdministrator().");
             else
             {
-                //TODO: FIX THIS
-#if ! DEBUG
-                await Task.Delay(1);
-                return false;
-#else
                 PerformanceReviewAdministratorModel? administrator =
                     (
                         await database_OPS!.QueryByStoredProcedureAsync
@@ -120,7 +115,6 @@ namespace Training.Website.Services
                     )?.FirstOrDefault();
 
                 return (administrator != null);
-#endif
             }
         }
     }
