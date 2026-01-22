@@ -37,6 +37,8 @@ namespace Training.Website.Components.Pages
         private bool _reviewNotStatusNotChangedWindow_Visible = false;
         private bool _reviewSubmittedWindow_Visible = false;
         private bool _answersSavedWindow_Visible = false;
+        private bool _showChangeStatusReminder = false;
+        private bool _showMustClickSubmitReviewReminder = false;
         private int? _selectedReviewYear = null;
         private string[]? _reviewYears = null;
         private int? _cmsReviewerID = null;
@@ -226,11 +228,17 @@ namespace Training.Website.Components.Pages
         private void ReviewStatusChanged(string newValue)
         {
             _selectedNewReviewStatus = newValue;
+            _showMustClickSubmitReviewReminder = (_selectedNewReviewStatus != Globals.ReviewStatuses[Globals.ReviewStatusType.Pending]);
             StateHasChanged();
         }
 
-        private bool ReviewStatusEnabled() =>
-            _areQuestionsDirty == false && AllQuestionsAnswered() == true && _selectedReview != null && _selectedReview.Status_ID_Type != Globals.ReviewStatusType.SentToHR;
+        private bool ReviewStatusEnabled()
+        {
+            if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == false && _selectedReview!.Status_ID_Type == Globals.ReviewStatusType.InReview)
+                return false;
+            else
+                return  _areQuestionsDirty == false && AllQuestionsAnswered() == true && _selectedReview != null && _selectedReview.Status_ID_Type != Globals.ReviewStatusType.SentToHR;
+        }
 
         private string?[]? ReviewStatuses()
         {
@@ -238,12 +246,20 @@ namespace Training.Website.Components.Pages
             IOrderedEnumerable<Globals.ReviewStatusType> keys = Globals.ReviewStatuses.Keys.Order();
             List<string?> reviewStatuses = [];
 
-            foreach(Globals.ReviewStatusType key in keys)
+            if (isAdministrator == false && _selectedReview?.Status_ID_Type == Globals.ReviewStatusType.Pending)
             {
-                if (isAdministrator == true || (int?)key > _selectedReview?.Status_ID)  // DON'T ALLOW MANAGERS TO BACKTRACK THE REVIEW STATUS, BUT ADMINISTRATORS CAN DO IT.
+                reviewStatuses.Add(Globals.ReviewStatuses[Globals.ReviewStatusType.Pending]);
+                reviewStatuses.Add(Globals.ReviewStatuses[Globals.ReviewStatusType.InReview]);
+            }
+            else
+            {
+                foreach (Globals.ReviewStatusType key in keys)
                 {
-                    string? status = Globals.ReviewStatuses[key];
-                    reviewStatuses.Add(status);
+                    if (isAdministrator == true || (int?)key > _selectedReview?.Status_ID)  // DON'T ALLOW MANAGERS TO BACKTRACK THE REVIEW STATUS, BUT ADMINISTRATORS CAN DO IT.
+                    {
+                        string? status = Globals.ReviewStatuses[key];
+                        reviewStatuses.Add(status);
+                    }
                 }
             }
 
@@ -310,6 +326,7 @@ namespace Training.Website.Components.Pages
             if (_questions != null)
             {
                 await SaveAnswers();
+                _showChangeStatusReminder = AllQuestionsAnswered();
                 _areQuestionsDirty = false;
                 _answersSavedWindow_Visible = true;
                 StateHasChanged();
@@ -338,6 +355,8 @@ namespace Training.Website.Components.Pages
                         _selectedNewReviewStatus!, Database_OPS
                     );
 
+                _showChangeStatusReminder = false;
+                _showMustClickSubmitReviewReminder = false;
                 _selectedNewReviewStatus = null;
                 _selectedReview = null;
                 _selectedUser = null;
@@ -351,7 +370,9 @@ namespace Training.Website.Components.Pages
         }
 
         private bool SubmitReviewEnabled() =>
-            _areQuestionsDirty == false && ((AllQuestionsAnswered() == true && string.IsNullOrWhiteSpace(_selectedNewReviewStatus) == false) || WasReviewStatusChanged() == true);
+            _areQuestionsDirty == false &&
+            _selectedNewReviewStatus != Globals.ReviewStatuses[Globals.ReviewStatusType.Pending] &&
+            ((AllQuestionsAnswered() == true && string.IsNullOrWhiteSpace(_selectedNewReviewStatus) == false) || WasReviewStatusChanged() == true);
 
         private void TextBoxAreaChanged() => _areQuestionsDirty = true;
 

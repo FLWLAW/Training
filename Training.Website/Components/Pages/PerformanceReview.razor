@@ -199,6 +199,14 @@
                         </TelerikDropDownList>
                     </td>
                 </tr>
+                @if (_showMustClickSubmitReviewReminder == true)
+                {
+                    <tr>
+                        <td style="width: 100%; text-align: center; padding-top: 3px; color: red; font-weight: 700">
+                            CLICK 'Submit Review' ON BOTTOM OF PAGE
+                        </td>
+                    </tr>
+                }
                 <tr>
                     <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
                         <TelerikButton OnClick="@(async() => await ExportPerformanceReviewStatusHistoryToExcel_Main() )" Enabled="true">
@@ -253,7 +261,7 @@
                                         <TelerikTextArea
                                             @bind-Value="@question.Answer"
                                             OnChange="@TextBoxAreaChanged"
-                                            MaxLength="4000"
+                                            MaxLength="8000"
                                             Enabled="@CanEditAnswer()"
                                             Rows="20" />
                                     }
@@ -269,6 +277,14 @@
                         </TelerikButton>
                     </td>
                 </tr>
+                @if (_showChangeStatusReminder == true)
+                {
+                    <tr>
+                        <td style="width: 100%; text-align: center; padding-top: 3px; color: red; font-weight: 700">
+                            UPDATE "Review Status" AT TOP OF PAGE, THEN CLICK "Submit Review" BELOW.
+                        </td>
+                    </tr>
+                }
                 <tr>
                     <td colspan="2" style="align-content: center; align-items: center; text-align: center;">
                         <TelerikButton OnClick="@SubmitReviewClicked" Enabled="@SubmitReviewEnabled()">
