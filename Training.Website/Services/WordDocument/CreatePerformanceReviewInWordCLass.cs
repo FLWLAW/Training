@@ -2,6 +2,7 @@
 using System.Text;
 using Telerik.Documents.Common.Model;
 using Telerik.Documents.Media;
+//using Telerik.Windows.Documents.Fixed.Model.Editing;
 using Telerik.Windows.Documents.Flow.Model;
 using Telerik.Windows.Documents.Flow.Model.Styles;
 using Training.Website.Models.Reviews;
@@ -13,45 +14,30 @@ namespace Training.Website.Services.WordDocument
     {
         private readonly Dictionary<int, string>? _answerFormats;
         private readonly int _selectedReviewYear;
-        //private readonly string _sheetName;
         private readonly UsersForDropDownModel? _selectedUser;
         private readonly ReviewModel? _selectedReview;
         private readonly EmployeeInformationModel? _headerInfo;
         private readonly PerformanceReviewQuestionModel?[]? _questions;
         private readonly RadioChoiceModel?[]? _allRadioChoices;
-        //private readonly AllUsers_OPS_DB?[]? _allUsers_OPS_DB;
-        //private readonly AllUsers_CMS_DB?[]? _allUsers_CMS_DB;
-        //private readonly PerformanceReviewServiceMethods _service;
-        //private readonly IDatabase? _database_OPS;
 
         public CreatePerformanceReviewInWordClass
             (
                 Dictionary<int, string>? answerFormats,
                 int selectedReviewYear,
-                //string sheetName,
                 UsersForDropDownModel? selectedUser,
                 ReviewModel? selectedReview,
                 EmployeeInformationModel? headerInfo,
                 PerformanceReviewQuestionModel?[]? questions,
                 RadioChoiceModel?[]? radioChoices
-                //AllUsers_OPS_DB?[]? allUsers_OPS_DB,
-                //AllUsers_CMS_DB?[]? allUsers_CMS_DB,
-                //PerformanceReviewServiceMethods service,
-                //IDatabase? database_OPS
             )
         {
             _answerFormats = answerFormats;
             _selectedReviewYear = selectedReviewYear;
-            //_sheetName = sheetName;
             _selectedUser = selectedUser;
             _selectedReview = selectedReview;
             _headerInfo = headerInfo;
             _questions = questions;
             _allRadioChoices = radioChoices;
-            //_allUsers_CMS_DB = allUsers_CMS_DB;
-            //_allUsers_OPS_DB = allUsers_OPS_DB;
-            //_service = service;
-            //_database_OPS = database_OPS;
         }
 
         public async Task<RadFlowDocument> Create()
@@ -138,14 +124,21 @@ namespace Training.Website.Services.WordDocument
                                 }
                             }
                         }
-                        else
+                        else if (question.Answer != null)
                         {
-                            Paragraph textArea = section.Blocks.AddParagraph();
+                            string?[]? lines = question.Answer.Split('\n');
 
-                            textArea.Borders = new ParagraphBorders(new Border(BorderStyle.Single));
-                            textArea.Indentation.LeftIndent = 32;
-                            textArea.Indentation.RightIndent = 32;
-                            textArea.Inlines.AddRun(question?.Answer);
+                            foreach (string? line in lines)
+                            {
+                                Paragraph textArea = section.Blocks.AddParagraph();
+
+                                //textArea.Borders = new ParagraphBorders(new Border(BorderStyle.Single));
+                                textArea.Spacing.SpacingBefore = 6;
+                                //textArea.Spacing.SpacingAfter = 12;
+                                textArea.Indentation.LeftIndent = 64;
+                                textArea.Indentation.RightIndent = 64;
+                                textArea.Inlines.AddRun(line);
+                            }
                         }
                     }
                 }
@@ -165,6 +158,7 @@ namespace Training.Website.Services.WordDocument
         private void AddTitle(Section section)
         {
             Paragraph title = section.Blocks.AddParagraph();
+
             title.Shading.BackgroundColor = new ThemableColor(Colors.LightGray);
             title.TextAlignment = Alignment.Center;
             title.Inlines.AddRun($"{_selectedReviewYear} Performance Review").FontSize = 24;
