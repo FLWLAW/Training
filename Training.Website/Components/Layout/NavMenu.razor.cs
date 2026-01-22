@@ -35,14 +35,10 @@ namespace Training.Website.Components.Layout
             ? _administrators!.Contains(ApplicationState!.LoggedOnUser!.LoginID?.ToLower())
             : false;
 
-        //TODO: REMOVE CONDITIONAL COMPILE AFTER DATABASE OBJECTS DEPLOYED TO PRODUCTION
-#if DEBUG
         private bool IsManager() => ApplicationState != null && ApplicationState.LoggedOnUser != null &&_managerIDs != null
             ? _managerIDs!.Contains(ApplicationState!.LoggedOnUser!.AppUserID)
             : false;
-#else
-        private bool IsManager() => false;
-#endif
+
         private bool IsTester() =>
             ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.LoginID != null && _testers != null
                 ? _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower())

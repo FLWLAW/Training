@@ -1,7 +1,9 @@
 ﻿namespace Training.Website.Models.Reviews
 {
-    public class EmployeeInformationModel : ReviewStatusModel
+    public class EmployeeInformationModel
     {
+        public int? Review_ID { get; set; }
+        //public string? Status { get; set; }
         public int? Emp_ID { get; set; }
         public string? FullName { get; set; }
         public string? BadgeNum { get; set; }

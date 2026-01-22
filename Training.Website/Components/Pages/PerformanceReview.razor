@@ -1,6 +1,72 @@
 ﻿@page "/PerformanceReview"
 @using Models.Reviews
 
+<TelerikWindow Modal="true"
+               Visible="@_reviewNotStatusNotChangedWindow_Visible"
+               CloseOnOverlayClick="false"
+               Width="800px"
+               Height="200px">
+    <WindowContent>
+        <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
+            <tr>
+                <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
+                    REVIEW STATUS NOT CHANGED
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">
+                    <TelerikButton Class="Close" OnClick="@(() => ReviewStatusNotChangedWindowClicked())">Close</TelerikButton>
+                </td>
+            </tr>
+        </table>
+    </WindowContent>
+</TelerikWindow>
+
+<TelerikWindow Modal="true"
+               Visible="@_reviewSubmittedWindow_Visible"
+               CloseOnOverlayClick="false"
+               Width="800px"
+               Height="200px">
+    <WindowContent>
+        <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
+            <tr>
+                <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
+                    REVIEW SUBMITTED
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">
+                    <TelerikButton Class="Close" OnClick="@(() => ReviewSubmittedWindowClicked())">Close</TelerikButton>
+                </td>
+            </tr>
+        </table>
+    </WindowContent>
+</TelerikWindow>
+
+
+<TelerikWindow Modal="true"
+               Visible="@_answersSavedWindow_Visible"
+               CloseOnOverlayClick="false"
+               Width="800px"
+               Height="200px">
+    <WindowContent>
+        <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
+            <tr>
+                <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
+                    ANSWER(S) SAVED
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">
+                    <TelerikButton Class="Close" OnClick="@(() => AnswersSavedWindowClicked())">Close</TelerikButton>
+                </td>
+            </tr>
+        </table>
+    </WindowContent>
+</TelerikWindow>
+
+
+<!-- SELECT REVIEW YEAR -->
 <table style="width: 100%; padding-top: 45px;">
     <tr>
         <td style="width: 50%; text-align: right; padding-right: 6px; font-weight: 700;">
@@ -22,7 +88,8 @@
 
 @if (_selectedReviewYear != null)
 {
-    <table style="width: 100%">
+    <!-- [year] PERFORMANCE REVIEW HEADER -->
+    <table style="width: 100%;">
         <tr>
             <td style="width: 100%; text-align: center; font-weight: 700; background-color: lightgray;">
                 <h2>@_selectedReviewYear Performance Review</h2>
@@ -30,9 +97,25 @@
         </tr>
     </table>
 
+    <!-- SAVING CHANGES HEADER -->
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 100%; text-align: center; color: blue; font-size: larger; font-weight: 700;">
+                CLICK "Save Changes" ON BOTTOM TO SAVE CHANGES TO QUESTIONS.<br />
+                CLICK "Submit Review" ON BOTTOM TO SUBMIT A REVIEW.<br />
+                MANAGERS MUST ANSWER AND SAVE ALL QUESTIONS TO CHANGE A REVIEW STATUS.<br />
+                FOR MANAGERS TO SUBMIT A REVIEW, ALL QUESTIONS MUST BE ANSWERED AND SAVED, AND THE REVIEW STATUS MUST BE UPDATED.
+            </td>
+        </tr>
+    </table>
+
+    <!-- [user] HEADER AND DROP DOWN LIST -->
     <table style="width: 100%; padding-top: 45px;">
         <tr>
-            <td style="width: 100%; text-align: center;">
+            <td style="width: 50%; text-align: right; padding-right: 9px;">
+                Employee:
+            </td>
+            <td style="width: 50%; text-align: left; padding-left: 9px;">
                 <TelerikDropDownList Class="UniformWidth_DropDown"
                                      Width="200px"
                                      Data="@_allUsersForDropDown?.Select(q => q?.FullName)"
@@ -48,20 +131,9 @@
 
     @if (_allUsersForDropDown != null && _selectedUser != null)
     {
-        <!--
-        <table style="width: 100%">
-            <tr>
-                <td style="width: 95%;">
-                    <h2>@_selectedUserForManager?.FullName</h2>
-                </td>
-                <td style="width: 5%; text-align: right; font-weight: 200; font-size: x-small; color: gray;">
-                    ID #@_headerInfo?.Review_ID
-                </td>
-            </tr>
-        </table>
-        -->
         @if (_loading == true)
         {
+            <!-- "Loading..." HEADER -->
             <table style="width: 100%; padding-top: 30px;">
                 <tr>
                     <td style="width: 100%; text-align: center; font-style: italic; font-weight: 700; font-size: x-large; background-color: lightyellow;">
@@ -71,6 +143,7 @@
             </table>
         }
 
+        <!-- EMPLOYEE INFORMATION HEADER -->
         <table class="table_center">
             <tr>
                 <td class="column134">&nbsp;&nbsp;&nbsp;</td>
@@ -100,9 +173,56 @@
                 <td class="column134 borders">Department(s):</td>
                 <td class="column2 borders">@_headerInfo?.Departments</td>
                 <td class="column134 borders">Review Status:</td>
-                <td class="column134 borders">@_headerInfo?.Status</td>
+                <td class="column134 borders" style="font-weight: 700;">@Globals.ReviewStatuses[_selectedReview!.Status_ID_Type]</td>
             </tr>
         </table>
+
+        @if (_selectedReview != null && _selectedReview.Status_ID != null)
+        {
+            <!-- "New Review Status" HEADERS DROP DOWN -->
+            <table class="table_center">
+                <tr>
+                    <td style="width: 100%; text-align: center; padding-top: 9px; padding-right: 9px;">
+                        New Review Status:
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
+                        <TelerikDropDownList Class="UniformWidth_DropDown"
+                                             Width="200px"
+                                             Data="@ReviewStatuses()"
+                                             Enabled="@ReviewStatusEnabled()"
+                                             ValueChanged="@((string newValue) => ReviewStatusChanged(newValue) )">
+                            <DropDownListSettings>
+                                <DropDownListPopupSettings Height="180px" />
+                            </DropDownListSettings>
+                        </TelerikDropDownList>
+                    </td>
+                </tr>
+                @if (_showMustClickSubmitReviewReminder == true)
+                {
+                    <tr>
+                        <td style="width: 100%; text-align: center; padding-top: 3px; color: red; font-weight: 700">
+                            CLICK 'Submit Review' ON BOTTOM OF PAGE
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
+                        <TelerikButton OnClick="@(async() => await ExportPerformanceReviewStatusHistoryToExcel_Main() )" Enabled="true">
+                            Export Status History to Excel
+                        </TelerikButton>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
+                        <TelerikButton OnClick="@(async() => await ExportPerformanceReviewToWord_Main() )" Enabled="true">
+                            Export Performance Review to Word
+                        </TelerikButton>
+                    </td>
+                </tr>
+            </table>
+        }
 
         @if (_questions != null && _answerFormats != null)
         {
@@ -129,6 +249,7 @@
                                         <TelerikRadioGroup
                                             Data="@RadioChoicesForQuestion(question.Question_ID)"
                                             @bind-Value="question.RadioChoice_ID"
+                                            Enabled="@CanEditAnswer()"
                                             Layout="RadioGroupLayout.Vertical"
                                             OnChange="@RadioChoiceHandler"
                                             ValueField="@nameof(RadioChoiceModel.RadioChoice_ID)"
@@ -139,7 +260,9 @@
                                     {
                                         <TelerikTextArea
                                             @bind-Value="@question.Answer"
-                                            MaxLength="4000"
+                                            OnChange="@TextBoxAreaChanged"
+                                            MaxLength="8000"
+                                            Enabled="@CanEditAnswer()"
                                             Rows="20" />
                                     }
                                 }
@@ -149,8 +272,23 @@
                 }
                 <tr>
                     <td colspan="2" style="align-content: center; align-items: center; text-align: center;">
+                        <TelerikButton OnClick="@SaveAnswersClicked" Enabled="@SaveAnswersEnabled()">
+                            <span style="font-size: xx-large; font-weight: 700; width: 400px;">Save Answers</span>
+                        </TelerikButton>
+                    </td>
+                </tr>
+                @if (_showChangeStatusReminder == true)
+                {
+                    <tr>
+                        <td style="width: 100%; text-align: center; padding-top: 3px; color: red; font-weight: 700">
+                            UPDATE "Review Status" AT TOP OF PAGE, THEN CLICK "Submit Review" BELOW.
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td colspan="2" style="align-content: center; align-items: center; text-align: center;">
                         <TelerikButton OnClick="@SubmitReviewClicked" Enabled="@SubmitReviewEnabled()">
-                            <span style="font-size: xx-large; font-weight: 700; width: 400px;">Submit Review</span>
+                            <span style="font-size: xx-large; font-weight: 900; width: 400px;">Submit Review</span>
                         </TelerikButton>
                     </td>
                 </tr>
@@ -181,3 +319,18 @@
     background-color: white;
   }
 </style>
+
+<script>
+    window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+      const arrayBuffer = await contentStreamReference.arrayBuffer();
+      const blob = new Blob([arrayBuffer]);
+      const url = URL.createObjectURL(blob);
+      const anchorElement = document.createElement('a');
+      anchorElement.href = url;
+      anchorElement.download = fileName ?? '';
+      anchorElement.click();
+      anchorElement.remove();
+      URL.revokeObjectURL(url);
+    }
+</script>
+
