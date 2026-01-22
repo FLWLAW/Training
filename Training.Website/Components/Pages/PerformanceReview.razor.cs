@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
@@ -31,8 +32,6 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
-        private const int _firstReviewYear = 2025;
-
         private bool _areQuestionsDirty = false;
         private bool _reviewNotStatusNotChangedWindow_Visible = false;
         private bool _reviewSubmittedWindow_Visible = false;
@@ -237,7 +236,7 @@ namespace Training.Website.Components.Pages
             if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == false && _selectedReview!.Status_ID_Type == Globals.ReviewStatusType.InReview)
                 return false;
             else
-                return  _areQuestionsDirty == false && AllQuestionsAnswered() == true && _selectedReview != null && _selectedReview.Status_ID_Type != Globals.ReviewStatusType.SentToHR;
+                return _areQuestionsDirty == false && AllQuestionsAnswered() == true && _selectedReview != null && _selectedReview.Status_ID_Type != Globals.ReviewStatusType.SentToHR;
         }
 
         private string?[]? ReviewStatuses()
@@ -252,16 +251,9 @@ namespace Training.Website.Components.Pages
                 reviewStatuses.Add(Globals.ReviewStatuses[Globals.ReviewStatusType.InReview]);
             }
             else
-            {
                 foreach (Globals.ReviewStatusType key in keys)
-                {
-                    if (isAdministrator == true || (int?)key > _selectedReview?.Status_ID)  // DON'T ALLOW MANAGERS TO BACKTRACK THE REVIEW STATUS, BUT ADMINISTRATORS CAN DO IT.
-                    {
-                        string? status = Globals.ReviewStatuses[key];
-                        reviewStatuses.Add(status);
-                    }
-                }
-            }
+                    if (isAdministrator == true || (int?)key > _selectedReview?.Status_ID)  // DON'T ALLOW MANAGERS TO BACKTRACK THE REVIEW STATUS AFTER IT'S BEEN UPDATED AND "SUBMIT REVIEW" HAS BEEN PRESSED, BUT ADMINISTRATORS CAN DO IT.
+                        reviewStatuses.Add(Globals.ReviewStatuses[key]);
 
             return [.. reviewStatuses];
         }
@@ -288,6 +280,8 @@ namespace Training.Website.Components.Pages
                 _selectedUser = null;
                 _headerInfo = null;
                 _answers = null;
+                _showChangeStatusReminder = false;
+                _showMustClickSubmitReviewReminder = false;
                 StateHasChanged();
             }
         }
@@ -299,7 +293,7 @@ namespace Training.Website.Components.Pages
             int mostRecentPastReviewYear = DateTime.Now.Year - 1;
             List<string> reviewYears = [];
 
-            for (int year = mostRecentPastReviewYear; year >= _firstReviewYear; year--)
+            for (int year = mostRecentPastReviewYear; year >= Globals.FirstReviewYear; year--)
                 reviewYears.Add(year.ToString());
 
             return [.. reviewYears];
