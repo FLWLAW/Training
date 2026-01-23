@@ -1,4 +1,5 @@
 ﻿using SqlServerDatabaseAccessLibrary;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using Telerik.Documents.Common.Model;
 using Telerik.Documents.Media;
@@ -51,6 +52,7 @@ namespace Training.Website.Services.WordDocument
                 AddEmployeeHeader(section);
                 AddEmployeeInfo(document, section);
                 AddQuestionsAndAnswers(section);
+                AddSignatures(section);
             });
 
             return document;
@@ -153,6 +155,16 @@ namespace Training.Website.Services.WordDocument
             AddCell(row, value2, 250);
             AddCell(row, value3, 200);
             AddCell(row, value4, 200);
+        }
+
+        private void AddSignatures(Section section)
+        {
+            const string signatureSection = "Signature:\t______________________________\tDate:\t__________";
+
+            section.Blocks.AddParagraph().Inlines.AddRun(string.Empty);
+            section.Blocks.AddParagraph().Inlines.AddRun($"Employee {signatureSection}");
+            section.Blocks.AddParagraph().Inlines.AddRun(string.Empty);
+            section.Blocks.AddParagraph().Inlines.AddRun($"Manager {signatureSection}");
         }
 
         private void AddTitle(Section section)
