@@ -209,8 +209,8 @@
                 }
                 <tr>
                     <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
-                        <TelerikButton OnClick="@(async() => await ExportPerformanceReviewStatusHistoryToExcel_Main() )" Enabled="true">
-                            Export Status History to Excel
+                        <TelerikButton OnClick="@(async() => await ExportPerformanceReviewOneEmployeeStatusHistoryToExcel_Main() )" Enabled="true">
+                            Export Status History for @_selectedUser?.FullName to Excel
                         </TelerikButton>
                     </td>
                 </tr>

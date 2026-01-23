@@ -5,22 +5,22 @@ using Training.Website.Models.Users;
 
 namespace Training.Website.Services
 {
-    public class PerformanceReviewExcelExport
+    public class PerformanceReviewOneEmployeeExcelExport
     {
         //private readonly int _selectedReviewYear;
         private readonly string _sheetName;
-        private readonly UsersForDropDownModel? _selectedUser;
+        //private readonly UsersForDropDownModel? _selectedUser;
         private readonly ReviewModel? _selectedReview;
         private readonly AllUsers_OPS_DB?[]? _allUsers_OPS_DB;
         private readonly AllUsers_CMS_DB?[]? _allUsers_CMS_DB;
         private readonly PerformanceReviewServiceMethods _service;
         private readonly IDatabase? _database_OPS;
 
-        public PerformanceReviewExcelExport
+        public PerformanceReviewOneEmployeeExcelExport
             (
                 //int selectedReviewYear,
                 string sheetName,
-                UsersForDropDownModel? selectedUser,
+                //UsersForDropDownModel? selectedUser,
                 ReviewModel? selectedReview,
                 AllUsers_OPS_DB?[]? allUsers_OPS_DB,
                 AllUsers_CMS_DB?[]? allUsers_CMS_DB,
@@ -30,7 +30,7 @@ namespace Training.Website.Services
         {
             //_selectedReviewYear = selectedReviewYear;
             _sheetName = sheetName;
-            _selectedUser = selectedUser;
+            //_selectedUser = selectedUser;
             _selectedReview = selectedReview;
             _allUsers_CMS_DB = allUsers_CMS_DB;
             _allUsers_OPS_DB = allUsers_OPS_DB;
