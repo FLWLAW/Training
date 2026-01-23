@@ -60,6 +60,15 @@
             </NavLink>
         </div>
     }
+
+    @if (ApplicationState?.LoggedOnUser?.UserName == "David Rosenblum" || ApplicationState?.LoggedOnUser?.UserName == "Susan Eisenman")
+    {
+        <div class="nav-item px-1">
+            <NavLink class="Dashboard-nav-link" href="PerformanceReviewAdministratorPage">
+                Performance Review Administrator Page
+            </NavLink>
+        </div>
+    }
 </div>
 
 
