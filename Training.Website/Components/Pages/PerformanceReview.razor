@@ -100,7 +100,7 @@
     <!-- SAVING CHANGES HEADER -->
     <table style="width: 100%;">
         <tr>
-            <td style="width: 100%; text-align: center; color: blue; font-size: larger; font-weight: 700;">
+            <td style="width: 100%; text-align: center; color: blue; font-size: larger;">
                 CLICK "Save Changes" ON BOTTOM TO SAVE CHANGES TO QUESTIONS.<br />
                 CLICK "Submit Review" ON BOTTOM TO SUBMIT A REVIEW.<br />
                 MANAGERS MUST ANSWER AND SAVE ALL QUESTIONS TO CHANGE A REVIEW STATUS.<br />
@@ -209,8 +209,8 @@
                 }
                 <tr>
                     <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
-                        <TelerikButton OnClick="@(async() => await ExportPerformanceReviewStatusHistoryToExcel_Main() )" Enabled="true">
-                            Export Status History to Excel
+                        <TelerikButton OnClick="@(async() => await ExportPerformanceReviewOneEmployeeStatusHistoryToExcel_Main() )" Enabled="true">
+                            Export Status History for @_selectedUser?.FullName to Excel
                         </TelerikButton>
                     </td>
                 </tr>
@@ -270,8 +270,10 @@
                         </tr>
                     }
                 }
+            </table>
+            <table style="width: 100%; padding-top: 30px;">
                 <tr>
-                    <td colspan="2" style="align-content: center; align-items: center; text-align: center;">
+                    <td style="width: 100%; align-content: center; align-items: center; text-align: center;">
                         <TelerikButton OnClick="@SaveAnswersClicked" Enabled="@SaveAnswersEnabled()">
                             <span style="font-size: xx-large; font-weight: 700; width: 400px;">Save Answers</span>
                         </TelerikButton>

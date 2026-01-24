@@ -87,8 +87,13 @@ namespace Training.Website.Services
             return result;
         }
 
+        /*
         public async Task<IEnumerable<StatusHistoryModel?>?> GetReviewStatusHistoryByReviewID(int reviewID, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<StatusHistoryModel?, object?>("usp_Performance_Review_GetReviewStatusHistoryByReviewID", new { Review_ID = reviewID });
+        */
+
+        public async Task<IEnumerable<StatusHistoryModel?>?> GetReviewStatusHistoryOneEmployeeByReviewID(int reviewID, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<StatusHistoryModel?, object?>("usp_Performance_Review_GetReviewStatusHistoryOneEmployeeByReviewID", new { Review_ID = reviewID });
 
         public async Task<IEnumerable<UsersForDropDownModel?>?> GetUsersForManager_CMS_DB
             (AllUsers_CMS_DB?[]? allUsers_CMS_DB, AllUsers_OPS_DB?[]? allUsers_OPS_DB, int? cmsDB_ManagerID, IDatabase? database)
@@ -131,10 +136,10 @@ namespace Training.Website.Services
 
                 parameters.Add("@Review_Year", value: reviewYear, dbType: DbType.Int32, direction: ParameterDirection.Input);
                 parameters.Add("@OPS_User_ID_Reviewer", value: opsReviewerID, dbType: DbType.Int32, direction: ParameterDirection.Input);
-                parameters.Add("@OPS_User_ID_Reviewee", value: opsRevieweeID, dbType: DbType.Int32, direction: ParameterDirection.Input);
                 parameters.Add("@CMS_User_ID_Reviewer", value: cmsReviewerID, dbType: DbType.Int32, direction: ParameterDirection.Input);
-                parameters.Add("@CMS_User_ID_Reviewee", value: cmsRevieweeID, dbType: DbType.Int32, direction: ParameterDirection.Input);
                 parameters.Add("@Login_ID_Reviewer", value: loginID_Reviewer, dbType: DbType.String, direction: ParameterDirection.Input);
+                parameters.Add("@OPS_User_ID_Reviewee", value: opsRevieweeID, dbType: DbType.Int32, direction: ParameterDirection.Input);
+                parameters.Add("@CMS_User_ID_Reviewee", value: cmsRevieweeID, dbType: DbType.Int32, direction: ParameterDirection.Input);
                 parameters.Add("@Login_ID_Reviewee", value: loginID_Reviewee, dbType: DbType.String, direction: ParameterDirection.Input);
                 parameters.Add("@Review_ID", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
@@ -149,20 +154,30 @@ namespace Training.Website.Services
             }
         }
 
-        public async Task InsertReviewStatusChangeOnly(int? reviewID, int? opsUserID, int? cmsUserID, string? loginID, string oldStatus, string newStatus, IDatabase? database)
+        public async Task InsertReviewStatusChangeOnly
+            (
+                int? reviewID,
+                int? opsUserID_Reviewee, int? cmsUserID_Reviewee, string? loginID_Reviewee,
+                int? opsUserID_StatusChangedBy, int? cmsUserID_StatusChangedBy, string loginID_StatusChangedBy,
+                string oldStatus, string newStatus,
+                IDatabase? database
+            )
         {
             if (reviewID == null)
                 throw new NoNullAllowedException("[reviewID] cannot be null in InsertReviewStatusChangeOnly().");
-            else if (opsUserID == null && cmsUserID == null && loginID == null)
+            else if (opsUserID_Reviewee == null && cmsUserID_Reviewee == null && loginID_Reviewee == null)
                 throw new NoNullAllowedException("[opsUserID], [cmsUserID] and [loginID] cannot all be null in InsertReviewStatusChangeOnly(). At least one of these parameters must contain a non-null value.");
             else
             {
                 InsertReviewStatusChange_Parameters parameters = new()
                 {
                     Review_ID = reviewID,
-                    OPS_User_ID = opsUserID,
-                    CMS_User_ID = cmsUserID,
-                    Login_ID = loginID,
+                    OPS_User_ID_Reviewee = opsUserID_Reviewee,
+                    CMS_User_ID_Reviewee = cmsUserID_Reviewee,
+                    Login_ID_Reviewee = loginID_Reviewee,
+                    OPS_User_ID_StatusChangedBy = opsUserID_StatusChangedBy,
+                    CMS_User_ID_StatusChangedBy = cmsUserID_StatusChangedBy,
+                    Login_ID_StatusChangedBy = loginID_StatusChangedBy,
                     OldStatus = oldStatus,
                     NewStatus = newStatus
                 };

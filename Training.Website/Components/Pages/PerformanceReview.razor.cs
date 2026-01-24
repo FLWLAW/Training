@@ -129,12 +129,12 @@ namespace Training.Website.Components.Pages
             await Globals.ExportToWordFile(document, filename, JS);
         }
 
-        private async Task ExportPerformanceReviewStatusHistoryToExcel_Main()
+        private async Task ExportPerformanceReviewOneEmployeeStatusHistoryToExcel_Main()
         {
             string sheetName = $"Review Status History {_selectedReviewYear} {_selectedUser?.FullName}";
 
-            PerformanceReviewExcelExport export =
-                new(sheetName, _selectedUser, _selectedReview, _allUsers_OPS_DB, _allUsers_CMS_DB, _service, Database_OPS);
+            PerformanceReviewOneEmployeeExcelExport export =
+                new(sheetName, _selectedReview, _allUsers_OPS_DB, _allUsers_CMS_DB, _service, Database_OPS);
 
             using (MemoryStream? stream = await export.Go())
             {
@@ -344,7 +344,8 @@ namespace Training.Website.Components.Pages
                 await _service.InsertReviewStatusChangeOnly
                     (
                         _selectedReview?.ID,
-                        _opsReviewerID, _cmsReviewerID, ApplicationState!.LoggedOnUser!.LoginID,
+                        _selectedUser?.OPS_UserID, _selectedUser?.CMS_UserID, _selectedUser?.OPS_LoginID,
+                        _opsReviewerID, _cmsReviewerID, ApplicationState!.LoggedOnUser!.LoginID!,
                         Globals.ReviewStatuses[_selectedReview!.Status_ID_Type],
                         _selectedNewReviewStatus!, Database_OPS
                     );
