@@ -344,7 +344,8 @@ namespace Training.Website.Components.Pages
                 await _service.InsertReviewStatusChangeOnly
                     (
                         _selectedReview?.ID,
-                        _opsReviewerID, _cmsReviewerID, ApplicationState!.LoggedOnUser!.LoginID,
+                        _selectedUser?.OPS_UserID, _selectedUser?.CMS_UserID, _selectedUser?.OPS_LoginID,
+                        _opsReviewerID, _cmsReviewerID, ApplicationState!.LoggedOnUser!.LoginID!,
                         Globals.ReviewStatuses[_selectedReview!.Status_ID_Type],
                         _selectedNewReviewStatus!, Database_OPS
                     );

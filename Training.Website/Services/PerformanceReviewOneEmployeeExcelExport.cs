@@ -40,7 +40,7 @@ namespace Training.Website.Services
 
         public async Task<MemoryStream?> Go()
         {
-            StatusHistoryModel?[]? results = await GetReviewStatusHistoryByReviewID_Main();
+            StatusHistoryModel?[]? results = await GetReviewStatusHistoryOneEmployeeByReviewID_Main();
 
             if (results == null || results.Length == 0)
                 return null;
@@ -64,29 +64,45 @@ namespace Training.Website.Services
 
         // =============================================================================================================================================================================================================================================================================================================================================================================================================
 
-        private async Task<StatusHistoryModel?[]?> GetReviewStatusHistoryByReviewID_Main()
+        private async Task<StatusHistoryModel?[]?> GetReviewStatusHistoryOneEmployeeByReviewID_Main()
         {
-            StatusHistoryModel?[]? results = (await _service.GetReviewStatusHistoryByReviewID(_selectedReview!.ID!.Value, _database_OPS))?.ToArray();
+            StatusHistoryModel?[]? results = (await _service.GetReviewStatusHistoryOneEmployeeByReviewID(_selectedReview!.ID!.Value, _database_OPS))?.ToArray();
 
             if (results != null)
             {
                 foreach (StatusHistoryModel? result in results)
                 {
-                    if (result != null && result.StatusChangedBy != null)
+                    if (result != null && result.Login_ID_StatusChangedBy != null)
                     {
-                        AllUsers_OPS_DB? opsUser = _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(result.StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true);
-                        if (opsUser != null)
+                        AllUsers_OPS_DB? opsReviewee =
+                            _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(result.Login_ID_Reviewee, StringComparison.InvariantCultureIgnoreCase) == true);
+                        
+                        if (opsReviewee != null)
                         {
-                            result.FirstName = opsUser.FirstName;
-                            result.LastName = opsUser.LastName;
+                            result.FirstName_Reviewee = opsReviewee.FirstName;
+                            result.LastName_Reviewee = opsReviewee.LastName;
+
+                            AllUsers_OPS_DB? opsStatusChangedBy =
+                                _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(result.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true);
+                            
+                            result.FirstName_StatusChangedBy = opsStatusChangedBy?.FirstName;
+                            result.LastName_StatusChangedBy = opsStatusChangedBy?.LastName;
                         }
                         else
                         {
-                            AllUsers_CMS_DB? cmsUser = _allUsers_CMS_DB?.FirstOrDefault(q => q?.LoginID?.Equals(result.StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true);
-                            if (cmsUser != null)
+                            AllUsers_CMS_DB? cmsReviewee =
+                                _allUsers_CMS_DB?.FirstOrDefault(q => q?.LoginID?.Equals(result.Login_ID_Reviewee, StringComparison.InvariantCultureIgnoreCase) == true);
+
+                            if (cmsReviewee != null)
                             {
-                                result.FirstName = cmsUser.FirstName;
-                                result.LastName = cmsUser.LastName;
+                                result.FirstName_Reviewee = cmsReviewee.FirstName;
+                                result.LastName_Reviewee = cmsReviewee.LastName;
+
+                                AllUsers_CMS_DB? cmsStatusChangedBy =
+                                    _allUsers_CMS_DB?.FirstOrDefault(q => q?.LoginID.Equals(result.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true);
+
+                                result.FirstName_StatusChangedBy = cmsStatusChangedBy?.FirstName;
+                                result.LastName_StatusChangedBy = cmsStatusChangedBy?.LastName;
                             }
                         }
                     }
@@ -130,11 +146,11 @@ namespace Training.Website.Services
                     using (IRowExporter row = worksheet.CreateRowExporter())
                     {
                         SpecialExcelExportClass.SetCellValue(row, result.Review_ID);
-                        SpecialExcelExportClass.SetCellValue(row, result.FirstName);
-                        SpecialExcelExportClass.SetCellValue(row, result.LastName);
+                        SpecialExcelExportClass.SetCellValue(row, result.FirstName_Reviewee);
+                        SpecialExcelExportClass.SetCellValue(row, result.LastName_Reviewee);
                         SpecialExcelExportClass.SetCellValue(row, result.OldStatus);
                         SpecialExcelExportClass.SetCellValue(row, result.NewStatus);
-                        SpecialExcelExportClass.SetCellValue(row, result.StatusChangedBy);
+                        SpecialExcelExportClass.SetCellValue(row, string.Concat(result.FirstName_StatusChangedBy, ' ', result.LastName_StatusChangedBy));
                         SpecialExcelExportClass.SetCellValue(row, result.WhenChanged);
                     }
                 }
