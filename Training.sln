@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Training.Website", "Training.Website\Training.Website.csproj", "{A13AC6F6-F52C-48B4-9011-E0C6F0A5267B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdHocBatchProcessingProgram01", "AdHocBatchProcessingProgram01\AdHocBatchProcessingProgram01.csproj", "{8C3DCBE6-1D0E-488C-B7BA-E21F2239A285}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +20,10 @@ Global
 		{A13AC6F6-F52C-48B4-9011-E0C6F0A5267B}.QA|Any CPU.Build.0 = QA|Any CPU
 		{A13AC6F6-F52C-48B4-9011-E0C6F0A5267B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A13AC6F6-F52C-48B4-9011-E0C6F0A5267B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C3DCBE6-1D0E-488C-B7BA-E21F2239A285}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C3DCBE6-1D0E-488C-B7BA-E21F2239A285}.QA|Any CPU.ActiveCfg = QA|Any CPU
+		{8C3DCBE6-1D0E-488C-B7BA-E21F2239A285}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C3DCBE6-1D0E-488C-B7BA-E21F2239A285}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
