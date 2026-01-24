@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /_TestProj1/_TestProj1.csproj
+/AdHocBatchProcessingProgram01/Data.txt
