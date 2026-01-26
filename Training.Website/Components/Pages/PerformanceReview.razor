@@ -65,6 +65,26 @@
     </WindowContent>
 </TelerikWindow>
 
+<TelerikWindow Modal="true"
+               Visible="@_saveAndSubmitWindow_Visible"
+               CloseOnOverlayClick="false"
+               Width="800px"
+               Height="200px">
+    <WindowContent>
+        <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
+            <tr>
+                <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
+                    ALL ANSWERS SAVED AND REVIEW STATUS UPGRADED
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">
+                    <TelerikButton Class="Close" OnClick="@(() => AnswersSavedAndSubmitWindowClicked())">Close</TelerikButton>
+                </td>
+            </tr>
+        </table>
+    </WindowContent>
+</TelerikWindow>
 
 <!-- SELECT REVIEW YEAR -->
 <table style="width: 100%; padding-top: 45px;">
@@ -199,13 +219,14 @@
                         </TelerikDropDownList>
                     </td>
                 </tr>
-                @if (_showMustClickSubmitReviewReminder == true)
+                @if (_showSelectSubmitToHR_Reminder == true)
                 {
                     <tr>
-                        <td style="width: 100%; text-align: center; padding-top: 3px; color: red; font-weight: 700">
-                            CLICK 'Submit Review' ON BOTTOM OF PAGE
+                         <td style="width: 100%; text-align: center; padding-top: 3px; color: red; font-weight: 700">
+                            MANAGER MUST MANUALLY SELECT 'SUBMIT TO HR' AND CLICK "Save & Submit"
                         </td>
                     </tr>
+
                 }
                 <tr>
                     <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
@@ -260,7 +281,6 @@
                                     {
                                         <TelerikTextArea
                                             @bind-Value="@question.Answer"
-                                            OnChange="@TextBoxAreaChanged"
                                             MaxLength="8000"
                                             Enabled="@CanEditAnswer()"
                                             Rows="20" />
@@ -275,22 +295,14 @@
                 <tr>
                     <td style="width: 100%; align-content: center; align-items: center; text-align: center;">
                         <TelerikButton OnClick="@SaveAnswersClicked" Enabled="@SaveAnswersEnabled()">
-                            <span style="font-size: xx-large; font-weight: 700; width: 400px;">Save Answers</span>
+                            <span style="font-size: xx-large; font-weight: 700; width: 400px;">Save</span>
                         </TelerikButton>
                     </td>
                 </tr>
-                @if (_showChangeStatusReminder == true)
-                {
-                    <tr>
-                        <td style="width: 100%; text-align: center; padding-top: 3px; color: red; font-weight: 700">
-                            UPDATE "Review Status" AT TOP OF PAGE, THEN CLICK "Submit Review" BELOW.
-                        </td>
-                    </tr>
-                }
                 <tr>
-                    <td colspan="2" style="align-content: center; align-items: center; text-align: center;">
-                        <TelerikButton OnClick="@SubmitReviewClicked" Enabled="@SubmitReviewEnabled()">
-                            <span style="font-size: xx-large; font-weight: 900; width: 400px;">Submit Review</span>
+                    <td style ="width: 100%; align-content: center; align-items: center; text-align: center;">
+                        <TelerikButton OnClick="@SaveAndSubmitClicked" Enabled="@SaveAndSubmitEnabled()">
+                            <span style="font-size: xx-large; font-weight: 700; width: 400px;">Save & Submit</span>
                         </TelerikButton>
                     </td>
                 </tr>
