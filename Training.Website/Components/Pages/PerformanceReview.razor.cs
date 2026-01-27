@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
+using System.Numerics;
 using System.Text;
 using Telerik.Blazor.Components;
 using Telerik.Documents.SpreadsheetStreaming;
@@ -34,11 +35,10 @@ namespace Training.Website.Components.Pages
         #endregion
 
         #region PRIVATE FIELDS
-        //private bool _areQuestionsDirty = false;
         private bool _reviewNotStatusNotChangedWindow_Visible = false;
         private bool _reviewSubmittedWindow_Visible = false;
         private bool _answersSavedWindow_Visible = false;
-                private bool _showSelectSubmitToHR_Reminder = false;
+        private bool _showSelectSubmitToHR_Reminder = false;
         private bool _saveAndSubmitWindow_Visible = false;
         private int? _selectedReviewYear = null;
         private string[]? _reviewYears = null;
@@ -125,8 +125,21 @@ namespace Training.Website.Components.Pages
                 return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
         }
 
+        private StringBuilder EMailMessageBody()
+        {
+            StringBuilder body = new($"The employee review for {_selectedUser?.FullName} has been approved.");
+
+            body.AppendLine();
+            body.AppendLine();
+            body.AppendLine($"Please schedule this employee's review together with either Dena or Colleen on or before {DateTime.Today.AddDays(7).ToShortDateString()}.");
+
+            return body;
+        }
+
         private async Task EMailToManager()
         {
+            // THIS METHOD IS EXECUTED WHEN THE ADMINISTRATOR CLICKS "Save & Submit" AND THE REVIEW STATUS IS ADVANCED FROM "In Review" TO "Submitted."
+
             if (_selectedReview == null)
                 throw new NoNullAllowedException("[_selectedReview] CANNOT BE NULL IN EMailToManager().");
             else
@@ -146,11 +159,10 @@ namespace Training.Website.Components.Pages
 #else   // RELEASE
                     List<MimeKit.MailboxAddress> managerRecipient = [new($"{managerFullInfo.FirstName} {managerFullInfo.LastName}", managerFullInfo.Email)];
 #endif                    
-
                     EMailer email = new()
                     {
                         Subject = $"Employee Review for {_selectedUser?.FullName} has been submitted",
-                        Body = new StringBuilder($"The employee review for {_selectedUser?.FullName} has been approved. Please schedule time with the employee to discuss their review."),
+                        Body = EMailMessageBody(),
                         BodyTextFormat = MimeKit.Text.TextFormat.Plain,
                         To = managerRecipient
                     };
@@ -158,17 +170,6 @@ namespace Training.Website.Components.Pages
                     email.Send();
                 }
             }
-        }
-
-        private async Task ExportPerformanceReviewToWord_Main()
-        {
-            CreatePerformanceReviewInWordClass export =
-                new (_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices);
-
-            RadFlowDocument document = await export.Create();
-            string filename = $"{_selectedReviewYear.Value} Performance Review - {_selectedUser?.FirstName} {_selectedUser?.LastName}.docx";
-
-            await Globals.ExportToWordFile(document, filename, JS);
         }
 
         private async Task ExportPerformanceReviewOneEmployeeStatusHistoryToExcel_Main()
@@ -188,6 +189,18 @@ namespace Training.Website.Components.Pages
                 }
             }
         }
+
+        private async Task ExportPerformanceReviewToWord_Main()
+        {
+            CreatePerformanceReviewInWordClass export =
+                new (_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices);
+
+            RadFlowDocument document = await export.Create();
+            string filename = $"{_selectedReviewYear.Value} Performance Review - {_selectedUser?.FirstName} {_selectedUser?.LastName}.docx";
+
+            await Globals.ExportToWordFile(document, filename, JS);
+        }
+
 
         private async Task GetCurrentReviewStatusByReviewID_Main()
         {
@@ -271,7 +284,6 @@ namespace Training.Website.Components.Pages
         private void ReviewStatusChanged(string newValue)
         {
             _selectedNewReviewStatus = newValue;
-            //_showMustClickSubmitReviewReminder = (_selectedNewReviewStatus != Globals.ReviewStatuses[Globals.ReviewStatusType.Pending]);
             StateHasChanged();
         }
 
