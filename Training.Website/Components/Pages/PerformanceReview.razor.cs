@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FLWLAW_Email.Library;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
+using System.Text;
 using Telerik.Blazor.Components;
 using Telerik.Documents.SpreadsheetStreaming;
 using Telerik.SvgIcons;
@@ -121,6 +123,41 @@ namespace Training.Website.Components.Pages
                 return true;
             else
                 return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
+        }
+
+        private async Task EMailToManager()
+        {
+            if (_selectedReview == null)
+                throw new NoNullAllowedException("[_selectedReview] CANNOT BE NULL IN EMailToManager().");
+            else
+            {
+                string? managerLoginID = await _service.GetLoginIdOfLatestManagerWhoChangedReviewStatusToInReview(_selectedReview!.ID!.Value, Database_OPS);
+                AllUsers_OPS_DB? managerFullInfo = _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(managerLoginID, StringComparison.InvariantCultureIgnoreCase) == true);
+
+                if (managerFullInfo != null)
+                {
+#if DEBUG
+                    MimeKit.MailboxAddress drosenblum = new("David Rosenblum", "drosenblum@flwlaw.com");
+                    List<MimeKit.MailboxAddress> managerRecipient = [drosenblum];
+#elif QA
+                    MimeKit.MailboxAddress drosenblum = new("David Rosenblum", "drosenblum@flwlaw.com");
+                    MimeKit.MailboxAddress seisenman = new("Susan Eisenman", "seisenman@flwlaw.com");
+                    List<MimeKit.MailboxAddress> managerRecipient = [drosenblum, seisenman];
+#else   // RELEASE
+                    List<MimeKit.MailboxAddress> managerRecipient = [new($"{managerFullInfo.FirstName} {managerFullInfo.LastName}", managerFullInfo.Email)];
+#endif                    
+
+                    EMailer email = new()
+                    {
+                        Subject = $"Employee Review for {_selectedUser?.FullName} has been submitted",
+                        Body = new StringBuilder($"The employee review for {_selectedUser?.FullName} has been approved. Please schedule time with the employee to discuss their review."),
+                        BodyTextFormat = MimeKit.Text.TextFormat.Plain,
+                        To = managerRecipient
+                    };
+
+                    email.Send();
+                }
+            }
         }
 
         private async Task ExportPerformanceReviewToWord_Main()
@@ -333,8 +370,7 @@ namespace Training.Website.Components.Pages
 
                 if (_selectedReview.Status_ID_Type == Globals.ReviewStatusType.Submitted)
                 {
-                    // TODO: EMailToManager()
-                    //EMailToManager();
+                    await EMailToManager();
                     _showSelectSubmitToHR_Reminder = true;
                 }
                 else
