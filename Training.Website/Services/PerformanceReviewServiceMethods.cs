@@ -39,7 +39,15 @@ namespace Training.Website.Services
             (await database!.QueryByStoredProcedureAsync<string?, object?>("usp_Performance_Review_GetCurrentReviewStatusByReviewID", new { Review_ID = reviewID }))?.FirstOrDefault();
 
         public async Task<EmployeeInformationModel?> GetEmployeeInformation(int OPS_Emp_ID, int reviewYear, IDatabase? database) =>
-            (await database!.QueryByStoredProcedureAsync<EmployeeInformationModel?, object?>("usp_Performance_Review_Employee_Information", new { OPS_Emp_ID = OPS_Emp_ID }))?.FirstOrDefault();
+            (await database!.QueryByStoredProcedureAsync<EmployeeInformationModel?, object?>
+                ("usp_Performance_Review_Employee_Information", new { OPS_Emp_ID = OPS_Emp_ID }))?.FirstOrDefault();
+
+        public async Task<string?> GetLoginIdOfLatestManagerWhoChangedReviewStatusToInReview(int reviewID, IDatabase? database) =>
+            (
+                await database!.QueryByStoredProcedureAsync
+                        <string?, object?>
+                            ("usp_Performance_Review_GetLoginIdOfLatestManagerWhoChangedReviewStatusToInReview", new { Review_ID = reviewID })
+                )?.FirstOrDefault();
 
         public async Task<Dictionary<int, string>?> GetPerformanceReviewAnswerFormats(IDatabase? database)
         {
@@ -86,11 +94,6 @@ namespace Training.Website.Services
 
             return result;
         }
-
-        /*
-        public async Task<IEnumerable<StatusHistoryModel?>?> GetReviewStatusHistoryByReviewID(int reviewID, IDatabase? database) =>
-            await database!.QueryByStoredProcedureAsync<StatusHistoryModel?, object?>("usp_Performance_Review_GetReviewStatusHistoryByReviewID", new { Review_ID = reviewID });
-        */
 
         public async Task<IEnumerable<StatusHistoryModel?>?> GetReviewStatusHistoryOneEmployeeByReviewID(int reviewID, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<StatusHistoryModel?, object?>("usp_Performance_Review_GetReviewStatusHistoryOneEmployeeByReviewID", new { Review_ID = reviewID });
