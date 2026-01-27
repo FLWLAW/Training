@@ -65,27 +65,6 @@
     </WindowContent>
 </TelerikWindow>
 
-<TelerikWindow Modal="true"
-               Visible="@_saveAndSubmitWindow_Visible"
-               CloseOnOverlayClick="false"
-               Width="800px"
-               Height="200px">
-    <WindowContent>
-        <table style="width: 100%; height: 100%; background-color: black; border-color: black;">
-            <tr>
-                <td style="width: 100%; text-align: center; font-size: large; color: white; font-weight: 700;" background-color: black;>
-                    ALL ANSWERS SAVED AND REVIEW STATUS UPGRADED
-                </td>
-            </tr>
-            <tr>
-                <td style="text-align: center;">
-                    <TelerikButton Class="Close" OnClick="@(() => AnswersSavedAndSubmitWindowClicked())">Close</TelerikButton>
-                </td>
-            </tr>
-        </table>
-    </WindowContent>
-</TelerikWindow>
-
 <!-- SELECT REVIEW YEAR -->
 <table style="width: 100%; padding-top: 45px;">
     <tr>
@@ -123,8 +102,7 @@
             <td style="width: 100%; text-align: center; color: blue; font-size: larger;">
                 CLICK "Save Changes" ON BOTTOM TO SAVE CHANGES TO QUESTIONS.<br />
                 CLICK "Save & Submit" ON BOTTOM TO SUBMIT A REVIEW.<br />
-                MANAGERS MUST ANSWER AND SAVE ALL QUESTIONS TO CHANGE A REVIEW STATUS.<br />
-                FOR MANAGERS TO SUBMIT A REVIEW, ALL QUESTIONS MUST BE ANSWERED AND SAVED.
+                FOR MANAGERS TO SUBMIT A REVIEW, ALL QUESTIONS MUST BE ANSWERED.
             </td>
         </tr>
     </table>

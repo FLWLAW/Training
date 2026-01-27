@@ -32,6 +32,9 @@ namespace Training.Website.Components.Pages
 
         [Inject]
         private IJSRuntime? JS { get; set; }
+
+        [Inject]
+        private NavigationManager? NavManager { get; set; }
         #endregion
 
         #region PRIVATE FIELDS
@@ -39,7 +42,6 @@ namespace Training.Website.Components.Pages
         private bool _reviewSubmittedWindow_Visible = false;
         private bool _answersSavedWindow_Visible = false;
         private bool _showSelectSubmitToHR_Reminder = false;
-        private bool _saveAndSubmitWindow_Visible = false;
         private int? _selectedReviewYear = null;
         private string[]? _reviewYears = null;
         private int? _cmsReviewerID = null;
@@ -102,12 +104,6 @@ namespace Training.Website.Components.Pages
 
         private bool AllQuestionsAnswered() =>
             _questions != null && _questions.All(q => q != null && !string.IsNullOrWhiteSpace(q.Answer));
-
-        private void AnswersSavedAndSubmitWindowClicked()
-        {
-            _saveAndSubmitWindow_Visible = false;
-            StateHasChanged();
-        }
 
         private void AnswersSavedWindowClicked()
         {
@@ -388,9 +384,7 @@ namespace Training.Website.Components.Pages
                 else
                     _showSelectSubmitToHR_Reminder = false;
 
-                _saveAndSubmitWindow_Visible = true;
-
-                StateHasChanged();
+                NavManager!.NavigateTo("/");
             }
         }
 
