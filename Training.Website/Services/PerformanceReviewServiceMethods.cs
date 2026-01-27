@@ -189,6 +189,9 @@ namespace Training.Website.Services
             }
         }
 
+        public async Task UpdateWhenReviewMeetingHeldOn(int reviewID, DateTime meetingDate, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_ReviewMeetingHeldOn", new { Review_ID = reviewID, Review_DateTime = meetingDate });
+
         public async Task UpsertPerformanceReviewAnswer_Main
             (int reviewID, int questionID, string answer, int cmsUserID, int opsUserID, string? loginID, bool isAdministrator, IDatabase? database)
         {

@@ -13,5 +13,6 @@
             }
         }
         public DateTime? When_Started { get; set; }
+        public DateTime? ReviewMeetingHeldOn { get; set; }
     }
 }

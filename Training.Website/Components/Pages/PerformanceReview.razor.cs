@@ -46,13 +46,14 @@ namespace Training.Website.Components.Pages
         private string[]? _reviewYears = null;
         private int? _cmsReviewerID = null;
         private int? _opsReviewerID = null;
+        private readonly DateTime _minimumReviewMeetingDate = DateTime.Today.AddMonths(-6);
         private bool _loading = false;
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
         private AllUsers_CMS_DB?[]? _allUsers_CMS_DB = null;
         private IEnumerable<UsersForDropDownModel?>? _allUsersForDropDown = null;
         private UsersForDropDownModel? _selectedUser = null;
         private Dictionary<int, string>? _answerFormats = null;
-        private string? _selectedNewReviewStatus = null;
+        private string? _selectedNewReviewStatus_DropDown = null;
         private ReviewModel? _selectedReview = null;
         private EmployeeInformationModel? _headerInfo = null;
         private PerformanceReviewQuestionModel?[]? _questions = null;
@@ -265,7 +266,6 @@ namespace Training.Website.Components.Pages
 
                 question!.Answer = radioChoice?.RadioChoice_Text;
                 question!.RadioChoice_ID = radioChoice?.RadioChoice_ID;
-                //_areQuestionsDirty = true;
             }
         }
 
@@ -277,9 +277,11 @@ namespace Training.Website.Components.Pages
                 return null;
         }
 
+        private bool ReviewMeetingDateEnabled() => _selectedReview?.Status_ID_Type == Globals.ReviewStatusType.Submitted;
+
         private void ReviewStatusChanged(string newValue)
         {
-            _selectedNewReviewStatus = newValue;
+            _selectedNewReviewStatus_DropDown = newValue;
             StateHasChanged();
         }
 
@@ -350,41 +352,71 @@ namespace Training.Website.Components.Pages
             {
                 await SaveAnswers();
 
-                if (string.IsNullOrWhiteSpace(_selectedNewReviewStatus) == true)
+                string oldReviewStatus_Str = Globals.ReviewStatuses[_selectedReview!.Status_ID_Type];
+                Globals.ReviewStatusType newReviewStatus_Type = Globals.ReviewStatusType.ERROR;
+                bool newStatusDropDownSelectedInSubmittedMode = false;
+
+                switch (_selectedReview!.Status_ID_Type)
                 {
-                    int? newStatusKey = _selectedReview?.Status_ID + 1;
-                    Globals.ReviewStatusType newStatusType = (Globals.ReviewStatusType)newStatusKey!.Value;
-
-                    _selectedNewReviewStatus = Globals.ReviewStatuses[newStatusType];
-                }
-
-                await _service.InsertReviewStatusChangeOnly
-                    (
-                        _selectedReview?.ID,
-                        _selectedUser?.OPS_UserID, _selectedUser?.CMS_UserID, _selectedUser?.OPS_LoginID,
-                        _opsReviewerID, _cmsReviewerID, ApplicationState!.LoggedOnUser!.LoginID!,
-                        Globals.ReviewStatuses[_selectedReview!.Status_ID_Type], _selectedNewReviewStatus!,
-                        Database_OPS
-                    );
-
-                foreach (KeyValuePair<Globals.ReviewStatusType, string> status in Globals.ReviewStatuses)
-                {
-                    if (status.Value.Equals(_selectedNewReviewStatus, StringComparison.InvariantCultureIgnoreCase) == true)
-                    {
-                        _selectedReview.Status_ID = (int?)status.Key;
+                    case Globals.ReviewStatusType.ERROR:
+                        newReviewStatus_Type = Globals.ReviewStatusType.Pending;
                         break;
-                    }
+                    case Globals.ReviewStatusType.Pending:
+                        newReviewStatus_Type = Globals.ReviewStatusType.InReview;
+                        break;
+                    case Globals.ReviewStatusType.InReview:
+                        newReviewStatus_Type = Globals.ReviewStatusType.Submitted;
+                        break;
+                    case Globals.ReviewStatusType.Submitted:
+                        newStatusDropDownSelectedInSubmittedMode = _selectedNewReviewStatus_DropDown != null;
+                        if (newStatusDropDownSelectedInSubmittedMode == true)
+                        {
+                            foreach(KeyValuePair<Globals.ReviewStatusType, string> reviewStatus in Globals.ReviewStatuses)
+                            {
+                                if (reviewStatus.Value.Equals(_selectedNewReviewStatus_DropDown, StringComparison.InvariantCultureIgnoreCase) == true)
+                                {
+                                    newReviewStatus_Type = reviewStatus.Key;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    case Globals.ReviewStatusType.SentToHR:
+                        throw new NotImplementedException();        // SHOULD NEVER EXECUTE BECAUSE BUTTON SHOULD BE DISABLED
                 }
-
-                if (_selectedReview.Status_ID_Type == Globals.ReviewStatusType.Submitted)
-                {
-                    await EMailToManager();
-                    _showSelectSubmitToHR_Reminder = true;
-                }
+                
+                if (_selectedReview!.Status_ID_Type == Globals.ReviewStatusType.Submitted && newStatusDropDownSelectedInSubmittedMode == false)
+                    StateHasChanged();
                 else
-                    _showSelectSubmitToHR_Reminder = false;
+                {
+                    string newReviewStatus_Str = Globals.ReviewStatuses[newReviewStatus_Type];
 
-                NavManager!.NavigateTo("/");
+                    await _service.InsertReviewStatusChangeOnly
+                        (
+                            _selectedReview?.ID,
+                            _selectedUser?.OPS_UserID, _selectedUser?.CMS_UserID, _selectedUser?.OPS_LoginID,
+                            _opsReviewerID, _cmsReviewerID, ApplicationState!.LoggedOnUser!.LoginID!,
+                            oldReviewStatus_Str, newReviewStatus_Str,
+                            Database_OPS
+                        );
+
+                    // UPDATE REVIEW STATUS HERE
+                    _selectedReview!.Status_ID = (int?)newReviewStatus_Type;
+                    _selectedNewReviewStatus_DropDown = Globals.ReviewStatuses[newReviewStatus_Type];
+
+                    switch (_selectedReview!.Status_ID_Type)
+                    {
+                        case Globals.ReviewStatusType.Submitted:
+                            await EMailToManager();
+                            break;
+                        case Globals.ReviewStatusType.SentToHR:
+                            await _service.UpdateWhenReviewMeetingHeldOn(_selectedReview.ID!.Value, _selectedReview!.ReviewMeetingHeldOn!.Value, Database_OPS);
+                            break;
+                    }
+
+                    _showSelectSubmitToHR_Reminder = _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Submitted;
+                    NavManager!.NavigateTo("/");
+                }
             }
         }
 
@@ -406,7 +438,9 @@ namespace Training.Website.Components.Pages
                         {
                             string? currentReviewStatus_Str = Globals.ReviewStatuses[_selectedReview.Status_ID_Type];
                             bool enabled =
-                                _selectedNewReviewStatus != null && _selectedNewReviewStatus!.Equals(currentReviewStatus_Str, StringComparison.InvariantCultureIgnoreCase) == false;
+                                string.IsNullOrWhiteSpace(_selectedNewReviewStatus_DropDown) == false &&
+                                _selectedNewReviewStatus_DropDown != Globals.ReviewStatuses[Globals.ReviewStatusType.Submitted] &&
+                                _selectedReview!.ReviewMeetingHeldOn != null;
 
                             return enabled;
                         }
@@ -524,7 +558,7 @@ namespace Training.Website.Components.Pages
         }
 
         private bool WasReviewStatusChanged() =>
-            string.IsNullOrWhiteSpace(_selectedNewReviewStatus) == false &&
-            _selectedNewReviewStatus.Equals(Globals.ReviewStatuses[_selectedReview!.Status_ID_Type], StringComparison.InvariantCultureIgnoreCase) == false;
+            string.IsNullOrWhiteSpace(_selectedNewReviewStatus_DropDown) == false &&
+            _selectedNewReviewStatus_DropDown.Equals(Globals.ReviewStatuses[_selectedReview!.Status_ID_Type], StringComparison.InvariantCultureIgnoreCase) == false;
     }
 }

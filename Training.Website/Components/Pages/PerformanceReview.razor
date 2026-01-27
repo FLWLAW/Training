@@ -197,6 +197,18 @@
                         </TelerikDropDownList>
                     </td>
                 </tr>
+                <tr>
+                    <td style="width: 100%; text-align: center; padding-top: 9px; padding-right: 9px;">
+                        <span style="padding-right: 9px;">Review Meeting Held On:</span>
+                        <!-- USE bind-value AND NOT OnChange, BECAUSE OnChange WILL NOT LAUNCH ITS ASSOCIATED METHOD AND RUN ANY VALUE-SETTING COMMANDS UNTIL AFTER THE CONTROL LOSES FOCUS. bind-Value WILL SET THE VALUE IMMEDIATELY.  ->
+                        <TelerikDatePicker @bind-Value="@_selectedReview!.ReviewMeetingHeldOn"
+                                           Enabled="@ReviewMeetingDateEnabled()"
+                                           Format="MM/dd/yyyy"
+                                           Min="@_minimumReviewMeetingDate"
+                                           Max="@DateTime.Today"
+                                           Width="150px" />
+                    </td>
+                </tr>
                 @if (_showSelectSubmitToHR_Reminder == true)
                 {
                     <tr>
