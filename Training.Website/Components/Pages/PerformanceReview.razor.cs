@@ -198,6 +198,9 @@ namespace Training.Website.Components.Pages
             await Globals.ExportToWordFile(document, filename, JS);
         }
 
+        private bool ExportToWordEnabled() =>
+            ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true ||
+            _selectedReview!.Status_ID_Type == Globals.ReviewStatusType.Pending || _selectedReview.Status_ID_Type == Globals.ReviewStatusType.InReview;
 
         private async Task GetCurrentReviewStatusByReviewID_Main()
         {
