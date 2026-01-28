@@ -71,6 +71,10 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureAsync<PerformanceReviewQuestionModel?, object?>
                 ("usp_Performance_Review_GetPerformanceReviewQuestionsByReviewYear", new { ReviewYear = reviewYear });
 
+        public async Task<IEnumerable<PerformanceReviewStatusesAllUsersByReviewYearModel?>?> GetReviewStatusesAllUsersByReviewYear(int reviewYear, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<PerformanceReviewStatusesAllUsersByReviewYearModel?, object?>
+                ("usp_Performance_Review_GetReviewStatusesAllUsersByReviewYear", new { Review_Year = reviewYear });
+
         public async Task<ReviewModel?> GetReviewByReviewID(int reviewID, IDatabase? database) =>
             (await database!.QueryByStoredProcedureAsync<ReviewModel, object?>("usp_Performance_Review_GetReviewByReviewID", new { Review_ID = reviewID }))?.FirstOrDefault();
 
@@ -188,6 +192,9 @@ namespace Training.Website.Services
                 await database!.NonQueryByStoredProcedureAsync<InsertReviewStatusChange_Parameters>("usp_Performance_Review_InsertStatusChangeOnly", parameters);
             }
         }
+
+        public async Task UpdateWhenReviewMeetingHeldOn(int reviewID, DateTime meetingDate, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_ReviewMeetingHeldOn", new { Review_ID = reviewID, Review_DateTime = meetingDate });
 
         public async Task UpsertPerformanceReviewAnswer_Main
             (int reviewID, int questionID, string answer, int cmsUserID, int opsUserID, string? loginID, bool isAdministrator, IDatabase? database)

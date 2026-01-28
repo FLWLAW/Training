@@ -1,9 +1,30 @@
-﻿using Telerik.Documents.SpreadsheetStreaming;
+﻿using Microsoft.JSInterop;
+using System.Data;
+using Telerik.Documents.SpreadsheetStreaming;
+using Telerik.SvgIcons;
 
 namespace Training.Website.Services
 {
     public class SpecialExcelExportClass
     {
+        public static async Task ExportToBrowser(MemoryStream? stream, string? filename, IJSRuntime? js)
+        {
+            if (stream == null)
+                throw new NoNullAllowedException("[stream] cannot ne null in ExportToBrowser().");
+            else if (string.IsNullOrWhiteSpace(filename) == true)
+                throw new NoNullAllowedException("[filename] cannot be null in ExportToBrowser().");
+            else if (filename?.EndsWith(".xlsx") == false && filename?.EndsWith(".xls") == false && filename?.EndsWith(".xlsb") == false)
+                throw new ArgumentException("[filename] must have an .xls, .xlsx or .xlsb extension, and that extension must be the final extension.");
+            else if (js == null)
+                throw new NoNullAllowedException("[js] cannot be null in ExportToBrowser().");
+            else
+            {
+                stream.Position = 0;    // VERY IMPORTANT!!!!!
+                using var streamRef = new DotNetStreamReference(stream: stream);
+                await js.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+            }
+        }
+
         public static void SetCellValue(IRowExporter row, object? value)
         {
             using (ICellExporter cell = row.CreateCellExporter())
