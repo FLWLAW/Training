@@ -71,6 +71,10 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureAsync<PerformanceReviewQuestionModel?, object?>
                 ("usp_Performance_Review_GetPerformanceReviewQuestionsByReviewYear", new { ReviewYear = reviewYear });
 
+        public async Task<IEnumerable<PerformanceReviewStatusesAllUsersByReviewYearModel?>?> GetReviewStatusesAllUsersByReviewYear(int reviewYear, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<PerformanceReviewStatusesAllUsersByReviewYearModel?, object?>
+                ("usp_Performance_Review_GetReviewStatusesAllUsersByReviewYear", new { Review_Year = reviewYear });
+
         public async Task<ReviewModel?> GetReviewByReviewID(int reviewID, IDatabase? database) =>
             (await database!.QueryByStoredProcedureAsync<ReviewModel, object?>("usp_Performance_Review_GetReviewByReviewID", new { Review_ID = reviewID }))?.FirstOrDefault();
 

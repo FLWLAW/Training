@@ -2,9 +2,12 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.Identity.Client;
 using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
+using System;
 using System.Data;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using Telerik.Blazor.Components;
@@ -171,7 +174,29 @@ namespace Training.Website.Components.Pages
 
         private async Task ExportAllUsersToExcel()
         {
-            await Task.Delay(1);
+            PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results =
+                (await _service.GetReviewStatusesAllUsersByReviewYear(_selectedReviewYear!.Value, Database_OPS))?.ToArray();
+
+            if (results != null)
+            {
+                foreach (PerformanceReviewStatusesAllUsersByReviewYearModel? result in results)
+                {
+                    if (result != null)
+                    {
+                        Tuple<string?, string?>? tupleReviewee = await GetReviewee(result);
+
+                        result.FirstName_Reviewee = tupleReviewee?.Item1;
+                        result.LastName_Reviewee = tupleReviewee?.Item2;
+                        result.FullName_StatusChangedBy = await GetReviewer(result);
+                    }
+                }
+                results = await RefinedResultsForAllUsersExcelExport(results);
+
+                PerformanceReviewAllEmployeesStatusExcelExport export = new();
+                MemoryStream? stream = await export.Go(_selectedReviewYear.Value, results);
+
+                await SpecialExcelExportClass.ExportToBrowser(stream, $"All Users Current Status {_selectedReviewYear.Value}.xlsx", JS);
+            }
         }
 
         private async Task ExportPerformanceReviewOneEmployeeStatusHistoryToExcel_Main()
@@ -182,6 +207,8 @@ namespace Training.Website.Components.Pages
                 new(sheetName, _selectedReview, _allUsers_OPS_DB, _allUsers_CMS_DB, _service, Database_OPS);
 
             using (MemoryStream? stream = await export.Go())
+                await SpecialExcelExportClass.ExportToBrowser(stream, $"{sheetName}.xlsx", JS);
+/*
             {
                 if (stream != null)
                 {
@@ -190,6 +217,7 @@ namespace Training.Website.Components.Pages
                     await JS!.InvokeVoidAsync("downloadFileFromStream", $"{sheetName}.xlsx", streamRef);
                 }
             }
+*/
         }
 
         private async Task ExportPerformanceReviewToWord_Main()
@@ -224,6 +252,63 @@ namespace Training.Website.Components.Pages
                     }
                 }
             }
+        }
+
+        private async Task<Tuple<string?, string?>?> GetReviewee(PerformanceReviewStatusesAllUsersByReviewYearModel? result)
+        {
+            string? firstName_Reviewee = null, lastName_Reviewee = null;
+
+            await Task.Run(() =>
+            {
+                AllUsers_OPS_DB? reviewee_OPS_DB =
+                    _allUsers_OPS_DB?.FirstOrDefault
+                        (q => q?.UserName?.Equals(result?.Login_ID_Reviewee, StringComparison.InvariantCultureIgnoreCase) == true || q?.Emp_ID == result?.OPS_User_ID_Reviewee);
+
+                if (reviewee_OPS_DB != null)
+                {
+                    lastName_Reviewee = reviewee_OPS_DB.LastName;
+                    firstName_Reviewee = reviewee_OPS_DB?.FirstName;
+                }
+                else
+                {
+                    AllUsers_CMS_DB? reviewee_CMS_DB = _allUsers_CMS_DB?.FirstOrDefault
+                        (q => q?.LoginID?.Equals(result?.Login_ID_Reviewee, StringComparison.InvariantCultureIgnoreCase) == true || q?.AppUserID == result?.CMS_User_ID_Reviewee);
+
+                    if (reviewee_CMS_DB != null)
+                    {
+                        firstName_Reviewee = reviewee_CMS_DB.FirstName;
+                        lastName_Reviewee = reviewee_CMS_DB.LastName;
+                    }
+                }
+            });
+
+            return new Tuple<string?, string?>(firstName_Reviewee, lastName_Reviewee);
+        }
+
+        private async Task<string?> GetReviewer(PerformanceReviewStatusesAllUsersByReviewYearModel? result)
+        {
+            string? reviewer = null;
+
+            await Task.Run(() =>
+            {
+                AllUsers_OPS_DB? reviewer_OPS_DB =
+                    _allUsers_OPS_DB?.FirstOrDefault
+                        (q => q?.UserName?.Equals(result?.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true || q?.Emp_ID == result?.OPS_User_ID_Reviewee);
+
+                if (reviewer_OPS_DB != null)
+                    reviewer = string.Concat(reviewer_OPS_DB.FirstName, ' ', reviewer_OPS_DB.LastName);
+                else
+                {
+                    AllUsers_CMS_DB? reviewer_CMS_DB = _allUsers_CMS_DB?.FirstOrDefault
+                        (q => q?.LoginID?.Equals(result?.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true || q?.AppUserID == result?.CMS_User_ID_Reviewee);
+
+                    if (reviewer_CMS_DB != null)
+                        reviewer = string.Concat(reviewer_CMS_DB.FirstName, ' ', reviewer_CMS_DB.LastName);
+                }
+
+            });
+
+            return reviewer;
         }
 
         private async Task<IEnumerable<UsersForDropDownModel?>?> GetUsers_Main()
@@ -283,6 +368,55 @@ namespace Training.Website.Components.Pages
                 return _allRadioChoices?.Where(q => q?.ReviewQuestion_ID == questionID).OrderBy(q => q?.RadioChoice_Sequence);
             else
                 return null;
+        }
+
+        private async Task<PerformanceReviewStatusesAllUsersByReviewYearModel?[]?> RefinedResultsForAllUsersExcelExport(PerformanceReviewStatusesAllUsersByReviewYearModel?[] results_Raw)
+        {
+            if (results_Raw == null || results_Raw.Length == 0)
+                return null;
+            else
+            {
+                // GENERATE A LIST OF LOGIN IDs THAT OCCUR MORE THAN ONCE AND THE MOST RECENT WhenChanged
+                string?[]? reviewees_LoginIDsMoreThanOnce = results_Raw.GroupBy(q => q?.Login_ID_Reviewee?.ToLower()).Where(c => c?.Count() > 1).Select(q => q.Key)?.ToArray();
+
+                List<int?> listOfIDsToNotUse = [];
+
+                if (reviewees_LoginIDsMoreThanOnce != null)
+                {
+                    // PARSE THROUGH LIST OF REVIEWEE LOGIN IDs THAT OCCUR MORE THAN ONCE
+                    foreach (string? duplicateReviewee_LoginID in reviewees_LoginIDsMoreThanOnce)
+                    {
+                        // GET FULL RECORD ENTRIES OF LOGIN IDs THAT OCCUR MORE THAN ONCE
+                        PerformanceReviewStatusesAllUsersByReviewYearModel?[]? list =
+                            results_Raw.Where(q => q?.Login_ID_Reviewee?.Equals(duplicateReviewee_LoginID, StringComparison.InvariantCultureIgnoreCase) == true)?.ToArray();
+
+                        if (list != null)
+                        {
+                            int? mostRecentID = list.OrderByDescending(q => q?.WhenChanged).FirstOrDefault()?.ID;
+                            if (mostRecentID != null)   // SHOULD NEVER BE NULL
+                            {
+                                int?[]? tempListDotUseIDs = list.Where(q => q?.ID != mostRecentID).Select(r => r?.ID)?.ToArray();
+
+                                if (tempListDotUseIDs != null)
+                                    listOfIDsToNotUse.AddRange(tempListDotUseIDs);
+                            }
+                        }
+                    }
+                }
+
+                if (listOfIDsToNotUse.Count == 0)
+                    return results_Raw;
+                else
+                {
+                    List<PerformanceReviewStatusesAllUsersByReviewYearModel?> results_Refined = [];
+
+                    foreach (PerformanceReviewStatusesAllUsersByReviewYearModel? result_Raw in results_Raw)
+                        if (result_Raw != null && listOfIDsToNotUse.Contains(result_Raw.ID) == false)
+                            results_Refined.Add(result_Raw);
+
+                    return await Task.FromResult<PerformanceReviewStatusesAllUsersByReviewYearModel?[]?>([.. results_Refined]);
+                }
+            }
         }
 
         private bool ReviewMeetingDateEnabled() => _selectedReview?.Status_ID_Type == Globals.ReviewStatusType.Submitted;
