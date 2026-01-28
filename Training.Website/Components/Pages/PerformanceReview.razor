@@ -218,6 +218,17 @@
                     </tr>
 
                 }
+                @if (ApplicationState!.LoggedOnUser.IsPerformanceReviewAdministrator == true)
+                {
+                    <tr>
+                        <td style="width: 100%; text-align: center; padding-top: 3px; color: red; font-weight: 700">
+                            <TelerikButton OnClick="@(async () => await ExportAllUsersToExcel())"
+                                           Enabled="true">
+                                Export All Users To Excel
+                            </TelerikButton>
+                        </td>
+                    </tr>
+                }
                 <tr>
                     <td style="width: 100%; text-align: center; padding-top: 3px; padding-left: 9px;">
                         <TelerikButton OnClick="@(async() => await ExportPerformanceReviewOneEmployeeStatusHistoryToExcel_Main() )" Enabled="true">

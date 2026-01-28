@@ -169,6 +169,11 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private async Task ExportAllUsersToExcel()
+        {
+            await Task.Delay(1);
+        }
+
         private async Task ExportPerformanceReviewOneEmployeeStatusHistoryToExcel_Main()
         {
             string sheetName = $"Review Status History {_selectedReviewYear} {_selectedUser?.FullName}";
@@ -474,6 +479,8 @@ namespace Training.Website.Components.Pages
             if (_questions != null)
             {
                 await SaveAnswers();
+                if (_selectedReview!.ReviewMeetingHeldOn != null)
+                    await _service.UpdateWhenReviewMeetingHeldOn(_selectedReview.ID!.Value, _selectedReview.ReviewMeetingHeldOn.Value, Database_OPS);
                 _answersSavedWindow_Visible = true;
                 StateHasChanged();
             }
