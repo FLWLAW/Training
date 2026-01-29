@@ -9,7 +9,7 @@ using Training.Website.Services;
 
 namespace Training.Website.Services.WordDocument
 {
-    public class CreateQuestionnairesInWordClass : IWordDocumentCreate
+    public class CreateQuestionnairesInWordClass
     {
         private readonly AdministratorServiceMethods _service;
         private readonly SessionInformationModel? _selectedSession;

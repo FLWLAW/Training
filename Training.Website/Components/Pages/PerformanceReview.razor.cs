@@ -13,6 +13,8 @@ using System.Text;
 using Telerik.Blazor.Components;
 using Telerik.Documents.SpreadsheetStreaming;
 using Telerik.SvgIcons;
+using Telerik.Windows.Documents.Fixed.Model;
+using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
 using Telerik.Windows.Documents.Flow.Model;
 using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
 using Training.Website.Models.Reviews;
@@ -125,6 +127,26 @@ namespace Training.Website.Components.Pages
                 return _selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
         }
 
+        private RadFixedDocument ConvertFlowToFixed(RadFlowDocument flowDocument)
+        {
+            // https://demos.telerik.com/blazor-ui/wordsprocessing/pdf-export
+
+            // 1. Create an instance of the PdfFormatProvider from the Flow namespace
+            // This provider facilitates the conversion from the flow model to a fixed layout.
+
+            // NOTE FROM DR - THIS IS CURIOUS, BECAUSE I DON'T SEE Telerik.**WINDOWS**.Documents.Flow... REFERENCED ANYWHERE - ONLY Telerik.Documents.Flow
+            Telerik.Windows.Documents.Flow.FormatProviders.Pdf.PdfFormatProvider provider = new();
+
+            // Optional: Set a timeout for the export process
+            TimeSpan timeout = TimeSpan.FromSeconds(30);
+
+            // 2. Use the ExportToFixedDocument method to perform the conversion
+            RadFixedDocument fixedDocument = provider.ExportToFixedDocument(flowDocument, timeout);
+
+            // 3. The resulting RadFixedDocument can now be used with RadPdfProcessing features
+            return fixedDocument;
+        }
+
         private StringBuilder EMailMessageBody()
         {
             StringBuilder body = new($"The employee review for {_selectedUser?.FullName} has been approved.");
@@ -208,24 +230,26 @@ namespace Training.Website.Components.Pages
 
             using (MemoryStream? stream = await export.Go())
                 await SpecialExcelExportClass.ExportToBrowser(stream, $"{sheetName}.xlsx", JS);
-/*
-            {
-                if (stream != null)
-                {
-                    stream.Position = 0;    // VERY IMPORTANT!!!!!
-                    using var streamRef = new DotNetStreamReference(stream: stream);
-                    await JS!.InvokeVoidAsync("downloadFileFromStream", $"{sheetName}.xlsx", streamRef);
-                }
-            }
-*/
+        }
+
+        private async Task ExportPerformanceReviewToAcrobat_Main()
+        {
+            CreatePerformanceReviewDocumentClass export =
+                new(_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices);
+
+            RadFlowDocument flowDocument = await export.Create(CreatePerformanceReviewDocumentClass.DocumentType.Acrobat);
+            RadFixedDocument fixedDocument = ConvertFlowToFixed(flowDocument);
+            string filename = $"{_selectedReviewYear.Value} Performance Review - {_selectedUser?.FirstName} {_selectedUser?.LastName}.pdf";
+
+            await Globals.ExportToAcrobatFile(fixedDocument, filename, JS);
         }
 
         private async Task ExportPerformanceReviewToWord_Main()
         {
-            CreatePerformanceReviewInWordClass export =
+            CreatePerformanceReviewDocumentClass export =
                 new (_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices);
 
-            RadFlowDocument document = await export.Create();
+            RadFlowDocument document = await export.Create(CreatePerformanceReviewDocumentClass.DocumentType.Word);
             string filename = $"{_selectedReviewYear.Value} Performance Review - {_selectedUser?.FirstName} {_selectedUser?.LastName}.docx";
 
             await Globals.ExportToWordFile(document, filename, JS);

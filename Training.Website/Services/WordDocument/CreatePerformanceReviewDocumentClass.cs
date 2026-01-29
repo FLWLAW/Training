@@ -11,7 +11,7 @@ using Training.Website.Models.Users;
 
 namespace Training.Website.Services.WordDocument
 {
-    public class CreatePerformanceReviewInWordClass : IWordDocumentCreate
+    public class CreatePerformanceReviewDocumentClass
     {
         private readonly Dictionary<int, string>? _answerFormats;
         private readonly int _selectedReviewYear;
@@ -21,7 +21,7 @@ namespace Training.Website.Services.WordDocument
         private readonly PerformanceReviewQuestionModel?[]? _questions;
         private readonly RadioChoiceModel?[]? _allRadioChoices;
 
-        public CreatePerformanceReviewInWordClass
+        public CreatePerformanceReviewDocumentClass
             (
                 Dictionary<int, string>? answerFormats,
                 int selectedReviewYear,
@@ -41,7 +41,14 @@ namespace Training.Website.Services.WordDocument
             _allRadioChoices = radioChoices;
         }
 
-        public async Task<RadFlowDocument> Create()
+        public enum DocumentType
+        {
+            NOT_SPECIFIED,
+            Word,
+            Acrobat,
+        }
+
+        public async Task<RadFlowDocument> Create(DocumentType documentType)
         {
             RadFlowDocument document = new();
             Section? section = document.Sections.AddSection();
@@ -51,8 +58,9 @@ namespace Training.Website.Services.WordDocument
                 AddTitle(section);
                 AddEmployeeHeader(section);
                 AddEmployeeInfo(document, section);
-                AddQuestionsAndAnswers(section);
-                AddSignatures(section);
+                AddQuestionsAndAnswers(documentType, section);
+                if (documentType == DocumentType.Acrobat)
+                    AddSignatures(section);
             });
 
             return document;
@@ -93,7 +101,7 @@ namespace Training.Website.Services.WordDocument
             cell.PreferredWidth = new TableWidthUnit(width);
         }
 
-        private void AddQuestionsAndAnswers(Section section)
+        private void AddQuestionsAndAnswers(DocumentType documentType, Section section)
         {
             if (_questions != null)
             {
@@ -116,7 +124,10 @@ namespace Training.Website.Services.WordDocument
                                     StringBuilder radioChoiceLine = new("\t\t");
 
                                     if (question.Answer?.Equals(radioChoice?.RadioChoice_Text, StringComparison.InvariantCultureIgnoreCase) == true)
-                                        radioChoiceLine.Append($"{Globals.CheckMark}\t");
+                                    {
+                                        string mark = (documentType == DocumentType.Acrobat) ? "X" : Globals.CheckMark;     // NOTE: CHECK MARK DOES NOT APPEAR IN ACROBAT
+                                        radioChoiceLine.Append($"{mark}\t");
+                                    }
                                     else
                                         radioChoiceLine.Append('\t');
 
