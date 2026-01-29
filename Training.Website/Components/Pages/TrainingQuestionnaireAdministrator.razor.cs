@@ -30,9 +30,9 @@ namespace Training.Website.Components.Pages
         #region PRIVATE FIELDS
         private const string _windowWidth = "80%";
         private const string _windowLeft = "20%";
-        private const string _topWindowTop = "7%";
-        private const string _middleWindowTop = "27%";
-        private const string _bottomWindowTop = "74%";
+        private const string _topWindowTop = "15%";
+        private const string _middleWindowTop = "35%";
+        private const string _bottomWindowTop = "82%";
 
         private Dictionary<int, string>? _answerFormats = null;
         private IEnumerable<string>? _sessions_FullText = null;
