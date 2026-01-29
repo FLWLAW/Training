@@ -17,6 +17,7 @@ namespace Training.Website.Components.Layout
         #endregion
 
         #region PRIVATE FIELDS
+        private bool _performanceReviewMode = false;
         private readonly SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
         private readonly NavMenuServiceMethods _service = new();
         private IEnumerable<string>? _testers = null;
@@ -43,5 +44,15 @@ namespace Training.Website.Components.Layout
             ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.LoginID != null && _testers != null
                 ? _testers!.Contains(ApplicationState!.LoggedOnUser!.LoginID!.ToLower())
                 : false;
+
+        private void SetPerformanceViewModeToTrue()
+        {
+            //NOTE: IF THIS EVENT IS FIRED IMMEDIATELY AFTER THE PAGE IS RENDERED, ITS INTENDED EFFECT OF MAKING THE "questionnaire" LINKS DISAPPEAR DOESN'T WORK.
+            //      THE USER NEEDS TO WAIT A FEW SECONDS AFTER THE PAGE RENDERS.
+            //      USING AN "await Task.Delay(x)" DIDN'T WORK.
+
+            _performanceReviewMode = true;
+            StateHasChanged();
+        }
     }
 }

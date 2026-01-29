@@ -1,35 +1,42 @@
-﻿<div class="top-row ps-3 navbar navbar-dark" style="background-color: black">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Training</a>
+﻿@if (_performanceReviewMode == false)
+{
+    <div class="top-row ps-3 navbar navbar-dark" style="background-color: black">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="">Training</a>
+        </div>
     </div>
-</div>
+}
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <div class="nav-item px-1">
-        <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireUser">
-            Training Questionnaire
-        </NavLink>
-    </div>
 
-    @if (IsAdministrator() == true)
+    @if (_performanceReviewMode == false)
     {
         <div class="nav-item px-1">
-            <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAdministrator">
-                Create Training Questionnaire and Answer Key
+            <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireUser">
+                Training Questionnaire
             </NavLink>
         </div>
 
-        <div class="nav-item px-1">
-            <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAudience">
-                Audience
-            </NavLink>
-        </div>
+        @if (IsAdministrator() == true)
+        {
+            <div class="nav-item px-1">
+                <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAdministrator">
+                    Create Training Questionnaire and Answer Key
+                </NavLink>
+            </div>
 
-        <div class="nav-item px-1">
-            <NavLink class="Dashboard-nav-link" href="Reports">
-                Reports
-            </NavLink>
-        </div>
+            <div class="nav-item px-1">
+                <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAudience">
+                    Audience
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-1">
+                <NavLink class="Dashboard-nav-link" href="Reports">
+                    Reports
+                </NavLink>
+            </div>
+        }
     }
 
     @if (IsTester() == true)
@@ -54,17 +61,15 @@
 
     @if (IsTester() == true || IsManager() == true)
     {
-        <div class="nav-item px-1">
-            <NavLink class="Dashboard-nav-link" href="PerformanceReview">
-                Performance Review
-            </NavLink>
-        </div>
+        <NavLink class="Dashboard-nav-link" href="PerformanceReview" @onclick="SetPerformanceViewModeToTrue">
+            Performance Review
+        </NavLink>
     }
 
     @if (ApplicationState?.LoggedOnUser?.UserName == "David Rosenblum" || ApplicationState?.LoggedOnUser?.UserName == "Susan Eisenman")
     {
         <div class="nav-item px-1">
-            <NavLink class="Dashboard-nav-link" href="PerformanceReviewAdministratorPage">
+            <NavLink class="Dashboard-nav-link" href="PerformanceReviewAdministratorPage" @onclick="SetPerformanceViewModeToTrue">
                 Performance Review Administrator Page
             </NavLink>
         </div>
