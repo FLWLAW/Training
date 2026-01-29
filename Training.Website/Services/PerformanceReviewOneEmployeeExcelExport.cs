@@ -99,7 +99,7 @@ namespace Training.Website.Services
                                 result.LastName_Reviewee = cmsReviewee.LastName;
 
                                 AllUsers_CMS_DB? cmsStatusChangedBy =
-                                    _allUsers_CMS_DB?.FirstOrDefault(q => q?.LoginID.Equals(result.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true);
+                                    _allUsers_CMS_DB?.FirstOrDefault(q => q?.LoginID?.Equals(result.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true);
 
                                 result.FirstName_StatusChangedBy = cmsStatusChangedBy?.FirstName;
                                 result.LastName_StatusChangedBy = cmsStatusChangedBy?.LastName;

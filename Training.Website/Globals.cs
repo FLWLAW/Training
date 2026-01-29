@@ -3,6 +3,7 @@ using SqlServerDatabaseAccessLibrary;
 using System.Text;
 using Telerik.Blazor.Components;
 using Telerik.SvgIcons;
+using Telerik.Windows.Documents.Fixed.Model;
 using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
 using Telerik.Windows.Documents.Flow.Model;
 using Training.Website.Models;
@@ -121,6 +122,20 @@ namespace Training.Website
                         filenameRefined.Append($"_{segment.ToString()}");
 
             return filenameRefined.ToString();
+        }
+
+        public static async Task ExportToAcrobatFile(RadFixedDocument document, string filename, IJSRuntime? JS)
+        {
+            Telerik.Windows.Documents.Fixed.FormatProviders.Pdf.PdfFormatProvider formatProvider = new();
+
+            using (MemoryStream ms = new())
+            {
+                formatProvider.Export(document, ms, null);
+
+                ms.Position = 0;    // VERY IMPORTANT!!!!!
+                using var streamRef = new DotNetStreamReference(stream: ms);
+                await JS!.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+            }
         }
 
         public static async Task ExportToExcelFile<T>(TelerikGrid<T>? grid) => await grid!.SaveAsExcelFileAsync();
