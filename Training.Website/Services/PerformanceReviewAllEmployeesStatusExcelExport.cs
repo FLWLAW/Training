@@ -5,13 +5,13 @@ namespace Training.Website.Services
 {
     public class PerformanceReviewAllEmployeesStatusExcelExport
     {
-        public async Task<MemoryStream?> Go(int reviewYear, PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results)
+        public async Task<MemoryStream?> Go(string tabTitle, PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results)
         {
             MemoryStream stream = new();    // CANNOT USE "using" HERE, BECAUSE "using" WILL CLOSE THE STREAM BEFORE IT IS RETURNED
 
             using (IWorkbookExporter workbook = SpreadExporter.CreateWorkbookExporter(SpreadDocumentFormat.Xlsx, stream))
             {
-                using (IWorksheetExporter worksheet = workbook.CreateWorksheetExporter($"All Users Status Year {reviewYear}"))
+                using (IWorksheetExporter worksheet = workbook.CreateWorksheetExporter(tabTitle))
                 {
                     SetColumnWidths(worksheet);
                     SetColumnHeaders(worksheet);
@@ -32,11 +32,11 @@ namespace Training.Website.Services
                 SpecialExcelExportClass.SetColumnHeader(row, "Review ID");
                 SpecialExcelExportClass.SetColumnHeader(row, "Employee First Name");
                 SpecialExcelExportClass.SetColumnHeader(row, "Employee Last Name");
+                SpecialExcelExportClass.SetColumnHeader(row, "Manager");
                 SpecialExcelExportClass.SetColumnHeader(row, "Current Review Status");
                 SpecialExcelExportClass.SetColumnHeader(row, "Status Changed By");
                 SpecialExcelExportClass.SetColumnHeader(row, "Status Changed Date");
                 SpecialExcelExportClass.SetColumnHeader(row, "Review Meeting Held On");
-
             }
         }
 
@@ -46,6 +46,7 @@ namespace Training.Website.Services
             SpecialExcelExportClass.SetColumnWidth(worksheet, 90);      // REVIEW ID
             SpecialExcelExportClass.SetColumnWidth(worksheet, 150);     // EMP. FIRST NAME
             SpecialExcelExportClass.SetColumnWidth(worksheet, 150);     // EMP. LAST NAME
+            SpecialExcelExportClass.SetColumnWidth(worksheet, 150);     // MANAGER
             SpecialExcelExportClass.SetColumnWidth(worksheet, 150);     // CURRENT REVIEW STATUS
             SpecialExcelExportClass.SetColumnWidth(worksheet, 130);     // STATUS CHANGED BY
             SpecialExcelExportClass.SetColumnWidth(worksheet, 160);     // STATUS CHANGED DATE
@@ -66,6 +67,7 @@ namespace Training.Website.Services
                             SpecialExcelExportClass.SetCellValue(row, result.Review_ID);
                             SpecialExcelExportClass.SetCellValue(row, result.FirstName_Reviewee);
                             SpecialExcelExportClass.SetCellValue(row, result.LastName_Reviewee);
+                            SpecialExcelExportClass.SetCellValue(row, result.ManagerName);
                             SpecialExcelExportClass.SetCellValue(row, result.NewStatus);
                             SpecialExcelExportClass.SetCellValue(row, result.FullName_StatusChangedBy);
                             SpecialExcelExportClass.SetCellValue(row, result.WhenChanged);

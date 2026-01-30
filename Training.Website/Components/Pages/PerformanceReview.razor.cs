@@ -201,23 +201,48 @@ namespace Training.Website.Components.Pages
 
             if (results != null)
             {
-                foreach (PerformanceReviewStatusesAllUsersByReviewYearModel? result in results)
-                {
-                    if (result != null)
-                    {
-                        Tuple<string?, string?>? tupleReviewee = await GetReviewee(result);
+                results = await PopulateReviewees_Reviewers_Managers(results);
 
-                        result.FirstName_Reviewee = tupleReviewee?.Item1;
-                        result.LastName_Reviewee = tupleReviewee?.Item2;
-                        result.FullName_StatusChangedBy = await GetReviewer(result);
+                string tabTitle = $"Employees Current Status {_selectedReviewYear}";
+                PerformanceReviewAllEmployeesStatusExcelExport export = new();
+                MemoryStream? stream = await export.Go(tabTitle, results);
+
+                await SpecialExcelExportClass.ExportToBrowser(stream, $"{tabTitle}.xlsx", JS);
+            }
+        }
+
+        public async Task ExportCurrentReviewStatusesForAllUsersInEmployeeDropDownToExcel_Main()
+        {
+            if (_allUsersForDropDown != null)
+            {
+                List<PerformanceReviewStatusesAllUsersByReviewYearModel?> results_List = [];
+
+                foreach (UsersForDropDownModel? user in _allUsersForDropDown)
+                {
+                    if (user != null && user.OPS_UserID != null)
+                    {
+                        PerformanceReviewStatusesAllUsersByReviewYearModel? row =
+                            await _service.GetLatestStatusOneEmployeeByReviewYearAndID(user!.OPS_UserID!.Value, _selectedReviewYear!.Value, Database_OPS);
+
+                        if (row != null)
+                        {
+                            if (row.Review_ID != null)
+                                row.ReviewMeetingHeldOn = await _service.GetMeetingHeldOnByReviewID(row.Review_ID.Value, Database_OPS);
+
+                            results_List.Add(row);
+                        }
                     }
                 }
-                results = await RefinedResultsForAllUsersExcelExport(results);
 
+                PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results_Array = results_List?.ToArray();
+                results_Array = await PopulateReviewees_Reviewers_Managers(results_Array);
+
+                string tabTitle = $"{ApplicationState!.LoggedOnUser!.UserName} {_selectedReviewYear}";
                 PerformanceReviewAllEmployeesStatusExcelExport export = new();
-                MemoryStream? stream = await export.Go(_selectedReviewYear.Value, results);
+                MemoryStream? stream = await export.Go(tabTitle, results_Array);
+                string? filename = $"Employees Current Status {tabTitle}.xlsx";
 
-                await SpecialExcelExportClass.ExportToBrowser(stream, $"All Users Current Status {_selectedReviewYear.Value}.xlsx", JS);
+                await SpecialExcelExportClass.ExportToBrowser(stream, filename, JS);
             }
         }
 
@@ -228,8 +253,8 @@ namespace Training.Website.Components.Pages
             PerformanceReviewOneEmployeeExcelExport export =
                 new(sheetName, _selectedReview, _allUsers_OPS_DB, _allUsers_CMS_DB, _service, Database_OPS);
 
-            using (MemoryStream? stream = await export.Go())
-                await SpecialExcelExportClass.ExportToBrowser(stream, $"{sheetName}.xlsx", JS);
+            using MemoryStream? stream = await export.Go();
+            await SpecialExcelExportClass.ExportToBrowser(stream, $"{sheetName}.xlsx", JS);
         }
 
         private async Task ExportPerformanceReviewToAcrobat_Main()
@@ -374,6 +399,30 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private async Task<PerformanceReviewStatusesAllUsersByReviewYearModel?[]?> PopulateReviewees_Reviewers_Managers(PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results)
+        {
+            if (results == null)
+                return null;
+            else
+            {
+                foreach (PerformanceReviewStatusesAllUsersByReviewYearModel? result in results)
+                {
+                    if (result != null)
+                    {
+                        Tuple<string?, string?>? tupleReviewee = await GetReviewee(result);
+
+                        result.FirstName_Reviewee = tupleReviewee?.Item1;
+                        result.LastName_Reviewee = tupleReviewee?.Item2;
+                        result.FullName_StatusChangedBy = await GetReviewer(result);
+                        result.ManagerName = await _service.GetManagerForUser_CMS_DB(result.CMS_User_ID_Reviewee!.Value, _allUsers_CMS_DB, _dbCMS!);
+                    }
+                }
+
+                results = await RefinedResultsForAllUsersExcelExport(results);
+                return results;
+            }
+        }
+
         private void RadioChoiceHandler(object? newValue)
         {
             if (newValue != null && int.TryParse(newValue.ToString(), out int selectedRadioChoiceID) == true)
@@ -396,6 +445,8 @@ namespace Training.Website.Components.Pages
 
         private async Task<PerformanceReviewStatusesAllUsersByReviewYearModel?[]?> RefinedResultsForAllUsersExcelExport(PerformanceReviewStatusesAllUsersByReviewYearModel?[] results_Raw)
         {
+            // GET MOST RECENT STATUS OF EACH EMPLOYEE
+
             if (results_Raw == null || results_Raw.Length == 0)
                 return null;
             else
@@ -646,12 +697,12 @@ namespace Training.Website.Components.Pages
 
         private bool SaveAnswersEnabled()
         {
-            if (_selectedReview != null && _selectedReview.Status_ID_Type == Globals.ReviewStatusType.SentToHR)
+            if (_selectedReview == null || _selectedReview.Status_ID_Type == Globals.ReviewStatusType.SentToHR)
                 return false;
-            else if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true)
+            else if (ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator == true || (_selectedReview.Status_ID_Type == Globals.ReviewStatusType.Submitted && _selectedReview.ReviewMeetingHeldOn != null))
                 return true;
             else
-                return _selectedReview?.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
+                return _selectedReview.Status_ID_Type == Globals.ReviewStatusType.Pending && WasReviewStatusChanged() == false;
         }
 
         private async Task UserForDropDownChanged(string newValue)

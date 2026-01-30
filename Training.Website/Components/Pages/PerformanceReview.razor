@@ -140,6 +140,15 @@
                 </TelerikDropDownList>
             </td>
         </tr>
+        <tr>
+            <td colspan="2" style="text-align: center">
+                <TelerikButton
+                    OnClick="@(async () => await ExportCurrentReviewStatusesForAllUsersInEmployeeDropDownToExcel_Main())"
+                    Enabled="true">
+                    Export Status History For All Users Reporting To @ApplicationState.LoggedOnUser.UserName to Excel
+                </TelerikButton>
+            </td>
+        </tr>
     </table>
 
     @if (_allUsersForDropDown != null && _selectedUser != null)
