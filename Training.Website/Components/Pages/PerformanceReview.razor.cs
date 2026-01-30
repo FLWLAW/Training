@@ -194,29 +194,6 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private async Task<PerformanceReviewStatusesAllUsersByReviewYearModel?[]?> PopulateReviewees_Reviewers(PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results)
-        {
-            if (results == null)
-                return null;
-            else
-            {
-                foreach (PerformanceReviewStatusesAllUsersByReviewYearModel? result in results)
-                {
-                    if (result != null)
-                    {
-                        Tuple<string?, string?>? tupleReviewee = await GetReviewee(result);
-
-                        result.FirstName_Reviewee = tupleReviewee?.Item1;
-                        result.LastName_Reviewee = tupleReviewee?.Item2;
-                        result.FullName_StatusChangedBy = await GetReviewer(result);
-                    }
-                }
-
-                results = await RefinedResultsForAllUsersExcelExport(results);
-                return results;
-            }
-        }
-
         private async Task ExportAllUsersToExcel()
         {
             PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results =
@@ -224,7 +201,7 @@ namespace Training.Website.Components.Pages
 
             if (results != null)
             {
-                results = await PopulateReviewees_Reviewers(results);
+                results = await PopulateReviewees_Reviewers_Managers(results);
 
                 string tabTitle = $"Employees Current Status {_selectedReviewYear}";
                 PerformanceReviewAllEmployeesStatusExcelExport export = new();
@@ -242,20 +219,23 @@ namespace Training.Website.Components.Pages
 
                 foreach (UsersForDropDownModel? user in _allUsersForDropDown)
                 {
-                    PerformanceReviewStatusesAllUsersByReviewYearModel? row =
-                        await _service.GetLatestStatusOneEmployeeByReviewYearAndID(user!.OPS_UserID!.Value, _selectedReviewYear!.Value, Database_OPS);
-
-                    if (row != null)
+                    if (user != null && user.OPS_UserID != null)
                     {
-                        if (row.Review_ID != null)
-                            row.ReviewMeetingHeldOn = await _service.GetMeetingHeldOnByReviewID(row.Review_ID.Value, Database_OPS);
+                        PerformanceReviewStatusesAllUsersByReviewYearModel? row =
+                            await _service.GetLatestStatusOneEmployeeByReviewYearAndID(user!.OPS_UserID!.Value, _selectedReviewYear!.Value, Database_OPS);
 
-                        results_List.Add(row);
+                        if (row != null)
+                        {
+                            if (row.Review_ID != null)
+                                row.ReviewMeetingHeldOn = await _service.GetMeetingHeldOnByReviewID(row.Review_ID.Value, Database_OPS);
+
+                            results_List.Add(row);
+                        }
                     }
                 }
 
                 PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results_Array = results_List?.ToArray();
-                await PopulateReviewees_Reviewers(results_Array);
+                results_Array = await PopulateReviewees_Reviewers_Managers(results_Array);
 
                 string tabTitle = $"{ApplicationState!.LoggedOnUser!.UserName} {_selectedReviewYear}";
                 PerformanceReviewAllEmployeesStatusExcelExport export = new();
@@ -273,8 +253,8 @@ namespace Training.Website.Components.Pages
             PerformanceReviewOneEmployeeExcelExport export =
                 new(sheetName, _selectedReview, _allUsers_OPS_DB, _allUsers_CMS_DB, _service, Database_OPS);
 
-            using (MemoryStream? stream = await export.Go())
-                await SpecialExcelExportClass.ExportToBrowser(stream, $"{sheetName}.xlsx", JS);
+            using MemoryStream? stream = await export.Go();
+            await SpecialExcelExportClass.ExportToBrowser(stream, $"{sheetName}.xlsx", JS);
         }
 
         private async Task ExportPerformanceReviewToAcrobat_Main()
@@ -416,6 +396,30 @@ namespace Training.Website.Components.Pages
                     throw new NoNullAllowedException("[reviewID] cannot be null in InsertAndGetReview().");
                 else
                     _selectedReview = await _service.GetReviewByReviewID(reviewID!.Value, Database_OPS);
+            }
+        }
+
+        private async Task<PerformanceReviewStatusesAllUsersByReviewYearModel?[]?> PopulateReviewees_Reviewers_Managers(PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results)
+        {
+            if (results == null)
+                return null;
+            else
+            {
+                foreach (PerformanceReviewStatusesAllUsersByReviewYearModel? result in results)
+                {
+                    if (result != null)
+                    {
+                        Tuple<string?, string?>? tupleReviewee = await GetReviewee(result);
+
+                        result.FirstName_Reviewee = tupleReviewee?.Item1;
+                        result.LastName_Reviewee = tupleReviewee?.Item2;
+                        result.FullName_StatusChangedBy = await GetReviewer(result);
+                        result.ManagerName = await _service.GetManagerForUser_CMS_DB(result.CMS_User_ID_Reviewee!.Value, _allUsers_CMS_DB, _dbCMS!);
+                    }
+                }
+
+                results = await RefinedResultsForAllUsersExcelExport(results);
+                return results;
             }
         }
 

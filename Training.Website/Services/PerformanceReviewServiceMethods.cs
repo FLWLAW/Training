@@ -1,6 +1,8 @@
 ﻿using Dapper;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
+using System.Text;
+using System.Threading.Tasks;
 using Training.Website.Models;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
@@ -56,6 +58,56 @@ namespace Training.Website.Services
                         <string?, object?>
                             ("usp_Performance_Review_GetLoginIdOfLatestManagerWhoChangedReviewStatusToInReview", new { Review_ID = reviewID })
                 )?.FirstOrDefault();
+
+        public async Task<string?> GetManagerForUser_CMS_DB(int cmsUserID_Reviewee, AllUsers_CMS_DB?[]? allUsers_CMS_DB, IDatabase database)
+        {
+            int? cmsUserID_Manager =
+                (
+                    await database!.QueryByStatementAsync<int?>
+                    ($"SELECT TOP 1 ManagerAppUserID FROM AppUserManager WHERE AppUserID = {cmsUserID_Reviewee} ORDER BY CreateDT DESC")
+                )?.FirstOrDefault();
+
+            if (cmsUserID_Manager == null)
+                return null;
+            else
+            {
+                AllUsers_CMS_DB? manager = allUsers_CMS_DB?.FirstOrDefault(q => q?.AppUserID == cmsUserID_Manager);
+
+                if (manager == null)
+                    return "[NO MANAGER FOUND IN DB]";
+                else
+                {
+                    string managerFirstName = manager.FirstName ?? string.Empty;
+                    string managerLastName = manager.LastName ?? string.Empty;
+                    bool blankFirstName = string.IsNullOrEmpty(managerFirstName);
+                    bool blankLastName = string.IsNullOrEmpty(managerLastName);
+
+                    if (blankFirstName == false && blankLastName == false)
+                        return string.Concat(managerFirstName, ' ', managerLastName);
+                    else
+                    {
+                        string managerLoginID = manager.LoginID ?? string.Empty;
+                        bool blankLoginID = string.IsNullOrEmpty(managerLoginID);
+                        string suffix = $" FOR ID #{cmsUserID_Manager} IN NY.AppUser FOR A MANAGER.";
+
+                        if (blankLastName == true && blankFirstName == true && blankLoginID == true)                                    // 111  (7)
+                            return $"[NO FIRST NAME, LAST NAME OR LOGIN ID FOUND{suffix}.]";
+                        else if (blankLastName == true && blankFirstName == true && blankLoginID == false)                              // 110  (6)
+                            return $"User ID: {managerLoginID} [NO FIRST NAME OR LAST NAME FOUND{suffix}.]";
+                        else if (blankLastName == true && blankFirstName == false && blankLoginID == true)                              // 101  (5)
+                            return $"First Name: {managerFirstName} [NO FIRST NAME OR LOGIN ID FOUND{suffix}.]";
+                        else if (blankLastName == true && blankFirstName == false && blankLoginID == false)                             // 100  (4)
+                            return $"First Name: {managerFirstName}, Login ID: {managerLoginID} [NO lAST NAME FOUND{suffix}.]";
+                        else if (blankLastName == false && blankFirstName == true && blankLoginID == true)                              // 011  (3)
+                            return $"Last Name: {managerLastName}, [NO FIRST NAME OR LOGIN ID FOUND{suffix}.]:";
+                        else //if (blankLastName == false && blankFirstName == true && blankLoginID == false)                           // 010  (2)
+                            return $"Last Name: {managerLastName}, Login ID: {managerLoginID} [NO FIRST NAME FOUND{suffix}.]";
+
+                        // IF MANAGER FIRST NAME AND MANAGER LAST NAME ARE BOTH NOT BLANK, THAT IS COVERED BEFORE THE "else" AND WE DON'T CARE ABOUT THE LOGIN ID IN THAT CIRCUMSTANCE.
+                    }
+                }
+            }
+        }
 
         public async Task<DateTime?> GetMeetingHeldOnByReviewID(int reviewID, IDatabase? database) =>
             (await database!.QueryByStatementAsync<DateTime?>($"SELECT ReviewMeetingHeldOn FROM [PERFORMANCE Review Main Tbl] WHERE ID = {reviewID}"))?.FirstOrDefault();
