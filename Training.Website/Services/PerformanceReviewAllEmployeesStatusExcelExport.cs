@@ -5,13 +5,13 @@ namespace Training.Website.Services
 {
     public class PerformanceReviewAllEmployeesStatusExcelExport
     {
-        public async Task<MemoryStream?> Go(int reviewYear, PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results)
+        public async Task<MemoryStream?> Go(string tabTitle, PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results)
         {
             MemoryStream stream = new();    // CANNOT USE "using" HERE, BECAUSE "using" WILL CLOSE THE STREAM BEFORE IT IS RETURNED
 
             using (IWorkbookExporter workbook = SpreadExporter.CreateWorkbookExporter(SpreadDocumentFormat.Xlsx, stream))
             {
-                using (IWorksheetExporter worksheet = workbook.CreateWorksheetExporter($"All Users Status Year {reviewYear}"))
+                using (IWorksheetExporter worksheet = workbook.CreateWorksheetExporter(tabTitle))
                 {
                     SetColumnWidths(worksheet);
                     SetColumnHeaders(worksheet);

@@ -38,6 +38,14 @@ namespace Training.Website.Services
         public async Task<string?> GetCurrentReviewStatusByReviewID(int reviewID, IDatabase? database) =>
             (await database!.QueryByStoredProcedureAsync<string?, object?>("usp_Performance_Review_GetCurrentReviewStatusByReviewID", new { Review_ID = reviewID }))?.FirstOrDefault();
 
+        public async Task<PerformanceReviewStatusesAllUsersByReviewYearModel?> GetLatestStatusOneEmployeeByReviewYearAndID(int opsID, int reviewYear, IDatabase? database) =>
+            (
+                await database!.QueryByStoredProcedureAsync
+                    <PerformanceReviewStatusesAllUsersByReviewYearModel?, object?>
+                        ("usp_Performance_Review_GetLatestStatusOneEmployeeByReviewYearAndID", new { OPS_Reviewee_ID = opsID, Review_Year = reviewYear })
+            )?.FirstOrDefault();
+
+
         public async Task<EmployeeInformationModel?> GetEmployeeInformation(int OPS_Emp_ID, int reviewYear, IDatabase? database) =>
             (await database!.QueryByStoredProcedureAsync<EmployeeInformationModel?, object?>
                 ("usp_Performance_Review_Employee_Information", new { OPS_Emp_ID = OPS_Emp_ID }))?.FirstOrDefault();
@@ -48,6 +56,9 @@ namespace Training.Website.Services
                         <string?, object?>
                             ("usp_Performance_Review_GetLoginIdOfLatestManagerWhoChangedReviewStatusToInReview", new { Review_ID = reviewID })
                 )?.FirstOrDefault();
+
+        public async Task<DateTime?> GetMeetingHeldOnByReviewID(int reviewID, IDatabase? database) =>
+            (await database!.QueryByStatementAsync<DateTime?>($"SELECT ReviewMeetingHeldOn FROM [PERFORMANCE Review Main Tbl] WHERE ID = {reviewID}"))?.FirstOrDefault();
 
         public async Task<Dictionary<int, string>?> GetPerformanceReviewAnswerFormats(IDatabase? database)
         {
