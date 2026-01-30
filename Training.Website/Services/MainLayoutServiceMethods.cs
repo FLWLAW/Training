@@ -57,8 +57,7 @@ namespace Training.Website.Services
                         LastName = "Rosenblum",
                         LoginID = "DRosenblum",
                         RoleID = 1,
-                        TitleID = 1,
-                        UserName = "David Rosenblum"
+                        TitleID = 1
                     };
                 }
 #else
