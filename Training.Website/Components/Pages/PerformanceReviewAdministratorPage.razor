@@ -33,13 +33,20 @@
             <TelerikGrid Data="@_questions"
                          Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
                          Width="1600px" Height="750px"
+                         EditMode="GridEditMode.Inline"
                          FilterMode="@GridFilterMode.None" Groupable="false"
                          SelectionMode="GridSelectionMode.None">
                 <GridColumns>
-                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question_ID)" Title="Question ID" Width="90px" />
-                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.QuestionNumber)" Title="Question Number" Width="90px" />
-                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question)" Title="Question" Width="120px" />
+                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question_ID)" Title="Question ID" Width="60px" Editable="false" />
+                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.QuestionNumber)" Title="Question Number" Width="60px" Editable="false" />
+                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question)" Title="Question" Width="240px" />
                     <GridColumn Field="@nameof(PerformanceReviewQuestionModel.AnswerFormat)" Title="Answer Format" Width="130px" />
+                    <GridCommandColumn Width="180px">
+                        <GridCommandButton Command="Edit">Edit</GridCommandButton>
+                        <GridCommandButton Command="Save" ShowInEdit="true">Save</GridCommandButton>
+                        <GridCommandButton Command="Cancel" ShowInEdit="true">Cancel</GridCommandButton>
+                        <GridCommandButton Command="Delete">Delete</GridCommandButton>
+                    </GridCommandColumn>
                 </GridColumns>
             </TelerikGrid>
         </td>

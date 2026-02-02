@@ -130,9 +130,9 @@ namespace Training.Website.Services
             }
         }
 
-        public async Task<IEnumerable<PerformanceReviewQuestionModel?>?> GetPerformanceReviewQuestions(int reviewYear, IDatabase? database) =>
+        public async Task<IEnumerable<PerformanceReviewQuestionModel?>?> GetPerformanceReviewQuestions(int reviewYear, bool isDeleted, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<PerformanceReviewQuestionModel?, object?>
-                ("usp_Performance_Review_GetPerformanceReviewQuestionsByReviewYear", new { ReviewYear = reviewYear });
+                ("usp_Performance_Review_GetPerformanceReviewQuestionsByReviewYearAndDeletedStatus", new { ReviewYear = reviewYear, IsDeleted = isDeleted });
 
         public async Task<IEnumerable<PerformanceReviewStatusesAllUsersByReviewYearModel?>?> GetReviewStatusesAllUsersByReviewYear(int reviewYear, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<PerformanceReviewStatusesAllUsersByReviewYearModel?, object?>

@@ -20,7 +20,7 @@ namespace Training.Website.Services
         public async Task<IEnumerable<IdValue<int>?>?> GetAllTitles(IDatabase? database) =>
             await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Title_SA", "TitleID", "TitleDesc");
 
-        public async Task<IEnumerable<AllUsers_CMS_DB>?> GetAllUsers_CMS_DB(IDatabase? database) =>
+        public async Task<IEnumerable<AllUsers_CMS_DB?>?> GetAllUsers_CMS_DB(IDatabase? database) =>
             await database!.QueryByStatementAsync<AllUsers_CMS_DB?>
                 ("SELECT AppUserID, RoleID, TitleID, FirstName, LastName, EmailAddress, LoginID FROM AppUser WHERE ActiveInd <> 0 AND TeamNameInd = 0 ORDER BY (FirstName + ' ' + LastName)");
 

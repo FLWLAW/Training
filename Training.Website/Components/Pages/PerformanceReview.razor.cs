@@ -540,7 +540,7 @@ namespace Training.Website.Components.Pages
             if (int.TryParse(newValue, out int selectedReviewYear) == true)
             {
                 _selectedReviewYear = selectedReviewYear;
-                _questions = (await _service.GetPerformanceReviewQuestions(_selectedReviewYear.Value, Database_OPS))?.ToArray();
+                _questions = (await _service.GetPerformanceReviewQuestions(_selectedReviewYear.Value, false, Database_OPS))?.ToArray();
                 _allRadioChoices = (await _service.GetAllRadioButtonChoicesByYear(_selectedReviewYear.Value, Database_OPS))?.ToArray();
                 _selectedUser = null;
                 _headerInfo = null;
