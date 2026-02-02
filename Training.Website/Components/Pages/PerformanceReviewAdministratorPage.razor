@@ -1,5 +1,6 @@
 ﻿@page "/PerformanceReviewAdministratorPage"
 
+@using Training.Website.Models
 @using Training.Website.Models.Reviews;
 
 <!-- SELECT REVIEW YEAR -->
@@ -27,29 +28,84 @@
     </tr>
 </table>
 
-<table width="100%">
-    <tr>
-        <td style="width: 100%;">
-            <TelerikGrid Data="@_questions"
-                         Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
-                         Width="1600px" Height="750px"
-                         EditMode="GridEditMode.Inline"
-                         FilterMode="@GridFilterMode.None" Groupable="false"
-                         SelectionMode="GridSelectionMode.None">
-                <GridColumns>
-                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question_ID)" Title="Question ID" Width="60px" Editable="false" />
-                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.QuestionNumber)" Title="Question Number" Width="60px" Editable="false" />
-                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question)" Title="Question" Width="240px" />
-                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.AnswerFormat)" Title="Answer Format" Width="130px" />
-                    <GridCommandColumn Width="180px">
-                        <GridCommandButton Command="Edit">Edit</GridCommandButton>
-                        <GridCommandButton Command="Save" ShowInEdit="true">Save</GridCommandButton>
-                        <GridCommandButton Command="Cancel" ShowInEdit="true">Cancel</GridCommandButton>
-                        <GridCommandButton Command="Delete">Delete</GridCommandButton>
-                    </GridCommandColumn>
-                </GridColumns>
-            </TelerikGrid>
-        </td>
-    </tr>
-</table>
+@if (_selectedReviewYear != null)
+{
+    <table width="100%">
+        <tr>
+            <td style="width: 100%; text-align: center; padding-top: 60px; font-weight: 700;">
+                Active Questions
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100%; text-align: center;">
+                <TelerikGrid
+                    Data="@_activeQuestions"
+                    Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                    Width="1600px"
+                    EditMode="GridEditMode.Inline"
+                    OnCreate="@ActiveQuestionCreateHandler"
+                    OnDelete="@ActiveQuestionDeleteHandler"
+                    OnUpdate="@ActiveQuestionUpdateHandler"
+                    FilterMode="@GridFilterMode.None" Groupable="false"
+                    SelectionMode="GridSelectionMode.None">
+                    <GridToolBarTemplate>
+                        <GridCommandButton Command="Add">Add New Question</GridCommandButton>
+                    </GridToolBarTemplate>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question_ID)" Title="Question ID" Width="60px" Editable="false" />
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.QuestionNumber)" Title="Question Number" Width="90px" Editable="false" />
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question)" Title="Question" Width="240px" />
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.AnswerFormat)" Title="Answer Format" Width="130px">
+                            <Template>
+                                @{
+                                    var dataItem = (PerformanceReviewQuestionModel)context;
+                                    @_answerFormats![dataItem.AnswerFormat!.Value]
+                                }
+                            </Template>
+                            <EditorTemplate>
+                                @{
+                                    <TelerikDropDownList
+                                        Data="@_answerFormats?.Values"
+                                        @bind-Value="@_selectedAnswerFormatDropDownValue"
+                                        Width="100%" />
+                                }
+                            </EditorTemplate>
+                        </GridColumn>
+                        <GridCommandColumn Width="180px">
+                            <GridCommandButton Command="Edit">Edit</GridCommandButton>
+                            <GridCommandButton Command="Save" ShowInEdit="true">Save</GridCommandButton>
+                            <GridCommandButton Command="Cancel" ShowInEdit="true">Cancel</GridCommandButton>
+                            <GridCommandButton Command="Delete">Delete</GridCommandButton>
+                        </GridCommandColumn>
+                    </GridColumns>
+                </TelerikGrid>
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100%; text-align: center; padding-top: 120px; font-weight: 700;">
+                Deleted Questions
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 100%; text-align: center;">
+                <TelerikGrid Data="@_deletedQuestions"
+                    Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                    Width="1600px"
+                    EditMode="GridEditMode.Inline"
+                    FilterMode="@GridFilterMode.None" Groupable="false"
+                    SelectionMode="GridSelectionMode.None">
+                    <GridColumns>
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question_ID)" Title="Question ID" Width="60px" Editable="false" />
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.QuestionNumber)" Title="Question Number" Width="90px" Editable="false" />
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question)" Title="Question" Width="240px" />
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.AnswerFormat)" Title="Answer Format" Width="130px" />
+                        <GridCommandColumn Width="180px">
+                            <GridCommandButton Command="Restore" OnClick="@RestoreHandler">Restore</GridCommandButton>
+                        </GridCommandColumn>
+                    </GridColumns>
+                </TelerikGrid>
+            </td>
+        </tr>
+    </table>
+}
 
