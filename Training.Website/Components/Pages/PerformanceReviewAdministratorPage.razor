@@ -1,5 +1,7 @@
 ﻿@page "/PerformanceReviewAdministratorPage"
 
+@using Training.Website.Models.Reviews;
+
 <!-- SELECT REVIEW YEAR -->
 <table style="width: 100%; padding-top: 45px;">
     <tr>
@@ -24,3 +26,23 @@
         </td>
     </tr>
 </table>
+
+<table width="100%">
+    <tr>
+        <td style="width: 100%;">
+            <TelerikGrid Data="@_questions"
+                         Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                         Width="1600px" Height="750px"
+                         FilterMode="@GridFilterMode.None" Groupable="false"
+                         SelectionMode="GridSelectionMode.None">
+                <GridColumns>
+                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question_ID)" Title="Question ID" Width="90px" />
+                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.QuestionNumber)" Title="Question Number" Width="90px" />
+                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question)" Title="Question" Width="120px" />
+                    <GridColumn Field="@nameof(PerformanceReviewQuestionModel.AnswerFormat)" Title="Answer Format" Width="130px" />
+                </GridColumns>
+            </TelerikGrid>
+        </td>
+    </tr>
+</table>
+
