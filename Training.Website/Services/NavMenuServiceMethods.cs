@@ -8,7 +8,7 @@ namespace Training.Website.Services
             database!.QueryByStoredProcedure<string?>("usp_TRAINING_Questionnaire_GetAdministratorLoginIDs");
 
         public IEnumerable<int?>? Managers(IDatabase? database) =>
-            database!.QueryByStatement<int?>("SELECT AppuserID FROM AppUserManager");
+            database!.QueryByStatement<int?>("SELECT ManagerAppUserID FROM AppUserManager");
 
         public IEnumerable<string> Testers() =>
             [
