@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
+using Training.Website.Models.Reviews;
+using Training.Website.Services;
 
 namespace Training.Website.Components.Pages
 {
@@ -23,7 +25,8 @@ namespace Training.Website.Components.Pages
         #region PRIVATE FIELDS
         private int? _selectedReviewYear = null;
         private string[]? _reviewYears = null;
-
+        private PerformanceReviewQuestionModel?[]? _questions = null;
+        private PerformanceReviewServiceMethods? _service = new();
         #endregion
 
 
