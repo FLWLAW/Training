@@ -50,9 +50,36 @@ namespace Training.Website.Components.Pages
 
         // =========================================================================================================================================================================================================================================================================================================
 
-        private void ActiveQuestionCreateHandler(GridCommandEventArgs args)
+        private async Task ActiveQuestionCreateHandler(GridCommandEventArgs args)
         {
-            //throw new NotImplementedException();
+            if (_selectedAnswerFormatDropDownValue != null)
+            {
+                string? newQuestionText = (ConvertToModel(args))?.Question;
+
+                if (newQuestionText != null)
+                {
+                    int? newAnswerFormat = null;
+                    foreach (KeyValuePair<int, string> kvp in _answerFormats!)
+                    {
+                        if (kvp.Value == _selectedAnswerFormatDropDownValue)
+                        {
+                            newAnswerFormat = kvp.Key;
+                            break;
+                        }
+                    }
+
+                    if (newAnswerFormat == null)
+                        throw new NoNullAllowedException("[newAnswerFormat] cannot be NULL in ActiveQuestionCreateHandler().");
+                    else
+                    {
+                        _activeQuestions ??= [];
+                        int? newQuestionNumber = (_activeQuestions.Count == 0) ? 1 : _activeQuestions.Max(q => q?.QuestionNumber) + 1;
+                        await _service.InsertNewQuestion(_selectedReviewYear!.Value, newQuestionNumber!.Value, newQuestionText.Trim(), newAnswerFormat.Value, Database_OPS);
+                        await GetAllQuestions();
+                        StateHasChanged();
+                    }
+                }
+            }
         }
 
         private async Task ActiveQuestionDeleteHandler(GridCommandEventArgs args) => await DeleteRestoreMainHandler(args, true);

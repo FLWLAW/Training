@@ -49,7 +49,9 @@
                     FilterMode="@GridFilterMode.None" Groupable="false"
                     SelectionMode="GridSelectionMode.None">
                     <GridToolBarTemplate>
-                        <GridCommandButton Command="Add">Add New Question</GridCommandButton>
+                         <div class="center-toolbar-items">
+                            <GridCommandButton Command="Add">Add New Question</GridCommandButton>
+                        </div>
                     </GridToolBarTemplate>
                     <GridColumns>
                         <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question_ID)" Title="Question ID" Width="60px" Editable="false" />
@@ -118,3 +120,11 @@
     </table>
 }
 
+<style>
+    .center-toolbar-items {
+        display: flex;
+        justify-content: center; /* Centers items horizontally */
+        align-items: center; /* Centers items vertically, if the toolbar has a specific height */
+        width: 100%; /* Ensures the div takes the full width of the toolbar */
+    }
+</style>

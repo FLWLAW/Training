@@ -179,6 +179,19 @@ namespace Training.Website.Services
             }
         }
 
+        public async Task InsertNewQuestion(int reviewYear, int questionNumber, string? question, int answerFormat, IDatabase? database)
+        {
+            InsertNewQuestion_Parameters parameters = new()
+            {
+                Review_Year = reviewYear,
+                Question_Number = questionNumber,
+                Question = question,
+                AnswerFormat = answerFormat
+            };
+
+            await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_InsertNewQuestion", parameters);
+        }
+
         public async Task<int?> InsertReviewAndFirstStatusChange
             (int reviewYear, int opsReviewerID, int opsRevieweeID, int cmsReviewerID, int cmsRevieweeID, string loginID_Reviewer, string loginID_Reviewee, IDatabase? database)
         {
