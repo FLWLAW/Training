@@ -76,6 +76,8 @@
                             <GridCommandButton Command="Save" ShowInEdit="true">Save</GridCommandButton>
                             <GridCommandButton Command="Cancel" ShowInEdit="true">Cancel</GridCommandButton>
                             <GridCommandButton Command="Delete">Delete</GridCommandButton>
+                            <GridCommandButton Command="MoveUp" ShowInEdit="false" OnClick="@MoveUpHandler">Move Up</GridCommandButton>
+                            <GridCommandButton Command="MoveDown" ShowInEdit="false" OnClick="@MoveDownHandler">Move Down</GridCommandButton>
                         </GridCommandColumn>
                     </GridColumns>
                 </TelerikGrid>

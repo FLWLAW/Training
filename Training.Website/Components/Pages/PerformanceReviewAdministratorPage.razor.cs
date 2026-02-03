@@ -26,6 +26,11 @@ namespace Training.Website.Components.Pages
         */
         #endregion
 
+        #region PRIVATE CONSTANTS
+        private const int _UP = -1;
+        private const int _DOWN = 1;
+        #endregion
+
         #region PRIVATE FIELDS
         private int? _selectedReviewYear = null;
         private string? _selectedAnswerFormatDropDownValue = null;
@@ -97,6 +102,37 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private async Task MoveDownHandler(GridCommandEventArgs args) => await MoveHandlerMain(args, _DOWN);
+
+        private async Task MoveHandlerMain(GridCommandEventArgs args, int moveIncrement)
+        {
+            if (_activeQuestions == null)
+                throw new NoNullAllowedException("[_activeQuestions] cannot be null in MoveHandlerMain().");
+            else
+            {
+                PerformanceReviewQuestionModel? question1 = ConvertToModel(args);
+                int highestQuestionNumber = _activeQuestions.Count;
+
+                if (question1 != null && ((moveIncrement == _UP && question1.QuestionNumber > 1) || (moveIncrement == _DOWN && question1.QuestionNumber < highestQuestionNumber)))
+                {
+                    int secondQuestionNumber = question1.QuestionNumber.Value + moveIncrement;
+                    PerformanceReviewQuestionModel? question2 = _activeQuestions.FirstOrDefault(q => q?.QuestionNumber == secondQuestionNumber);
+
+                    if (question2 != null)
+                    {
+                        int firstQuestionNumber = question1.QuestionNumber.Value;
+
+                        await _service.UpdateQuestionNumber(question1.Question_ID!.Value, secondQuestionNumber, Database_OPS);
+                        await _service.UpdateQuestionNumber(question2.Question_ID!.Value, firstQuestionNumber, Database_OPS);
+                        await GetAllQuestions();
+
+                        StateHasChanged();
+                    }
+                }
+            }
+        }
+        private async Task MoveUpHandler(GridCommandEventArgs args) => await MoveHandlerMain(args, _UP);
+
         private async Task ResequenceQuestions()
         {
             if (_activeQuestions == null)
@@ -133,7 +169,6 @@ namespace Training.Website.Components.Pages
                 _showChangeStatusReminder = false;
                 _showMustClickSubmitReviewReminder = false;
                 */
-                await Task.Delay(1);        //TODO: REMOVE ONCE THERE IS AWAITABLE CODE IN HERE.
                 StateHasChanged();
             }
         }
