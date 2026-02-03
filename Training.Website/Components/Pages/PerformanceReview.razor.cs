@@ -98,7 +98,7 @@ namespace Training.Website.Components.Pages
                             {
                                 _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
                                 _allUsersForDropDown = await GetUsers_Main();
-                                _answerFormats = await _service.GetPerformanceReviewAnswerFormats(Database_OPS);
+                                _answerFormats = await _service.GetAnswerFormats_PerformanceReview(Database_OPS);
                             }
                         }
                     }

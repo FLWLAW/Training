@@ -98,7 +98,14 @@
                         <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question_ID)" Title="Question ID" Width="60px" Editable="false" />
                         <GridColumn Field="@nameof(PerformanceReviewQuestionModel.QuestionNumber)" Title="Question Number" Width="90px" Editable="false" />
                         <GridColumn Field="@nameof(PerformanceReviewQuestionModel.Question)" Title="Question" Width="240px" />
-                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.AnswerFormat)" Title="Answer Format" Width="130px" />
+                        <GridColumn Field="@nameof(PerformanceReviewQuestionModel.AnswerFormat)" Title="Answer Format" Width="130px">
+                            <Template>
+                                @{
+                                    var dataItem = (PerformanceReviewQuestionModel)context;
+                                    @_answerFormats![dataItem.AnswerFormat!.Value]
+                                }
+                            </Template>
+                        </GridColumn>
                         <GridCommandColumn Width="180px">
                             <GridCommandButton Command="Restore" OnClick="@RestoreHandler">Restore</GridCommandButton>
                         </GridCommandColumn>

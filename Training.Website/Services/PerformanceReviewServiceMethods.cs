@@ -112,24 +112,6 @@ namespace Training.Website.Services
         public async Task<DateTime?> GetMeetingHeldOnByReviewID(int reviewID, IDatabase? database) =>
             (await database!.QueryByStatementAsync<DateTime?>($"SELECT ReviewMeetingHeldOn FROM [PERFORMANCE Review Main Tbl] WHERE ID = {reviewID}"))?.FirstOrDefault();
 
-        public async Task<Dictionary<int, string>?> GetPerformanceReviewAnswerFormats(IDatabase? database)
-        {
-            IEnumerable<AnswerFormatsModel>? data =
-                await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Performance_Review_GetAnswerFormats");
-
-            if (data == null)
-                return null;
-            else
-            {
-                Dictionary<int, string> answerFormats = [];
-
-                foreach (AnswerFormatsModel? row in data)
-                    answerFormats.Add(row.Format_ID, row.Name!);
-
-                return answerFormats;
-            }
-        }
-
         public async Task<IEnumerable<PerformanceReviewQuestionModel?>?> GetPerformanceReviewQuestions(int reviewYear, bool isDeleted, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<PerformanceReviewQuestionModel?, object?>
                 ("usp_Performance_Review_GetPerformanceReviewQuestionsByReviewYearAndDeletedStatus", new { ReviewYear = reviewYear, IsDeleted = isDeleted });
@@ -255,6 +237,18 @@ namespace Training.Website.Services
                 await database!.NonQueryByStoredProcedureAsync<InsertReviewStatusChange_Parameters>("usp_Performance_Review_InsertStatusChangeOnly", parameters);
             }
         }
+
+        public async Task UpdateAnswerFormat(int questionID, int answerFormat, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_AnswerFormat", new { Question_ID = questionID, AnswerFormat = answerFormat });
+
+        public async Task UpdateDeletedStatus(int questionID, bool newDeletedStatus, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_DeletedStatus", new { Question_ID = questionID, IsDeleted = newDeletedStatus });
+
+        public async Task UpdateQuestion(int questionID, string? question, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_Question", new { Question_ID = questionID, Question = question });
+
+        public async Task UpdateQuestionNumber(int questionID, int questionNumber, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_QuestionNumber", new { Question_ID = questionID, Question_Number = questionNumber });
 
         public async Task UpdateWhenReviewMeetingHeldOn(int reviewID, DateTime meetingDate, IDatabase? database) =>
             await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_ReviewMeetingHeldOn", new { Review_ID = reviewID, Review_DateTime = meetingDate });

@@ -24,7 +24,25 @@ namespace Training.Website.Services
             await database!.QueryByStatementAsync<AllUsers_CMS_DB?>
                 ("SELECT AppUserID, RoleID, TitleID, FirstName, LastName, EmailAddress, LoginID FROM AppUser WHERE ActiveInd <> 0 AND TeamNameInd = 0 ORDER BY (FirstName + ' ' + LastName)");
 
-        public async Task<Dictionary<int, string>?> GetAnswerFormats(IDatabase? database)
+        public async Task<Dictionary<int, string>?> GetAnswerFormats_PerformanceReview(IDatabase? database)
+        {
+            IEnumerable<AnswerFormatsModel>? data =
+                await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Performance_Review_GetAnswerFormats");
+
+            if (data == null)
+                return null;
+            else
+            {
+                Dictionary<int, string> answerFormats = [];
+
+                foreach (AnswerFormatsModel? row in data)
+                    answerFormats.Add(row.Format_ID, row.Name!);
+
+                return answerFormats;
+            }
+        }
+
+        public async Task<Dictionary<int, string>?> GetAnswerFormats_TrainingQuestionnaire(IDatabase? database)
         {
             IEnumerable<AnswerFormatsModel>? data =
                 await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Training_Questionnaire_GetAnswerFormats");

@@ -106,7 +106,7 @@ namespace Training.Website.Services
 
 
         /*
-        public async Task<IEnumerable<AnswerFormatsModel>?> GetAnswerFormats(IDatabase? database) =>
+        public async Task<IEnumerable<AnswerFormatsModel>?> GetAnswerFormats_TrainingQuestionnaire(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Training_Questionnaire_GetAnswerFormats");
         */
 
