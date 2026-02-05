@@ -313,12 +313,12 @@ namespace Training.Website.Components.Pages
                     _allUsers_OPS_DB?.FirstOrDefault
                         (q => q?.UserName?.Equals(result?.Login_ID_Reviewee, StringComparison.InvariantCultureIgnoreCase) == true || q?.Emp_ID == result?.OPS_User_ID_Reviewee);
 
-                if (reviewee_OPS_DB != null)
+                if (reviewee_OPS_DB != null)    // SEARCH IN OPS DB
                 {
                     lastName_Reviewee = reviewee_OPS_DB.LastName;
                     firstName_Reviewee = reviewee_OPS_DB?.FirstName;
                 }
-                else
+                else     // SEARCH IN CMS DB
                 {
                     AllUsers_CMS_DB? reviewee_CMS_DB = _allUsers_CMS_DB?.FirstOrDefault
                         (q => q?.LoginID?.Equals(result?.Login_ID_Reviewee, StringComparison.InvariantCultureIgnoreCase) == true || q?.AppUserID == result?.CMS_User_ID_Reviewee);
@@ -336,20 +336,22 @@ namespace Training.Website.Components.Pages
 
         private async Task<string?> GetReviewer(PerformanceReviewStatusesAllUsersByReviewYearModel? result)
         {
+            // RETURNS TO .StatusChangedBy
+
             string? reviewer = null;
 
             await Task.Run(() =>
             {
                 AllUsers_OPS_DB? reviewer_OPS_DB =
                     _allUsers_OPS_DB?.FirstOrDefault
-                        (q => q?.UserName?.Equals(result?.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true || q?.Emp_ID == result?.OPS_User_ID_Reviewee);
+                        (q => q?.UserName?.Equals(result?.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true); // || q?.Emp_ID == result?.OPS_User_ID_Reviewee);
 
                 if (reviewer_OPS_DB != null)
                     reviewer = string.Concat(reviewer_OPS_DB.FirstName, ' ', reviewer_OPS_DB.LastName);
                 else
                 {
                     AllUsers_CMS_DB? reviewer_CMS_DB = _allUsers_CMS_DB?.FirstOrDefault
-                        (q => q?.LoginID?.Equals(result?.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true || q?.AppUserID == result?.CMS_User_ID_Reviewee);
+                        (q => q?.LoginID?.Equals(result?.Login_ID_StatusChangedBy, StringComparison.InvariantCultureIgnoreCase) == true); // || q?.AppUserID == result?.CMS_User_ID_Reviewee);
 
                     if (reviewer_CMS_DB != null)
                         reviewer = string.Concat(reviewer_CMS_DB.FirstName, ' ', reviewer_CMS_DB.LastName);
