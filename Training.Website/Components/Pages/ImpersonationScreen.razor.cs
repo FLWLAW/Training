@@ -23,7 +23,7 @@ namespace Training.Website.Components.Pages
         #region PRIVATE FIELDS
         private readonly CommonServiceMethods _service = new();
         private readonly SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
-        private IEnumerable<AllUsers_CMS_DB>? _allUsers = null;
+        private IEnumerable<AllUsers_CMS_DB?>? _allUsers = null;
         #endregion
 
         protected override async Task OnInitializedAsync()

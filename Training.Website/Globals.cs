@@ -7,6 +7,7 @@ using Telerik.Windows.Documents.Fixed.Model;
 using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
 using Telerik.Windows.Documents.Flow.Model;
 using Training.Website.Models;
+using Training.Website.Models.Reviews;
 
 namespace Training.Website
 {
@@ -163,8 +164,9 @@ namespace Training.Website
             };
         */
 
-        public static int OPS_UserID(AppState? appState) =>
-            appState?.LoggedOnUser?.EmpID ?? 0;
+        public static int OPS_UserID(AppState? appState) => appState?.LoggedOnUser?.EmpID ?? 0;
 
+        public static IEnumerable<RadioChoiceModel?>? RadioChoicesForQuestion(int? questionID, IEnumerable<RadioChoiceModel?>? allRadioChoices) =>
+            questionID != null ? allRadioChoices?.Where(q => q?.ReviewQuestion_ID == questionID).OrderBy(q => q?.RadioChoice_Sequence) : null;
     }
 }

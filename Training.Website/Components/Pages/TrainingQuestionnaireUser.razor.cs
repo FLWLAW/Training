@@ -40,7 +40,6 @@ namespace Training.Website.Components.Pages
         private IEnumerable<AnswerChoicesModel?>? _currentMultipleChoiceAnswers = null;
         private IEnumerable<string?>? _currentAnswerChoices_DropDown = null;
         private string? _currentSelectedAnswer_DropDown = null;
-        //private string?[]? _currentSelectedAnswers_DropDown = null;
         private UserAnswersModel?[]? _currentSelectedAnswers_DropDown = null;
         private double? _score = null;
         private DateTime? _whenMustRetakeTestBy = null;
@@ -55,7 +54,7 @@ namespace Training.Website.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            _answerFormats = await _service.GetAnswerFormats(Database);
+            _answerFormats = await _service.GetAnswerFormats_TrainingQuestionnaire(Database);
 
             // GET ALL SESSIONS
             IEnumerable<SessionInformationModel>? allSessionsInfo = await _service.GetSessionInformation(Database);

@@ -71,7 +71,7 @@ namespace Training.Website.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            _answerFormats = await _service.GetAnswerFormats(Database);
+            _answerFormats = await _service.GetAnswerFormats_TrainingQuestionnaire(Database);
 
             // GET ALL SESSIONS
             IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database);
