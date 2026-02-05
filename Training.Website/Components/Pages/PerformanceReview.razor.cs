@@ -62,7 +62,7 @@ namespace Training.Website.Components.Pages
         private ReviewModel? _selectedReview = null;
         private EmployeeInformationModel? _headerInfo = null;
         private PerformanceReviewQuestionModel?[]? _questions = null;
-        private RadioChoiceModel?[]? _allRadioChoices = null;
+        private RadioChoiceModel?[]? _allRadioChoices_Active = null;
         private AnswersByReviewIdModel?[]? _answers = null;
         private readonly SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
         private PerformanceReviewServiceMethods _service = new();
@@ -260,7 +260,7 @@ namespace Training.Website.Components.Pages
         private async Task ExportPerformanceReviewToAcrobat_Main()
         {
             CreatePerformanceReviewDocumentClass export =
-                new(_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices);
+                new(_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices_Active);
 
             RadFlowDocument flowDocument = await export.Create(CreatePerformanceReviewDocumentClass.DocumentType.Acrobat);
             RadFixedDocument fixedDocument = ConvertFlowToFixed(flowDocument);
@@ -272,7 +272,7 @@ namespace Training.Website.Components.Pages
         private async Task ExportPerformanceReviewToWord_Main()
         {
             CreatePerformanceReviewDocumentClass export =
-                new (_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices);
+                new (_answerFormats, _selectedReviewYear!.Value, _selectedUser, _selectedReview, _headerInfo, _questions, _allRadioChoices_Active);
 
             RadFlowDocument document = await export.Create(CreatePerformanceReviewDocumentClass.DocumentType.Word);
             string filename = $"{_selectedReviewYear.Value} Performance Review - {_selectedUser?.FirstName} {_selectedUser?.LastName}.docx";
@@ -427,20 +427,12 @@ namespace Training.Website.Components.Pages
         {
             if (newValue != null && int.TryParse(newValue.ToString(), out int selectedRadioChoiceID) == true)
             {
-                RadioChoiceModel? radioChoice = _allRadioChoices?.FirstOrDefault(q => q?.RadioChoice_ID == selectedRadioChoiceID);
+                RadioChoiceModel? radioChoice = _allRadioChoices_Active?.FirstOrDefault(q => q?.RadioChoice_ID == selectedRadioChoiceID);
                 PerformanceReviewQuestionModel? question = _questions?.FirstOrDefault(q => q?.Question_ID == radioChoice?.ReviewQuestion_ID);
 
                 question!.Answer = radioChoice?.RadioChoice_Text;
                 question!.RadioChoice_ID = radioChoice?.RadioChoice_ID;
             }
-        }
-
-        private IEnumerable<RadioChoiceModel?>? RadioChoicesForQuestion(int? questionID)
-        {
-            if (questionID != null)
-                return _allRadioChoices?.Where(q => q?.ReviewQuestion_ID == questionID).OrderBy(q => q?.RadioChoice_Sequence);
-            else
-                return null;
         }
 
         private async Task<PerformanceReviewStatusesAllUsersByReviewYearModel?[]?> RefinedResultsForAllUsersExcelExport(PerformanceReviewStatusesAllUsersByReviewYearModel?[] results_Raw)
@@ -541,7 +533,7 @@ namespace Training.Website.Components.Pages
             {
                 _selectedReviewYear = selectedReviewYear;
                 _questions = (await _service.GetPerformanceReviewQuestions(_selectedReviewYear.Value, false, Database_OPS))?.ToArray();
-                _allRadioChoices = (await _service.GetAllRadioButtonChoicesByYear(_selectedReviewYear.Value, Database_OPS))?.ToArray();
+                _allRadioChoices_Active = (await _service.GetAllRadioButtonChoicesByYearAndDeletedStatus(_selectedReviewYear.Value, false, Database_OPS))?.ToArray();
                 _selectedUser = null;
                 _headerInfo = null;
                 _answers = null;
@@ -751,7 +743,7 @@ namespace Training.Website.Components.Pages
                                             string? answerToUse = (string.IsNullOrWhiteSpace(answer.AdministratorAnswer) == false) ? answer.AdministratorAnswer : answer.ManagerAnswer;
                                             question.Answer = answerToUse;
                                             if (_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
-                                                question.RadioChoice_ID = _allRadioChoices?.FirstOrDefault
+                                                question.RadioChoice_ID = _allRadioChoices_Active?.FirstOrDefault
                                                     (
                                                         q => q?.ReviewQuestion_ID == question.Question_ID &&
                                                         q?.RadioChoice_Text == answerToUse

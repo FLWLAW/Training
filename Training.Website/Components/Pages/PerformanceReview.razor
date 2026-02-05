@@ -292,7 +292,7 @@
                                     @if(_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
                                     {
                                         <TelerikRadioGroup
-                                            Data="@RadioChoicesForQuestion(question.Question_ID)"
+                                            Data="@Globals.RadioChoicesForQuestion(question.Question_ID, _allRadioChoices_Active)"
                                             @bind-Value="question.RadioChoice_ID"
                                             Enabled="@CanEditAnswer()"
                                             Layout="RadioGroupLayout.Vertical"
