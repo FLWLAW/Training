@@ -11,6 +11,10 @@ namespace Training.Website.Services
 {
     public class PerformanceReviewServiceMethods : CommonServiceMethods
     {
+        public async Task<IEnumerable<RadioChoiceModel?>?> GetAllRadioButtonChoicesByYear(int reviewYear, IDatabase? database) =>
+            await database!.QueryByStoredProcedureAsync<RadioChoiceModel?, object?>
+                ("usp_Performance_Review_GetAllRadioButtonChoicesByYear", new { ReviewYear = reviewYear });
+
         public async Task<IEnumerable<RadioChoiceModel?>?> GetAllRadioButtonChoicesByYearAndDeletedStatus(int reviewYear, bool isDeleted, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<RadioChoiceModel?, object?>
                 ("usp_Performance_Review_GetAllRadioButtonChoicesByYearAndDeletedStatus", new { ReviewYear = reviewYear, IsDeleted = isDeleted });
