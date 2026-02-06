@@ -3,13 +3,13 @@
 @using Training.Website.Models
 @using Training.Website.Models.Reviews;
 
-<TelerikWindow @ref="@_radioButtonEditWindow"
-               Modal="true"
-               Visible="@_radioButtonScreenVisible"
-               CloseOnOverlayClick="false"
-               Left="0px"
-               Width="1600px"
-               Height="800px">
+<TelerikWindow 
+    Modal="true"
+    Visible="@_radioButtonScreenVisible"
+    CloseOnOverlayClick="false"
+    Left="0px"
+    Width="1600px"
+    Height="800px">
     <WindowContent>
         @if (_questionWithRadioButtonsToEdit != null)
         {
