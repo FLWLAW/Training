@@ -52,6 +52,7 @@ namespace Training.Website.Components.Pages
         private PerformanceReviewQuestionModel? _questionWithRadioButtonsToEdit = null;
         private PerformanceReviewServiceMethods _service = new();
         private TelerikGrid<RadioChoiceModel>? _radioButtonGrid_Active;
+        private TelerikGrid<RadioChoiceModel>? _radioButtonGrid_Deleted;
         #endregion
 
 
@@ -132,7 +133,7 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private async Task ActiveQuestionDeleteHandler(GridCommandEventArgs args) => await DeleteRestoreMainHandler(args, true);
+        private async Task ActiveQuestionDeleteHandler(GridCommandEventArgs args) => await DeleteRestoreQuestionMainHandler(args, true);
 
         private async Task ActiveQuestionUpdateHandler(GridCommandEventArgs args)
         {
@@ -201,7 +202,7 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private async Task DeleteRestoreMainHandler(GridCommandEventArgs args, bool newDeletionStatus)
+        private async Task DeleteRestoreQuestionMainHandler(GridCommandEventArgs args, bool newDeletionStatus)
         {
             PerformanceReviewQuestionModel? questionToModify = ConvertToQuestionModel(args);
 
@@ -272,8 +273,8 @@ namespace Training.Website.Components.Pages
         }
         private async Task QuestionMoveUpHandler(GridCommandEventArgs args) => await QuestionMoveHandlerMain(args, _UP);
 
-        private IEnumerable<RadioChoiceModel?>? RadioButtonChoicesForScreen() =>
-            _allRadioChoices_Screen?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID && q?.IsDeleted == false).OrderBy(s => s?.RadioChoice_Sequence);
+        private IEnumerable<RadioChoiceModel?>? RadioButtonChoicesForScreen(bool deleted) =>
+            _allRadioChoices_Screen?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID && q?.IsDeleted == deleted).OrderBy(s => s?.RadioChoice_Sequence);
 
 
         private void RadioButtonDeleteHandler(GridCommandEventArgs args)
@@ -291,6 +292,7 @@ namespace Training.Website.Components.Pages
                     radioButtonToDelete.HasBeenChangedOnScreen = true;
 
                     _radioButtonGrid_Active?.Rebind();
+                    _radioButtonGrid_Deleted?.Rebind();
                 }
             }
         }
@@ -354,6 +356,20 @@ namespace Training.Website.Components.Pages
         }
         */
 
+        private void RadioButtonRestoreHandler(GridCommandEventArgs args)
+        {
+            var radioButtonToRestore = (RadioChoiceModel?)args.Item;
+
+            if (radioButtonToRestore != null)
+            {
+                radioButtonToRestore.IsDeleted = false;
+                radioButtonToRestore.HasBeenChangedOnScreen = true;
+                
+                _radioButtonGrid_Deleted?.Rebind();
+                _radioButtonGrid_Active?.Rebind();
+            }
+        }
+
         private void RadioButtonUpdateHandler(GridCommandEventArgs args)
         {
             var changedItem = (RadioChoiceModel?)args.Item;
@@ -414,7 +430,7 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private async Task RestoreHandler(GridCommandEventArgs args) => await DeleteRestoreMainHandler(args, false);
+        private async Task RestoreQuestionHandler(GridCommandEventArgs args) => await DeleteRestoreQuestionMainHandler(args, false);
 
         private async Task ReviewYearChanged(string newValue)
         {

@@ -28,7 +28,7 @@
                     <td style="text-align: center;">
                         <TelerikGrid
                             @ref="@_radioButtonGrid_Active"
-                            Data="@RadioButtonChoicesForScreen()"
+                            Data="@RadioButtonChoicesForScreen(false)"
                             Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
                             EditMode="GridEditMode.Incell"
                             OnUpdate="@RadioButtonUpdateHandler"
@@ -43,6 +43,31 @@
                                     <GridCommandButton Command="Delete">Delete</GridCommandButton>
                                     <GridCommandButton Command="MoveUp" ShowInEdit="false" OnClick="@RadioButtonMoveUpHandler">Move Up</GridCommandButton>
                                     <GridCommandButton Command="MoveDown" ShowInEdit="false" OnClick="@RadioButtonMoveDownHandler">Move Down</GridCommandButton>
+                                </GridCommandColumn>
+                            </GridColumns>
+                        </TelerikGrid>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%; text-align: center; font-size: large; font-weight: 700;">
+                        Deleted Radio Buttons for Question #@_questionWithRadioButtonsToEdit.QuestionNumber)&nbsp; @_questionWithRadioButtonsToEdit.Question
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <TelerikGrid
+                            @ref="@_radioButtonGrid_Deleted"
+                            Data="@RadioButtonChoicesForScreen(true)"
+                            Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                            EditMode="GridEditMode.None"
+                            Width="1600px">
+                            <GridColumns>
+                                <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_ID)" Title="Radio Choice ID" Width="100px" Editable="false" />
+                                <GridColumn Field="@nameof(RadioChoiceModel.ReviewQuestion_ID)" Title="Question ID" Width="100px" Editable="false" />
+                                <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Sequence)" Title="Sequence" Width="60px" Editable="false"/>
+                                <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Text)" Title="Text" Width="300px" Editable="true" />
+                                <GridCommandColumn Width="180px">
+                                    <GridCommandButton Command="Restore" ShowInEdit="false" OnClick="@RadioButtonRestoreHandler">Restore</GridCommandButton>
                                 </GridCommandColumn>
                             </GridColumns>
                         </TelerikGrid>
@@ -164,7 +189,7 @@
                             </Template>
                         </GridColumn>
                         <GridCommandColumn Width="180px">
-                            <GridCommandButton Command="Restore" OnClick="@RestoreHandler">Restore</GridCommandButton>
+                            <GridCommandButton Command="Restore" OnClick="@RestoreQuestionHandler">Restore</GridCommandButton>
                         </GridCommandColumn>
                     </GridColumns>
                 </TelerikGrid>
