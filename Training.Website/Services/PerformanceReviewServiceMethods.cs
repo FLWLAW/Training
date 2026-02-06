@@ -196,6 +196,13 @@ namespace Training.Website.Services
             await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_InsertNewQuestion", parameters);
         }
 
+        public async Task InsertNewRadioButton(int reviewQuestionID, int radioChoiceSequence, string? radioChoiceText, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync
+                (
+                    "usp_Performance_Review_InsertNewRadioButton",
+                    new { ReviewQuestion_ID = reviewQuestionID, RadioChoice_Sequence = radioChoiceSequence, RadioChoice_Text = radioChoiceText }
+                );
+
         public async Task<int?> InsertReviewAndFirstStatusChange
             (int reviewYear, int opsReviewerID, int opsRevieweeID, int cmsReviewerID, int cmsRevieweeID, string loginID_Reviewer, string loginID_Reviewee, IDatabase? database)
         {
@@ -267,9 +274,19 @@ namespace Training.Website.Services
         public async Task UpdateQuestionNumber(int questionID, int questionNumber, IDatabase? database) =>
             await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_QuestionNumber", new { Question_ID = questionID, Question_Number = questionNumber });
 
+
+        /*
         public async Task UpdateRadioButtonText(int radioChoiceID, string? radioChoiceText, IDatabase? database) =>
             await database!.NonQueryByStoredProcedureAsync
                 ("usp_Performance_Review_Performance_Review_Update_RadioButtonText", new { RadioChoice_ID = radioChoiceID, RadioChoice_Text = radioChoiceText });
+        */
+
+        public async Task UpdateRadioButton(int radioChoiceID, int radioChoiceSequence, string? radioChoiceText, bool deleted, IDatabase? database) =>
+            await database!.NonQueryByStoredProcedureAsync
+                (
+                    "usp_Performance_Review_UpdateRadioButton",
+                    new { RadioChoice_ID = radioChoiceID, RadioChoice_Sequence = radioChoiceSequence, RadioChoice_Text = radioChoiceText, IsDeleted = deleted };
+                );
 
         public async Task UpdateWhenReviewMeetingHeldOn(int reviewID, DateTime meetingDate, IDatabase? database) =>
             await database!.NonQueryByStoredProcedureAsync("usp_Performance_Review_Update_ReviewMeetingHeldOn", new { Review_ID = reviewID, Review_DateTime = meetingDate });

@@ -143,15 +143,28 @@ namespace Training.Website.Components.Pages
 
         private async Task ActiveQuestionUpdateHandler(GridCommandEventArgs args)
         {
-            // FIRST UPDATE RADIO BUTTONS TO DATABASE
-
-
-            _questionWithRadioButtonsToEdit = null;
-
             PerformanceReviewQuestionModel? questionToUpdate = ConvertToQuestionModel(args);
 
             if (questionToUpdate != null)
             {
+                if (_allRadioChoices_Screen != null && _questionWithRadioButtonsToEdit != null)
+                {
+                    foreach (RadioChoiceModel? radioChoice in _allRadioChoices_Screen)
+                    {
+                        if (radioChoice != null && radioChoice.HasBeenChangedOnScreen == true)
+                        {
+                            if (radioChoice.RadioChoice_ID == null)
+                                await _service.InsertNewRadioButton
+                                    (radioChoice.ReviewQuestion_ID!.Value, radioChoice.RadioChoice_Sequence!.Value, radioChoice.RadioChoice_Text!, Database_OPS);
+                            else
+                                await _service.UpdateRadioButton
+                                    (radioChoice.RadioChoice_ID.Value, radioChoice.RadioChoice_Sequence!.Value, radioChoice.RadioChoice_Text!, radioChoice.IsDeleted, Database_OPS);
+                        }
+                    }
+                }
+
+                _questionWithRadioButtonsToEdit = null;
+
                 bool questionTextChanged = await UpdateQuestion_IfChanged(questionToUpdate);
                 int? newAnswerFormat = await UpdateAnswerFormat_IfChanged(questionToUpdate);
                 //bool wasOldAnswerFormatRadioButtons = _answerFormats?[questionToUpdate.AnswerFormat!.Value] == Globals.RadioButtons;
