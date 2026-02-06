@@ -97,7 +97,13 @@ namespace Training.Website.Components.Pages
 
         private void ActiveQuestionCancelAllRadioChangesForOneQuestionHandler(GridCommandEventArgs args)
         {
-            throw new NotImplementedException();
+            _allRadioChoices_Screen = _allRadioChoices_Screen?.Where(q => q?.ReviewQuestion_ID != _questionWithRadioButtonsToEdit?.Question_ID).ToList();
+            _allRadioChoices_Screen ??= [];
+            _allRadioChoices_Screen.AddRange(_allRadioChoices_Original?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID)!);
+
+            _questionWithRadioButtonsToEdit = null;
+
+            StateHasChanged();
         }
 
         private async Task ActiveQuestionCreateHandler(GridCommandEventArgs args)
@@ -137,6 +143,9 @@ namespace Training.Website.Components.Pages
 
         private async Task ActiveQuestionUpdateHandler(GridCommandEventArgs args)
         {
+            // FIRST UPDATE RADIO BUTTONS TO DATABASE
+
+
             _questionWithRadioButtonsToEdit = null;
 
             PerformanceReviewQuestionModel? questionToUpdate = ConvertToQuestionModel(args);
@@ -160,7 +169,8 @@ namespace Training.Website.Components.Pages
 
         private void CloseRadioButtonEditScreen()
         {
-            throw new NotImplementedException();
+            _radioButtonScreenVisible = false;
+            StateHasChanged();
         }
 
         /*
