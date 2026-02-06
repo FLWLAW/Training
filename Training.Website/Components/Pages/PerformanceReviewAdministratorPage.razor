@@ -30,16 +30,25 @@
                             @ref="@_radioButtonGrid_Active"
                             Data="@RadioButtonChoicesForScreen(false)"
                             Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
-                            EditMode="GridEditMode.Incell"
+                            EditMode="@GridEditMode.Inline"
+                            OnCreate="@RadioButtonCreateHandler"
                             OnUpdate="@RadioButtonUpdateHandler"
                             OnDelete="@RadioButtonDeleteHandler"
                             Width="1600px">
+                            <GridToolBarTemplate>
+                                 <div class="center-toolbar-items">
+                                    <GridCommandButton Command="Add">Add New Radio Button</GridCommandButton>
+                                </div>
+                            </GridToolBarTemplate>
                             <GridColumns>
+                                <!--
                                 <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_ID)" Title="Radio Choice ID" Width="100px" Editable="false" />
+                                -->
                                 <GridColumn Field="@nameof(RadioChoiceModel.ReviewQuestion_ID)" Title="Question ID" Width="100px" Editable="false" />
                                 <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Sequence)" Title="Sequence" Width="60px" Editable="false"/>
                                 <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Text)" Title="Text" Width="300px" Editable="true" />
                                 <GridCommandColumn Width="180px">
+                                    <GridCommandButton Command="Edit">Edit</GridCommandButton>
                                     <GridCommandButton Command="Delete">Delete</GridCommandButton>
                                     <GridCommandButton Command="MoveUp" ShowInEdit="false" OnClick="@RadioButtonMoveUpHandler">Move Up</GridCommandButton>
                                     <GridCommandButton Command="MoveDown" ShowInEdit="false" OnClick="@RadioButtonMoveDownHandler">Move Down</GridCommandButton>

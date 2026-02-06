@@ -277,6 +277,27 @@ namespace Training.Website.Components.Pages
             _allRadioChoices_Screen?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID && q?.IsDeleted == deleted).OrderBy(s => s?.RadioChoice_Sequence);
 
 
+        private void RadioButtonCreateHandler(GridCommandEventArgs args)
+        {
+            if (_questionWithRadioButtonsToEdit != null)
+            {
+                var newRadioButtonItem = (RadioChoiceModel?)args.Item;
+
+                if (newRadioButtonItem != null)
+                {
+                    _allRadioChoices_Screen ??= [];
+                    newRadioButtonItem.ReviewQuestion_ID = _questionWithRadioButtonsToEdit.Question_ID;
+                    newRadioButtonItem.RadioChoice_Sequence = _allRadioChoices_Screen.Max(q => q?.RadioChoice_Sequence) + 1;
+                    newRadioButtonItem.IsDeleted = false;       // NOT NECESSARY UNLESS PROPERTY DEFAULT IS CHANGED OR IS MADE NULLABLE - SO IT'S GOOD PRACTICVE TO SET IT TO "FALSE" HERE.
+                    newRadioButtonItem.HasBeenChangedOnScreen = true;
+
+                    _allRadioChoices_Screen.Add(newRadioButtonItem);
+                    ResequenceRadioButtons();
+                    _radioButtonGrid_Active?.Rebind();
+                }
+            }
+        }
+
         private void RadioButtonDeleteHandler(GridCommandEventArgs args)
         {
             var changedItem = (RadioChoiceModel?)args.Item;
@@ -290,6 +311,8 @@ namespace Training.Website.Components.Pages
                     // THIS WILL CHANGE THE VALUES IN THE _allRadioChoices_Screen LIST, WHICH IS WHAT THE SCREEN BINDS TO, BUT IT WON'T CHANGE THE VALUES IN THE _allRadioChoices_Original LIST, WHICH IS WHAT WE USE TO COMPARE TO KNOW WHETHER CHANGES HAVE BEEN MADE. THEN, WHEN THE USER CLICKS "SAVE CHANGES", WE CAN LOOP THROUGH THE _allRadioChoices_Screen LIST AND COMPARE TO THE _allRadioChoices_Original LIST TO SEE WHICH RADIO CHOICES HAVE CHANGES THAT NEED TO BE SENT TO THE SERVER.
                     radioButtonToDelete.IsDeleted = true;
                     radioButtonToDelete.HasBeenChangedOnScreen = true;
+
+                    ResequenceRadioButtons();
 
                     _radioButtonGrid_Active?.Rebind();
                     _radioButtonGrid_Deleted?.Rebind();
@@ -321,6 +344,7 @@ namespace Training.Website.Components.Pages
                         radioButton2.RadioChoice_Sequence = firstSequenceNumber;
                         radioButton2.HasBeenChangedOnScreen = true;
 
+                        ResequenceRadioButtons();
                         _radioButtonGrid_Active?.Rebind();
                     }
                 }
@@ -409,6 +433,38 @@ namespace Training.Website.Components.Pages
             }
         }
         */
+
+        private void ResequenceRadioButtons()
+        {
+            if (_allRadioChoices_Screen != null)
+            {
+                int radioChoiceSequenceShouldBe = 1;
+
+                _allRadioChoices_Screen = _allRadioChoices_Screen
+                    .OrderBy(q => q?.ReviewQuestion_ID)
+                    .ThenBy(q => q?.RadioChoice_Sequence)
+                    .ThenBy(q => q?.RadioChoice_ID)
+                    .ToList();
+
+                foreach(RadioChoiceModel? radioChoice in _allRadioChoices_Screen)
+                {
+                    if
+                        (
+                            radioChoice != null &&
+                            radioChoice.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID &&
+                            radioChoice.IsDeleted == false
+                        )
+                    {
+                        if (radioChoice.RadioChoice_Sequence != radioChoiceSequenceShouldBe)
+                        {
+                            radioChoice.RadioChoice_Sequence = radioChoiceSequenceShouldBe;
+                            radioChoice.HasBeenChangedOnScreen = true;
+                        }
+                        radioChoiceSequenceShouldBe++;
+                    }
+                }
+            }
+        }
 
         private async Task ResequenceQuestions()
         {
