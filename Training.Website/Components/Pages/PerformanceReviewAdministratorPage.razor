@@ -24,6 +24,15 @@
                         Adding/Editing Radio Button Choices for Question #@_questionWithRadioButtonsToEdit.QuestionNumber)&nbsp; @_questionWithRadioButtonsToEdit.Question
                     </td>
                 </tr>
+                <tr style="color: mediumpurple;">
+                    <td style="text-align: center;">
+                        To cancel adding a new radio button, press [ESC].
+                        <br />
+                        When finished adding a new radio button after entering its text, press [ENTER].
+                        <br />
+                        When finished adding all new radio button(s), click 'Close,' then click the 'Save' button on the following screen.
+                    </td>
+                </tr>
                 <tr>
                     <td style="text-align: center;">
                         <TelerikGrid
@@ -34,10 +43,11 @@
                             OnCreate="@RadioButtonCreateHandler"
                             OnUpdate="@RadioButtonUpdateHandler"
                             OnDelete="@RadioButtonDeleteHandler"
+                            OnCancel="@RadioButtonCancelAdditionHandler"
                             Width="1600px">
                             <GridToolBarTemplate>
                                  <div class="center-toolbar-items">
-                                    <GridCommandButton Command="Add">Add New Radio Button</GridCommandButton>
+                                    <GridCommandButton Command="Add" Enabled="@(! _inRadioButtonAdditionMode)" OnClick="@RadioButtonAddNewClickedHandler">Add New Radio Button</GridCommandButton>
                                 </div>
                             </GridToolBarTemplate>
                             <GridColumns>

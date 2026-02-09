@@ -39,6 +39,7 @@ namespace Training.Website.Components.Pages
         private bool _radioButtonScreenVisible = false;
         private int? _selectedReviewYear = null;
         private string? _selectedAnswerFormatDropDownValue = null;
+        private bool _inRadioButtonAdditionMode = false;
         //private string? _newRadioButtonText = null;
         private string[]? _reviewYears = null;
         private Dictionary<int, string>? _answerFormats = null;
@@ -147,22 +148,27 @@ namespace Training.Website.Components.Pages
 
             if (questionToUpdate != null)
             {
+                // SAVE ANY ADDED/CHANGED RADIO BUTTONS FIRST
+
                 if (_allRadioChoices_Screen != null && _questionWithRadioButtonsToEdit != null)
                 {
                     foreach (RadioChoiceModel? radioChoice in _allRadioChoices_Screen)
                     {
-                        if (radioChoice != null && radioChoice.HasBeenChangedOnScreen == true)
+                        if (radioChoice != null && radioChoice.HasBeenChangedOnScreen == true && radioChoice.RadioChoice_Sequence != null && string.IsNullOrWhiteSpace(radioChoice.RadioChoice_Text) == false)
                         {
+                            radioChoice.RadioChoice_Text = radioChoice.RadioChoice_Text.Trim();
+
                             if (radioChoice.RadioChoice_ID == null)
                                 await _service.InsertNewRadioButton
-                                    (radioChoice.ReviewQuestion_ID!.Value, radioChoice.RadioChoice_Sequence!.Value, radioChoice.RadioChoice_Text!, Database_OPS);
+                                    (radioChoice.ReviewQuestion_ID!.Value, radioChoice.RadioChoice_Sequence!.Value, radioChoice.RadioChoice_Text, Database_OPS);
                             else
                                 await _service.UpdateRadioButton
-                                    (radioChoice.RadioChoice_ID.Value, radioChoice.RadioChoice_Sequence!.Value, radioChoice.RadioChoice_Text!, radioChoice.IsDeleted, Database_OPS);
+                                    (radioChoice.RadioChoice_ID.Value, radioChoice.RadioChoice_Sequence!.Value, radioChoice.RadioChoice_Text, radioChoice.IsDeleted, Database_OPS);
                         }
                     }
                 }
 
+                _inRadioButtonAdditionMode = false;
                 _questionWithRadioButtonsToEdit = null;
 
                 bool questionTextChanged = await UpdateQuestion_IfChanged(questionToUpdate);
@@ -296,9 +302,20 @@ namespace Training.Website.Components.Pages
         }
         private async Task QuestionMoveUpHandler(GridCommandEventArgs args) => await QuestionMoveHandlerMain(args, _UP);
 
+        private void RadioButtonAddNewClickedHandler(GridCommandEventArgs args)
+        {
+            _inRadioButtonAdditionMode = true;
+            StateHasChanged();
+        }
+
         private IEnumerable<RadioChoiceModel?>? RadioButtonChoicesForScreen(bool deleted) =>
             _allRadioChoices_Screen?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID && q?.IsDeleted == deleted).OrderBy(s => s?.RadioChoice_Sequence);
 
+        private void RadioButtonCancelAdditionHandler(GridCommandEventArgs args)
+        {
+            _inRadioButtonAdditionMode = false;
+            StateHasChanged();
+        }
 
         private void RadioButtonCreateHandler(GridCommandEventArgs args)
         {
@@ -313,10 +330,13 @@ namespace Training.Website.Components.Pages
                     newRadioButtonItem.RadioChoice_Sequence = _allRadioChoices_Screen.Max(q => q?.RadioChoice_Sequence) + 1;
                     newRadioButtonItem.IsDeleted = false;       // NOT NECESSARY UNLESS PROPERTY DEFAULT IS CHANGED OR IS MADE NULLABLE - SO IT'S GOOD PRACTICVE TO SET IT TO "FALSE" HERE.
                     newRadioButtonItem.HasBeenChangedOnScreen = true;
+                    newRadioButtonItem.IsNewAndNotAddedToDatabaseYet = true;
 
                     _allRadioChoices_Screen.Add(newRadioButtonItem);
                     ResequenceRadioButtons();
                     _radioButtonGrid_Active?.Rebind();
+                    _inRadioButtonAdditionMode = false;
+                    StateHasChanged();
                 }
             }
         }
@@ -332,8 +352,13 @@ namespace Training.Website.Components.Pages
                 if (radioButtonToDelete != null)
                 {
                     // THIS WILL CHANGE THE VALUES IN THE _allRadioChoices_Screen LIST, WHICH IS WHAT THE SCREEN BINDS TO, BUT IT WON'T CHANGE THE VALUES IN THE _allRadioChoices_Original LIST, WHICH IS WHAT WE USE TO COMPARE TO KNOW WHETHER CHANGES HAVE BEEN MADE. THEN, WHEN THE USER CLICKS "SAVE CHANGES", WE CAN LOOP THROUGH THE _allRadioChoices_Screen LIST AND COMPARE TO THE _allRadioChoices_Original LIST TO SEE WHICH RADIO CHOICES HAVE CHANGES THAT NEED TO BE SENT TO THE SERVER.
-                    radioButtonToDelete.IsDeleted = true;
-                    radioButtonToDelete.HasBeenChangedOnScreen = true;
+                    if (radioButtonToDelete.IsNewAndNotAddedToDatabaseYet == false)
+                    {
+                        radioButtonToDelete.IsDeleted = true;
+                        radioButtonToDelete.HasBeenChangedOnScreen = true;
+                    }
+                    else
+                        _allRadioChoices_Screen?.Remove(radioButtonToDelete);
 
                     ResequenceRadioButtons();
 
@@ -411,6 +436,8 @@ namespace Training.Website.Components.Pages
             {
                 radioButtonToRestore.IsDeleted = false;
                 radioButtonToRestore.HasBeenChangedOnScreen = true;
+
+                ResequenceRadioButtons();
                 
                 _radioButtonGrid_Deleted?.Rebind();
                 _radioButtonGrid_Active?.Rebind();

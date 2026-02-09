@@ -285,7 +285,7 @@ namespace Training.Website.Services
             await database!.NonQueryByStoredProcedureAsync
                 (
                     "usp_Performance_Review_UpdateRadioButton",
-                    new { RadioChoice_ID = radioChoiceID, RadioChoice_Sequence = radioChoiceSequence, RadioChoice_Text = radioChoiceText, IsDeleted = deleted };
+                    new { RadioChoice_ID = radioChoiceID, RadioChoice_Sequence = radioChoiceSequence, RadioChoice_Text = radioChoiceText, IsDeleted = deleted }
                 );
 
         public async Task UpdateWhenReviewMeetingHeldOn(int reviewID, DateTime meetingDate, IDatabase? database) =>
