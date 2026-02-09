@@ -24,13 +24,13 @@
                         Adding/Editing Radio Button Choices for Question #@_questionWithRadioButtonsToEdit.QuestionNumber)&nbsp; @_questionWithRadioButtonsToEdit.Question
                     </td>
                 </tr>
-                <tr style="color: mediumpurple;">
+                <tr class="AddingEditing">
                     <td style="text-align: center;">
                         To cancel adding a new radio button, press [ESC].
                         <br />
                         When finished adding a new radio button after entering its text, press [ENTER].
                         <br />
-                        When finished adding all new radio button(s), click 'Close,' then click the 'Save' button on the following screen.
+                        To save all additons and changes, click on the 'Close' button above, then click the 'Save' button on the following screen.
                     </td>
                 </tr>
                 <tr>
@@ -131,6 +131,14 @@
                 Active Questions
             </td>
         </tr>
+        @if(_inQuestionAddOrEditMode == true)
+        {
+            <tr class="AddingEditing">
+                <td style="width: 100%; text-align: center;">
+                    Both the question and the answer format must be entered for a new question to be saved or an existing question to be updated.
+                </td>
+            </tr>
+        }
         <tr>
             <td style="width: 100%; text-align: center;">
                 <TelerikGrid
@@ -146,7 +154,7 @@
                     SelectionMode="GridSelectionMode.None">
                     <GridToolBarTemplate>
                          <div class="center-toolbar-items">
-                            <GridCommandButton Command="Add">Add New Question</GridCommandButton>
+                            <GridCommandButton Command="Add" Enabled="@(! _inQuestionAddOrEditMode)" OnClick="@AddOrEditQuestionClickedHandler">Add New Question</GridCommandButton>
                         </div>
                     </GridToolBarTemplate>
                     <GridColumns>
@@ -170,7 +178,7 @@
                             </EditorTemplate>
                         </GridColumn>
                         <GridCommandColumn Width="180px">
-                            <GridCommandButton Command="Edit">Edit</GridCommandButton>
+                            <GridCommandButton Command="Edit" OnClick="@AddOrEditQuestionClickedHandler">Edit</GridCommandButton>
                             <GridCommandButton Command="Save" ShowInEdit="true">Save</GridCommandButton>
                             <GridCommandButton Command="Cancel" ShowInEdit="true">Cancel</GridCommandButton>
                             <GridCommandButton Command="Delete">Delete</GridCommandButton>
@@ -223,5 +231,8 @@
         justify-content: center; /* Centers items horizontally */
         align-items: center; /* Centers items vertically, if the toolbar has a specific height */
         width: 100%; /* Ensures the div takes the full width of the toolbar */
+    }
+    .AddingEditing {
+        color: mediumpurple;
     }
 </style>

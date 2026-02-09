@@ -39,6 +39,7 @@ namespace Training.Website.Components.Pages
         private bool _radioButtonScreenVisible = false;
         private int? _selectedReviewYear = null;
         private string? _selectedAnswerFormatDropDownValue = null;
+        private bool _inQuestionAddOrEditMode = false;
         private bool _inRadioButtonAdditionMode = false;
         //private string? _newRadioButtonText = null;
         private string[]? _reviewYears = null;
@@ -103,6 +104,7 @@ namespace Training.Website.Components.Pages
             _allRadioChoices_Screen.AddRange(_allRadioChoices_Original?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID)!);
 
             _questionWithRadioButtonsToEdit = null;
+            _inQuestionAddOrEditMode = false;
 
             StateHasChanged();
         }
@@ -133,7 +135,7 @@ namespace Training.Website.Components.Pages
                         int? newQuestionNumber = (_activeQuestions.Count == 0) ? 1 : _activeQuestions.Max(q => q?.QuestionNumber) + 1;
                         await _service.InsertNewQuestion(_selectedReviewYear!.Value, newQuestionNumber!.Value, newQuestionText.Trim(), newAnswerFormat.Value, Database_OPS);
                         await GetAllQuestions();
-                        //TODO: CODE FOR RADIO BUTTONS HERE
+                        _inQuestionAddOrEditMode = false;
                         StateHasChanged();
                     }
                 }
@@ -169,6 +171,7 @@ namespace Training.Website.Components.Pages
                 }
 
                 _inRadioButtonAdditionMode = false;
+                _inQuestionAddOrEditMode = false;
                 _questionWithRadioButtonsToEdit = null;
 
                 bool questionTextChanged = await UpdateQuestion_IfChanged(questionToUpdate);
@@ -184,6 +187,12 @@ namespace Training.Website.Components.Pages
                     StateHasChanged();
                 }
             }
+        }
+
+        private void AddOrEditQuestionClickedHandler(GridCommandEventArgs args)
+        {
+            _inQuestionAddOrEditMode = true;
+            StateHasChanged();
         }
 
         private void CloseRadioButtonEditScreen()
