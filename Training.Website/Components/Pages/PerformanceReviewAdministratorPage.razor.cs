@@ -6,9 +6,6 @@ using Telerik.Blazor.Components;
 using Training.Website.Models.Reviews;
 using Training.Website.Services;
 
-// TODO: IMPORTANT - IN PRODUCTION, REMOVE CURRENT PK FROM [PERFORMANCE Review Radio Button Choices Tbl] (ReviewQuestion_ID, RadioChoice_Sequence), AND MAKE NEW PK (RadioChoice_ID) ONLY. UPDATE ALL CODE ACCORDINGLY.
-
-
 namespace Training.Website.Components.Pages
 {
     public partial class PerformanceReviewAdministratorPage
@@ -36,8 +33,8 @@ namespace Training.Website.Components.Pages
         private bool _inRadioButtonAdditionMode = false;
         private string[]? _reviewYears = null;
         private Dictionary<int, string>? _answerFormats = null;
-        private List<PerformanceReviewQuestionModel?>? _activeQuestions = null;     // TODO: MAKE IEnumerable?
-        private List<PerformanceReviewQuestionModel?>? _deletedQuestions = null;    // TODO: MAKE IEnumerable?
+        private List<PerformanceReviewQuestionModel?>? _activeQuestions = null;
+        private List<PerformanceReviewQuestionModel?>? _deletedQuestions = null;
         private List<RadioChoiceModel?>? _allRadioChoices_Screen = null;
         private List<RadioChoiceModel?>? _allRadioChoices_Original = null;
         private PerformanceReviewQuestionModel? _questionWithRadioButtonsToEdit = null;
