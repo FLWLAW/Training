@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
+using System.Text.Json;
 using Telerik.Blazor.Components;
 using Training.Website.Models.Reviews;
 using Training.Website.Services;
@@ -202,7 +203,7 @@ namespace Training.Website.Components.Pages
         private async Task GetAllRadioChoices_FromDB()
         {
             _allRadioChoices_Original = (await _service.GetAllRadioButtonChoicesByYear(_selectedReviewYear!.Value, Database_OPS))?.ToList();
-            _allRadioChoices_Screen = (await _service.GetAllRadioButtonChoicesByYear(_selectedReviewYear.Value, Database_OPS))?.ToList();
+            _allRadioChoices_Screen = JsonSerializer.Deserialize<List<RadioChoiceModel?>>(JsonSerializer.Serialize(_allRadioChoices_Original)); // MAKE SEPARATE COPY OF ORIGINAL WITHOUT CHANGING "class" TO "record"
         }
 
         private async Task QuestionMoveDownHandler(GridCommandEventArgs args) => await QuestionMoveHandlerMain(args, _DOWN);
