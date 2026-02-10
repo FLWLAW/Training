@@ -1,26 +1,21 @@
 ﻿using FLWLAW_Email.Library;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.Identity.Client;
 using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
-using System;
 using System.Data;
-using System.Linq;
-using System.Numerics;
 using System.Text;
-using Telerik.Blazor.Components;
-using Telerik.Documents.SpreadsheetStreaming;
-using Telerik.SvgIcons;
 using Telerik.Windows.Documents.Fixed.Model;
-using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
 using Telerik.Windows.Documents.Flow.Model;
-using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
 using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
 using Training.Website.Services;
 using Training.Website.Services.WordDocument;
+
+/*
+    Performance Review Administrators ARE THOSE WHO ARE ABOVE MANAGERS WHO CHANGE THE REVIEW STATUSES FROM "In Review" TO "SUBMITTED."
+    Performance Review Super Administrators ARE THOSE WHO CAN ACCESS THE Performance Review Administrator Page.
+    WE REGRET THE CONFUSING TERMINOLOGY.
+*/
 
 namespace Training.Website.Components.Pages
 {

@@ -20,5 +20,6 @@
         public required int? TitleID { get; set; }
         //public string? HomeState { get; set; }
         public required bool IsPerformanceReviewAdministrator { get; set; }
+        public required bool IsPerformanceReviewSuperAdministrator { get; set; }
     }
 }

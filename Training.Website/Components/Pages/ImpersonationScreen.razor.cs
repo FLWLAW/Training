@@ -35,6 +35,7 @@ namespace Training.Website.Components.Pages
         {
             AllUsers_CMS_DB? user = _allUsers?.FirstOrDefault(q => q?.UserName?.Equals(newValue, StringComparison.InvariantCultureIgnoreCase) == true);
             string? loginID = user?.LoginID;
+
             ApplicationState!.LoggedOnUser = new()
             {
                 AppUserID = user?.AppUserID,
@@ -43,7 +44,8 @@ namespace Training.Website.Components.Pages
                 TitleID = user?.TitleID,
                 UserName = user?.UserName,
                 LoginID = user?.LoginID,
-                IsPerformanceReviewAdministrator = await _service.IsPerformanceReviewAdministrator(user?.LoginID, Database)
+                IsPerformanceReviewAdministrator = await _service.IsPerformanceReviewAdministrator(user?.LoginID, Database),
+                IsPerformanceReviewSuperAdministrator = await _service.IsPerformanceReviewSuperAdministrator(user?.LoginID, Database)
             };
             NavManager?.NavigateTo("/");
         }

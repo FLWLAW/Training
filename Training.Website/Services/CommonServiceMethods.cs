@@ -122,8 +122,8 @@ namespace Training.Website.Services
 
         public async Task<bool> IsPerformanceReviewAdministrator(string? loginID, IDatabase? database_OPS)
         {
-            if (string.IsNullOrEmpty(loginID) == true)
-                throw new ArgumentNullException("'loginID' cannot be null in IsPerformanceReviewAdministrator().");
+            if (string.IsNullOrWhiteSpace(loginID) == true)
+                throw new ArgumentNullException("'loginID' cannot be null, empty or completely white-spaced in IsPerformanceReviewAdministrator().");
             else
             {
                 PerformanceReviewAdministratorModel? administrator =
@@ -134,6 +134,23 @@ namespace Training.Website.Services
                     )?.FirstOrDefault();
 
                 return (administrator != null);
+            }
+        }
+
+        public async Task<bool> IsPerformanceReviewSuperAdministrator(string? loginID, IDatabase? database_OPS)
+        {
+            if (string.IsNullOrWhiteSpace(loginID) == true)
+                throw new ArgumentNullException("'loginID' cannot be null, empty or completely white-spaced in IsPerformanceReviewSuperAdministrator().");
+            else
+            {
+                PerformanceReviewAdministratorModel? superAdministrator =
+                    (
+                        await database_OPS!.QueryByStoredProcedureAsync
+                            <PerformanceReviewAdministratorModel?, object?>
+                            ("usp_Performance_Review_GetSuperAdministratorByLoginID", new { Login_ID = loginID })
+                    )?.FirstOrDefault();
+
+                return (superAdministrator != null);
             }
         }
     }

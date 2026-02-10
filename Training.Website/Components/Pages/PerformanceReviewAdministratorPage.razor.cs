@@ -3,6 +3,7 @@ using SqlServerDatabaseAccessLibrary;
 using System.Data;
 using System.Text.Json;
 using Telerik.Blazor.Components;
+using Telerik.SvgIcons;
 using Training.Website.Models.Reviews;
 using Training.Website.Services;
 
@@ -10,6 +11,12 @@ namespace Training.Website.Components.Pages
 {
     public partial class PerformanceReviewAdministratorPage
     {
+        /*
+            Performance Review Administrators ARE THOSE WHO ARE ABOVE MANAGERS WHO CHANGE THE REVIEW STATUSES FROM "In Review" TO "SUBMITTED."
+            Performance Review Super Administrators ARE THOSE WHO CAN ACCESS THE Performance Review Administrator Page.
+            WE REGRET THE CONFUSING TERMINOLOGY.
+        */
+
         #region CASCADING PARAMETERS
         [CascadingParameter]
         private AppState? ApplicationState { get; set; }
