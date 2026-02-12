@@ -6,8 +6,10 @@ namespace Training.Website.Services
 {
     public class AudienceServiceMethods : CommonServiceMethods
     {
+        /*
         public async Task<IEnumerable<IdValue<int>?>?> GetAllReports(IDatabase? database) =>
             await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Report_SA", "ReportID", "ReportDesc");
+        */
 
         public async Task<IEnumerable<int>?> GetAllOpsUserIDsAssignedToTasksBySessionID(int? sessionID, IDatabase? database) =>
             await database!.QueryByStatementAsync<int>($"SELECT DISTINCT Emp_ID FROM [TRAINING Tasks Tbl] WHERE TRAINING_ID = {sessionID} AND (IsDeleted = 0 OR IsDeleted IS NULL)");
