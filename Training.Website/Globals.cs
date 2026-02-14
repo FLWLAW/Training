@@ -57,11 +57,11 @@ namespace Training.Website
 #elif QA
         public const string BaseURL = "http://drosenblum-elitedesk:8484";
 #else
-        public const string BaseURL = "http://training.efwlaw.com";
+        //public const string BaseURL = "http://training.efwlaw.com";
+        public const string BaseURL = "https://training.flwlaw.com";
 #endif
 
-        public static int CMS_UserID(AppState? appState) =>
-            appState?.LoggedOnUser?.AppUserID ?? 0;
+        public static int CMS_UserID(AppState? appState) => appState?.LoggedOnUser?.AppUserID ?? 0;
 
         public static string? ConcatenateSessionInfo(SessionInformationModel? session) => $"{session?.Session_ID} ({session?.DocTitle})";
 

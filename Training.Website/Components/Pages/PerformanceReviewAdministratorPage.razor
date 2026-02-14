@@ -3,12 +3,17 @@
 @using Training.Website.Models
 @using Training.Website.Models.Reviews;
 
-<TelerikWindow Modal="true"
-               Visible="@_radioButtonScreenVisible"
-               CloseOnOverlayClick="false"
-               Left="0px"
-               Width="1600px"
-               Height="800px">
+<!-- Performance Review Administrators ARE THOSE WHO ARE ABOVE MANAGERS WHO CHANGE THE REVIEW STATUSES FROM "In Review" TO "SUBMITTED." -->
+<!-- Performance Review Super Administrators ARE THOSE WHO CAN ACCESS THE Performance Review Administrator Page. -->
+<!-- WE REGRET THE CONFUSING TERMINOLOGY. -->
+
+<TelerikWindow 
+    Modal="true"
+    Visible="@_radioButtonScreenVisible"
+    CloseOnOverlayClick="false"
+    Left="0px"
+    Width="1600px"
+    Height="800px">
     <WindowContent>
         @if (_questionWithRadioButtonsToEdit != null)
         {
@@ -23,42 +28,69 @@
                         Adding/Editing Radio Button Choices for Question #@_questionWithRadioButtonsToEdit.QuestionNumber)&nbsp; @_questionWithRadioButtonsToEdit.Question
                     </td>
                 </tr>
+                <tr class="AddingEditing">
+                    <td style="text-align: center;">
+                        To cancel adding a new radio button, press [ESC].
+                        <br />
+                        When finished adding a new radio button after entering its text, press [ENTER].
+                        <br />
+                        To save all additions and changes, click on the 'Close' button above, then click the 'Save' button on the following screen.
+                    </td>
+                </tr>
                 <tr>
                     <td style="text-align: center;">
                         <TelerikGrid
-                            Data="@_allRadioChoices_Active_ToEdit"
+                            @ref="@_radioButtonGrid_Active"
+                            Data="@RadioButtonChoicesForScreen(false)"
                             Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
-                            EditMode="GridEditMode.Incell"
+                            EditMode="@GridEditMode.Inline"
+                            OnCreate="@RadioButtonCreateHandler"
                             OnUpdate="@RadioButtonUpdateHandler"
                             OnDelete="@RadioButtonDeleteHandler"
+                            OnCancel="@RadioButtonCancelAdditionHandler"
+                            Width="1600px">
+                            <GridToolBarTemplate>
+                                 <div class="center-toolbar-items">
+                                    <GridCommandButton Command="Add" Enabled="@(! _inRadioButtonAdditionMode)" OnClick="@RadioButtonAddNewClickedHandler">Add New Radio Button</GridCommandButton>
+                                </div>
+                            </GridToolBarTemplate>
+                            <GridColumns>
+                                <!--
+                                <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_ID)" Title="Radio Choice ID" Width="100px" Editable="false" />
+                                -->
+                                <GridColumn Field="@nameof(RadioChoiceModel.ReviewQuestion_ID)" Title="Question ID" Width="100px" Editable="false" />
+                                <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Sequence)" Title="Sequence" Width="60px" Editable="false"/>
+                                <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Text)" Title="Text" Width="300px" Editable="true" />
+                                <GridCommandColumn Width="180px">
+                                    <GridCommandButton Command="Edit">Edit</GridCommandButton>
+                                    <GridCommandButton Command="Delete">Delete</GridCommandButton>
+                                    <GridCommandButton Command="MoveUp" ShowInEdit="false" OnClick="@RadioButtonMoveUpHandler">Move Up</GridCommandButton>
+                                    <GridCommandButton Command="MoveDown" ShowInEdit="false" OnClick="@RadioButtonMoveDownHandler">Move Down</GridCommandButton>
+                                </GridCommandColumn>
+                            </GridColumns>
+                        </TelerikGrid>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%; text-align: center; font-size: large; font-weight: 700;">
+                        Deleted Radio Buttons for Question #@_questionWithRadioButtonsToEdit.QuestionNumber)&nbsp; @_questionWithRadioButtonsToEdit.Question
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <TelerikGrid
+                            @ref="@_radioButtonGrid_Deleted"
+                            Data="@RadioButtonChoicesForScreen(true)"
+                            Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
+                            EditMode="GridEditMode.None"
                             Width="1600px">
                             <GridColumns>
                                 <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_ID)" Title="Radio Choice ID" Width="100px" Editable="false" />
                                 <GridColumn Field="@nameof(RadioChoiceModel.ReviewQuestion_ID)" Title="Question ID" Width="100px" Editable="false" />
                                 <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Sequence)" Title="Sequence" Width="60px" Editable="false"/>
                                 <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Text)" Title="Text" Width="300px" Editable="true" />
-                                <!--
-                                <GridColumn Field="@nameof(RadioChoiceModel.RadioChoice_Text)" Title="Text" Width="300px" Editable="true">
-                                    <EditorTemplate>
-                                        <TelerikTextBox
-                                            @bind-Value="((RadioChoiceModel)context).RadioChoice_Text" Width="100%"
-                                            OnBlur="@(args => RadioButtonTextBlur(args, (RadioChoiceModel)context) )" 
-                                            
-                                            />
-                                    </EditorTemplate>
-                                </GridColumn>
-                                -->
                                 <GridCommandColumn Width="180px">
-                                    <!--
-                                    <GridCommandButton Command="Edit">Edit</GridCommandButton>
-                                    -->
-                                    <GridCommandButton Command="Delete">Delete</GridCommandButton>
-                                    <GridCommandButton Command="MoveUp" ShowInEdit="false" OnClick="@RadioButtonMoveUpHandler">Move Up</GridCommandButton>
-                                    <GridCommandButton Command="MoveDown" ShowInEdit="false" OnClick="@RadioButtonMoveDownHandler">Move Down</GridCommandButton>
-                                    <!--
-                                    <GridCommandButton Command="RadioButtonUpdate" ShowInEdit="true" OnClick="@RadioButtonUpdateHandler">Update</GridCommandButton>
-                                    <GridCommandButton Command="Cancel" ShowInEdit="true">Cancel</GridCommandButton>
-                                    -->
+                                    <GridCommandButton Command="Restore" ShowInEdit="false" OnClick="@RadioButtonRestoreHandler">Restore</GridCommandButton>
                                 </GridCommandColumn>
                             </GridColumns>
                         </TelerikGrid>
@@ -103,6 +135,14 @@
                 Active Questions
             </td>
         </tr>
+        @if(_inQuestionAddOrEditMode == true)
+        {
+            <tr class="AddingEditing">
+                <td style="width: 100%; text-align: center;">
+                    Both the question and the answer format must be entered for a new question to be saved or an existing question to be updated.
+                </td>
+            </tr>
+        }
         <tr>
             <td style="width: 100%; text-align: center;">
                 <TelerikGrid
@@ -110,7 +150,7 @@
                     Pageable="false" ScrollMode="GridScrollMode.Scrollable" Sortable="true" Resizable="true" Reorderable="false"
                     Width="1600px"
                     EditMode="GridEditMode.Inline"
-                    OnCancel="@ActiveQuestionCancelAllChangesForOneQuestionHandler"
+                    OnCancel="@ActiveQuestionCancelAllRadioChangesForOneQuestionHandler"
                     OnCreate="@ActiveQuestionCreateHandler"
                     OnDelete="@ActiveQuestionDeleteHandler"
                     OnUpdate="@ActiveQuestionUpdateHandler"
@@ -118,7 +158,7 @@
                     SelectionMode="GridSelectionMode.None">
                     <GridToolBarTemplate>
                          <div class="center-toolbar-items">
-                            <GridCommandButton Command="Add">Add New Question</GridCommandButton>
+                            <GridCommandButton Command="Add" Enabled="@(! _inQuestionAddOrEditMode)" OnClick="@AddOrEditQuestionClickedHandler">Add New Question</GridCommandButton>
                         </div>
                     </GridToolBarTemplate>
                     <GridColumns>
@@ -142,7 +182,7 @@
                             </EditorTemplate>
                         </GridColumn>
                         <GridCommandColumn Width="180px">
-                            <GridCommandButton Command="Edit">Edit</GridCommandButton>
+                            <GridCommandButton Command="Edit" OnClick="@AddOrEditQuestionClickedHandler">Edit</GridCommandButton>
                             <GridCommandButton Command="Save" ShowInEdit="true">Save</GridCommandButton>
                             <GridCommandButton Command="Cancel" ShowInEdit="true">Cancel</GridCommandButton>
                             <GridCommandButton Command="Delete">Delete</GridCommandButton>
@@ -180,7 +220,7 @@
                             </Template>
                         </GridColumn>
                         <GridCommandColumn Width="180px">
-                            <GridCommandButton Command="Restore" OnClick="@RestoreHandler">Restore</GridCommandButton>
+                            <GridCommandButton Command="Restore" OnClick="@RestoreQuestionHandler">Restore</GridCommandButton>
                         </GridCommandColumn>
                     </GridColumns>
                 </TelerikGrid>
@@ -195,5 +235,8 @@
         justify-content: center; /* Centers items horizontally */
         align-items: center; /* Centers items vertically, if the toolbar has a specific height */
         width: 100%; /* Ensures the div takes the full width of the toolbar */
+    }
+    .AddingEditing {
+        color: mediumpurple;
     }
 </style>

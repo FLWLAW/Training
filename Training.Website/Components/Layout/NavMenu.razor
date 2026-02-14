@@ -7,7 +7,7 @@
     </div>
 }
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()" style="background-color: black; height: 1000px;">
 
     @if (_performanceReviewMode == false)
     {
@@ -17,7 +17,7 @@
             </NavLink>
         </div>
 
-        @if (IsAdministrator() == true)
+        @if (IsTrainingQuestionnaire_Administrator() == true)
         {
             <div class="nav-item px-1">
                 <NavLink class="Dashboard-nav-link" href="TrainingQuestionnaireAdministrator">
@@ -50,7 +50,20 @@
         </div>
     }
 
-    @if (IsTester() == true || IsManager() == true || IsAdministrator() == true)
+    <!-- Performance Review Administrators ARE THOSE WHO ARE ABOVE MANAGERS WHO CHANGE THE REVIEW STATUSES FROM "In Review" TO "SUBMITTED." -->
+    <!-- Performance Review Super Administrators ARE THOSE WHO CAN ACCESS THE Performance Review Administrator Page. -->
+    <!-- WE REGRET THE CONFUSING TERMINOLOGY. -->
+
+    @if
+        (
+            IsTester() == true || IsManager() == true ||
+            (
+                ApplicationState != null && ApplicationState.LoggedOnUser != null &&
+                (
+                    ApplicationState.LoggedOnUser.IsPerformanceReviewAdministrator == true || ApplicationState.LoggedOnUser.IsPerformanceReviewSuperAdministrator == true
+                )
+            )
+        )
     {
         <div class="top-row ps-3 navbar navbar-dark" style="background-color: black">
             <div class="container-fluid">
@@ -62,7 +75,7 @@
         </NavLink>
     }
 
-    @if (ApplicationState?.LoggedOnUser?.UserName == "David Rosenblum" || ApplicationState?.LoggedOnUser?.UserName == "Susan Eisenman")
+    @if (ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.IsPerformanceReviewSuperAdministrator  == true)
     {
         <div class="nav-item px-1">
             <NavLink class="Dashboard-nav-link" href="PerformanceReviewAdministratorPage" @onclick="SetPerformanceViewModeToTrue">
@@ -71,7 +84,6 @@
         </div>
     }
 </div>
-
 
 <style>
     .WSD_Header {

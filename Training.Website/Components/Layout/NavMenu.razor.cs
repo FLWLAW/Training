@@ -21,19 +21,19 @@ namespace Training.Website.Components.Layout
         private readonly SqlDatabase? _dbCMS = new(Configuration.DatabaseConnectionString_CMS()!);
         private readonly NavMenuServiceMethods _service = new();
         private IEnumerable<string>? _testers = null;
-        private IEnumerable<string?>? _administrators = null;
+        private IEnumerable<string?>? _trainingQuestionnaire_Administrators = null;
         private IEnumerable<int?>? _managerIDs = null;
         #endregion
 
         protected override void OnInitialized()
         {
             _testers = _service.Testers();
-            _administrators =_service.Administrator_LoginIDs(Database_OPS);
+            _trainingQuestionnaire_Administrators =_service.TrainingQuestionnaire_Administrator_LoginIDs(Database_OPS);
             _managerIDs = _service.Managers(_dbCMS);
         }
 
-        private bool IsAdministrator() => ApplicationState != null && ApplicationState.LoggedOnUser != null && _administrators != null
-            ? _administrators!.Contains(ApplicationState!.LoggedOnUser!.LoginID?.ToLower())
+        private bool IsTrainingQuestionnaire_Administrator() => ApplicationState != null && ApplicationState.LoggedOnUser != null && _trainingQuestionnaire_Administrators != null
+            ? _trainingQuestionnaire_Administrators!.Contains(ApplicationState!.LoggedOnUser!.LoginID?.ToLower())
             : false;
 
         private bool IsManager() => ApplicationState != null && ApplicationState.LoggedOnUser != null &&_managerIDs != null

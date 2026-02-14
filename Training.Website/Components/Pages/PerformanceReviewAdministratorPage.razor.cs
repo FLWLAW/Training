@@ -1,20 +1,22 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
-using System.Threading.Tasks;
+using System.Text.Json;
 using Telerik.Blazor.Components;
-using Training.Website.Models;
+using Telerik.SvgIcons;
 using Training.Website.Models.Reviews;
 using Training.Website.Services;
-
-// TODO: IMPORTANT - IN PRODUCTION, REMOVE CURRENT PK FROM [PERFORMANCE Review Radio Button Choices Tbl] (ReviewQuestion_ID, RadioChoice_Sequence), AND MAKE NEW PK (RadioChoice_ID) ONLY. UPDATE ALL CODE ACCORDINGLY.
-
 
 namespace Training.Website.Components.Pages
 {
     public partial class PerformanceReviewAdministratorPage
     {
+        /*
+            Performance Review Administrators ARE THOSE WHO ARE ABOVE MANAGERS WHO CHANGE THE REVIEW STATUSES FROM "In Review" TO "SUBMITTED."
+            Performance Review Super Administrators ARE THOSE WHO CAN ACCESS THE Performance Review Administrator Page.
+            WE REGRET THE CONFUSING TERMINOLOGY.
+        */
+
         #region CASCADING PARAMETERS
         [CascadingParameter]
         private AppState? ApplicationState { get; set; }
@@ -23,10 +25,6 @@ namespace Training.Website.Components.Pages
         #region DEPENDENCY INJECTION PROPERTIES
         [Inject]
         private IDatabase? Database_OPS { get; set; }
-        /*
-        [Inject]
-        private IJSRuntime? JS { get; set; }
-        */
         #endregion
 
         #region PRIVATE CONSTANTS
@@ -38,17 +36,18 @@ namespace Training.Website.Components.Pages
         private bool _radioButtonScreenVisible = false;
         private int? _selectedReviewYear = null;
         private string? _selectedAnswerFormatDropDownValue = null;
-        private string? _newRadioButtonText = null;
+        private bool _inQuestionAddOrEditMode = false;
+        private bool _inRadioButtonAdditionMode = false;
         private string[]? _reviewYears = null;
         private Dictionary<int, string>? _answerFormats = null;
-        private List<PerformanceReviewQuestionModel?>? _activeQuestions = null;     // TODO: MAKE IEnumerable?
-        private List<PerformanceReviewQuestionModel?>? _deletedQuestions = null;    // TODO: MAKE IEnumerable?
-        private List<RadioChoiceModel?>? _allRadioChoices_Active = null;
-        private List<RadioChoiceModel?>? _allRadioChoices_Active_Original = null;
-        private List<RadioChoiceModel?>? _allRadioChoices_Active_ToEdit = null;
-        private IEnumerable<RadioChoiceModel?>? _allRadioChoices_Deleted = null;
+        private List<PerformanceReviewQuestionModel?>? _activeQuestions = null;
+        private List<PerformanceReviewQuestionModel?>? _deletedQuestions = null;
+        private List<RadioChoiceModel?>? _allRadioChoices_Screen = null;
+        private List<RadioChoiceModel?>? _allRadioChoices_Original = null;
         private PerformanceReviewQuestionModel? _questionWithRadioButtonsToEdit = null;
         private PerformanceReviewServiceMethods _service = new();
+        private TelerikGrid<RadioChoiceModel>? _radioButtonGrid_Active;
+        private TelerikGrid<RadioChoiceModel>? _radioButtonGrid_Deleted;
         #endregion
 
 
@@ -60,25 +59,23 @@ namespace Training.Website.Components.Pages
 
         // =========================================================================================================================================================================================================================================================================================================
 
-        private void ActiveQuestionCancelAllChangesForOneQuestionHandler(GridCommandEventArgs args)
+        private void ActiveQuestionCancelAllRadioChangesForOneQuestionHandler(GridCommandEventArgs args)
         {
-            if (_allRadioChoices_Active != null)
-            {
-                int? questionToCancelID = ConvertToModel(args)?.Question_ID;
+            _allRadioChoices_Screen = _allRadioChoices_Screen?.Where(q => q?.ReviewQuestion_ID != _questionWithRadioButtonsToEdit?.Question_ID).ToList();
+            _allRadioChoices_Screen ??= [];
+            _allRadioChoices_Screen.AddRange(_allRadioChoices_Original?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID)!);
 
-                foreach (RadioChoiceModel? activeRadioChoice in _allRadioChoices_Active)
-                {
-                    // TODO: FINISH CODING HERE
-                }
-            }
+            _questionWithRadioButtonsToEdit = null;
+            _inQuestionAddOrEditMode = false;
 
+            StateHasChanged();
         }
 
         private async Task ActiveQuestionCreateHandler(GridCommandEventArgs args)
         {
             if (_selectedAnswerFormatDropDownValue != null)
             {
-                string? newQuestionText = (ConvertToModel(args))?.Question;
+                string? newQuestionText = (ConvertToQuestionModel(args))?.Question;
 
                 if (newQuestionText != null)
                 {
@@ -100,65 +97,69 @@ namespace Training.Website.Components.Pages
                         int? newQuestionNumber = (_activeQuestions.Count == 0) ? 1 : _activeQuestions.Max(q => q?.QuestionNumber) + 1;
                         await _service.InsertNewQuestion(_selectedReviewYear!.Value, newQuestionNumber!.Value, newQuestionText.Trim(), newAnswerFormat.Value, Database_OPS);
                         await GetAllQuestions();
-                        //TODO: CODE FOR RADIO BUTTONS HERE
+                        _inQuestionAddOrEditMode = false;
                         StateHasChanged();
                     }
                 }
             }
         }
 
-        private async Task ActiveQuestionDeleteHandler(GridCommandEventArgs args) => await DeleteRestoreMainHandler(args, true);
+        private async Task ActiveQuestionDeleteHandler(GridCommandEventArgs args) => await DeleteRestoreQuestionMainHandler(args, true);
 
         private async Task ActiveQuestionUpdateHandler(GridCommandEventArgs args)
         {
-            _questionWithRadioButtonsToEdit = null;
-
-            PerformanceReviewQuestionModel? questionToUpdate = ConvertToModel(args);
+            PerformanceReviewQuestionModel? questionToUpdate = ConvertToQuestionModel(args);
 
             if (questionToUpdate != null)
             {
+                // SAVE ANY ADDED/CHANGED RADIO BUTTONS FIRST
+
+                if (_allRadioChoices_Screen != null && _questionWithRadioButtonsToEdit != null)
+                {
+                    foreach (RadioChoiceModel? radioChoice in _allRadioChoices_Screen)
+                    {
+                        if (radioChoice != null && radioChoice.HasBeenChangedOnScreen == true && radioChoice.RadioChoice_Sequence != null && string.IsNullOrWhiteSpace(radioChoice.RadioChoice_Text) == false)
+                        {
+                            radioChoice.RadioChoice_Text = radioChoice.RadioChoice_Text.Trim();
+
+                            if (radioChoice.RadioChoice_ID == null)
+                                await _service.InsertNewRadioButton
+                                    (radioChoice.ReviewQuestion_ID!.Value, radioChoice.RadioChoice_Sequence!.Value, radioChoice.RadioChoice_Text, Database_OPS);
+                            else
+                                await _service.UpdateRadioButton
+                                    (radioChoice.RadioChoice_ID.Value, radioChoice.RadioChoice_Sequence!.Value, radioChoice.RadioChoice_Text, radioChoice.IsDeleted, Database_OPS);
+                        }
+                    }
+                }
+
+                _inRadioButtonAdditionMode = false;
+                _inQuestionAddOrEditMode = false;
+                _questionWithRadioButtonsToEdit = null;
+
                 bool questionTextChanged = await UpdateQuestion_IfChanged(questionToUpdate);
                 int? newAnswerFormat = await UpdateAnswerFormat_IfChanged(questionToUpdate);
-                //bool wasOldAnswerFormatRadioButtons = _answerFormats?[questionToUpdate.AnswerFormat!.Value] == Globals.RadioButtons;
-                //bool isNewAnswerFormatRadioButtons = newAnswerFormat != null && _answerFormats?[newAnswerFormat.Value] == Globals.RadioButtons;
 
                 if (questionTextChanged == true || newAnswerFormat != null)
                 {
                     await GetAllQuestions();
-                    //_radioButtonScreenVisible = wasOldAnswerFormatRadioButtons == true || isNewAnswerFormatRadioButtons == true;
-                    //_questionWithRadioButtonsToEdit = _radioButtonScreenVisible == true ? _activeQuestions!.FirstOrDefault(q => q?.Question_ID == questionToUpdate.Question_ID) : null;
                     StateHasChanged();
                 }
             }
         }
 
-        private void CloseRadioButtonEditScreen()
+        private void AddOrEditQuestionClickedHandler(GridCommandEventArgs args)
         {
-            if (_allRadioChoices_Active != null && _allRadioChoices_Active_ToEdit != null)
-            {
-                for (int major = 0; major < _allRadioChoices_Active?.Count; major++)
-                {
-                    for (int minor = 0; minor < _allRadioChoices_Active_ToEdit?.Count; minor++)
-                    {
-                        if (_allRadioChoices_Active_ToEdit[minor]?.RadioChoice_ID == _allRadioChoices_Active[major]?.RadioChoice_ID)
-                        {
-                            if (_allRadioChoices_Active[major]?.RadioChoice_Text != _allRadioChoices_Active_ToEdit[minor]?.RadioChoice_Text)
-                                _allRadioChoices_Active[major]!.RadioChoice_Text = _allRadioChoices_Active_ToEdit[minor]?.RadioChoice_Text;
-
-                            if (_allRadioChoices_Active[major]?.RadioChoice_Sequence != _allRadioChoices_Active_ToEdit[minor]?.RadioChoice_Sequence)
-                                _allRadioChoices_Active[major]!.RadioChoice_Sequence = _allRadioChoices_Active_ToEdit[minor]?.RadioChoice_Sequence;
-                        }
-                    }
-                }
-            }
-
-            _radioButtonScreenVisible = false;
-            _questionWithRadioButtonsToEdit = null;
-            _allRadioChoices_Active_ToEdit = null;
+            _inQuestionAddOrEditMode = true;
             StateHasChanged();
         }
 
-        private PerformanceReviewQuestionModel? ConvertToModel(GridCommandEventArgs args) => (PerformanceReviewQuestionModel?)args.Item;
+        private void CloseRadioButtonEditScreen()
+        {
+            _radioButtonScreenVisible = false;
+            StateHasChanged();
+        }
+
+        private PerformanceReviewQuestionModel? ConvertToQuestionModel(GridCommandEventArgs args) => (PerformanceReviewQuestionModel?)args.Item;
 
         private async Task GetAllQuestions()
         {
@@ -169,9 +170,9 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private async Task DeleteRestoreMainHandler(GridCommandEventArgs args, bool newDeletionStatus)
+        private async Task DeleteRestoreQuestionMainHandler(GridCommandEventArgs args, bool newDeletionStatus)
         {
-            PerformanceReviewQuestionModel? questionToModify = ConvertToModel(args);
+            PerformanceReviewQuestionModel? questionToModify = ConvertToQuestionModel(args);
 
             if (questionToModify == null)
                 throw new NoNullAllowedException("[questionToModify] not allowed in DeleteRestoreMainHandler().");
@@ -203,6 +204,12 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private async Task GetAllRadioChoices_FromDB()
+        {
+            _allRadioChoices_Original = (await _service.GetAllRadioButtonChoicesByYear(_selectedReviewYear!.Value, Database_OPS))?.ToList();
+            _allRadioChoices_Screen = JsonSerializer.Deserialize<List<RadioChoiceModel?>>(JsonSerializer.Serialize(_allRadioChoices_Original)); // MAKE SEPARATE COPY OF ORIGINAL WITHOUT CHANGING "class" TO "record"
+        }
+
         private async Task QuestionMoveDownHandler(GridCommandEventArgs args) => await QuestionMoveHandlerMain(args, _DOWN);
 
         private async Task QuestionMoveHandlerMain(GridCommandEventArgs args, int moveIncrement)
@@ -211,7 +218,7 @@ namespace Training.Website.Components.Pages
                 throw new NoNullAllowedException("[_activeQuestions] cannot be null in MoveHandlerMain().");
             else
             {
-                PerformanceReviewQuestionModel? question1 = ConvertToModel(args);
+                PerformanceReviewQuestionModel? question1 = ConvertToQuestionModel(args);
                 int highestQuestionNumber = _activeQuestions.Count;
 
                 if (question1 != null && ((moveIncrement == _UP && question1.QuestionNumber > 1) || (moveIncrement == _DOWN && question1.QuestionNumber < highestQuestionNumber)))
@@ -234,80 +241,167 @@ namespace Training.Website.Components.Pages
         }
         private async Task QuestionMoveUpHandler(GridCommandEventArgs args) => await QuestionMoveHandlerMain(args, _UP);
 
-        /*
-        private void RadioButtonTextBlur(object? args, RadioChoiceModel? possiblyChangedItem)
+        private void RadioButtonAddNewClickedHandler(GridCommandEventArgs args)
         {
-            // IF TAB IS PRESSED OR ANOTHER CONTROL IS CLICKED ON FIRST, THIS METHOD FIRES FIRST.
-            // IF ENTER IS PRESSED, RadioButtonUpdateHandler FIRES FIRST, THEN THIS FIRES.
+            _inRadioButtonAdditionMode = true;
+            StateHasChanged();
+        }
 
-            if (possiblyChangedItem != null && _allRadioChoices_Active_ToEdit != null)
+        private IEnumerable<RadioChoiceModel?>? RadioButtonChoicesForScreen(bool deleted) =>
+            _allRadioChoices_Screen?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID && q?.IsDeleted == deleted).OrderBy(s => s?.RadioChoice_Sequence);
+
+        private void RadioButtonCancelAdditionHandler(GridCommandEventArgs args)
+        {
+            _inRadioButtonAdditionMode = false;
+            StateHasChanged();
+        }
+
+        private void RadioButtonCreateHandler(GridCommandEventArgs args)
+        {
+            if (_questionWithRadioButtonsToEdit != null)
             {
-                for (int index = 0; index < _allRadioChoices_Active_ToEdit.Count; index++)
+                var newRadioButtonItem = (RadioChoiceModel?)args.Item;
+
+                if (newRadioButtonItem != null)
                 {
-                    if
-                        (
-                            _allRadioChoices_Active_ToEdit[index] != null &&
-                            _allRadioChoices_Active_ToEdit[index]!.RadioChoice_ID == possiblyChangedItem.RadioChoice_ID &&
-                            _allRadioChoices_Active_ToEdit[index]!.RadioChoice_Text != possiblyChangedItem.RadioChoice_Text
-                        )
-                    {
-                        _allRadioChoices_Active_ToEdit[index]!.RadioChoice_Text = possiblyChangedItem.RadioChoice_Text;
-                        //_allRadioChoices_Active_ToEdit[index]!.Changed = true;
-                    }
-                    //else
-                        //_allRadioChoices_Active_ToEdit[index]!.Changed = false;
+                    _allRadioChoices_Screen ??= [];
+                    newRadioButtonItem.ReviewQuestion_ID = _questionWithRadioButtonsToEdit.Question_ID;
+                    newRadioButtonItem.RadioChoice_Sequence = _allRadioChoices_Screen.Max(q => q?.RadioChoice_Sequence) + 1;
+                    newRadioButtonItem.IsDeleted = false;       // NOT NECESSARY UNLESS PROPERTY DEFAULT IS CHANGED OR IS MADE NULLABLE - SO IT'S GOOD PRACTICVE TO SET IT TO "FALSE" HERE.
+                    newRadioButtonItem.HasBeenChangedOnScreen = true;
+                    newRadioButtonItem.IsNewAndNotAddedToDatabaseYet = true;
+
+                    _allRadioChoices_Screen.Add(newRadioButtonItem);
+                    ResequenceRadioButtons();
+                    _radioButtonGrid_Active?.Rebind();
+                    _inRadioButtonAdditionMode = false;
+                    StateHasChanged();
                 }
             }
         }
-        */
 
-        private void RadioButtonTextChanged(string? newValue, RadioChoiceModel? item)
+        private void RadioButtonDeleteHandler(GridCommandEventArgs args)
         {
-            if (string.IsNullOrWhiteSpace(newValue) == false && item != null)
+            var changedItem = (RadioChoiceModel?)args.Item;
+
+            if (changedItem != null)
             {
-                item.RadioChoice_Text = newValue;
-                StateHasChanged();
+                RadioChoiceModel? radioButtonToDelete = _allRadioChoices_Screen?.FirstOrDefault(q => q?.RadioChoice_ID == changedItem?.RadioChoice_ID);
+
+                if (radioButtonToDelete != null)
+                {
+                    // THIS WILL CHANGE THE VALUES IN THE _allRadioChoices_Screen LIST, WHICH IS WHAT THE SCREEN BINDS TO, BUT IT WON'T CHANGE THE VALUES IN THE _allRadioChoices_Original LIST, WHICH IS WHAT WE USE TO COMPARE TO KNOW WHETHER CHANGES HAVE BEEN MADE. THEN, WHEN THE USER CLICKS "SAVE CHANGES", WE CAN LOOP THROUGH THE _allRadioChoices_Screen LIST AND COMPARE TO THE _allRadioChoices_Original LIST TO SEE WHICH RADIO CHOICES HAVE CHANGES THAT NEED TO BE SENT TO THE SERVER.
+                    if (radioButtonToDelete.IsNewAndNotAddedToDatabaseYet == false)
+                    {
+                        radioButtonToDelete.IsDeleted = true;
+                        radioButtonToDelete.HasBeenChangedOnScreen = true;
+                    }
+                    else
+                        _allRadioChoices_Screen?.Remove(radioButtonToDelete);
+
+                    ResequenceRadioButtons();
+
+                    _radioButtonGrid_Active?.Rebind();
+                    _radioButtonGrid_Deleted?.Rebind();
+                }
             }
         }
 
-        private async Task RadioButtonMoveDownHandler(GridCommandEventArgs args)
+        private void RadioButtonMoveDownHandler(GridCommandEventArgs args) => RadioButtonMoveHandlerMain(args, _DOWN);
+
+        private void RadioButtonMoveHandlerMain(GridCommandEventArgs args, int moveIncrement)
         {
-            await Task.Delay(1);
-            //throw new NotImplementedException();
+            if (_allRadioChoices_Screen != null)
+            {
+                var radioButton1 = (RadioChoiceModel?)args.Item;
+                int highestSequenceNumber = _allRadioChoices_Screen?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID && q?.IsDeleted == false)?.Count() ?? 0;
+
+                if (radioButton1 != null && ((moveIncrement == _UP && radioButton1.RadioChoice_Sequence > 1) || (moveIncrement == _DOWN && radioButton1.RadioChoice_Sequence < highestSequenceNumber)))
+                {
+                    int secondSequenceNumber = radioButton1.RadioChoice_Sequence.Value + moveIncrement;
+                    RadioChoiceModel? radioButton2 = _allRadioChoices_Screen?.FirstOrDefault
+                        (q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID && q?.RadioChoice_Sequence == secondSequenceNumber); // && q?.IsDeleted == false);
+
+                    if (radioButton2 != null)
+                    {
+                        int firstSequenceNumber = radioButton1.RadioChoice_Sequence.Value;
+
+                        radioButton1.RadioChoice_Sequence = secondSequenceNumber;
+                        radioButton1.HasBeenChangedOnScreen = true;
+                        radioButton2.RadioChoice_Sequence = firstSequenceNumber;
+                        radioButton2.HasBeenChangedOnScreen = true;
+
+                        ResequenceRadioButtons();
+                        _radioButtonGrid_Active?.Rebind();
+                    }
+                }
+            }
         }
 
-        private async Task RadioButtonMoveUpHandler(GridCommandEventArgs args)
-        {
-            await Task.Delay(1);
-            //throw new NotImplementedException();
-        }
 
-        private async Task RadioButtonDeleteHandler(GridCommandEventArgs args)
+        private void RadioButtonMoveUpHandler(GridCommandEventArgs args) => RadioButtonMoveHandlerMain(args, _UP);
+
+        private void RadioButtonRestoreHandler(GridCommandEventArgs args)
         {
-            await Task.Delay(1);
-            //throw new NotImplementedException();
+            var radioButtonToRestore = (RadioChoiceModel?)args.Item;
+
+            if (radioButtonToRestore != null)
+            {
+                radioButtonToRestore.IsDeleted = false;
+                radioButtonToRestore.HasBeenChangedOnScreen = true;
+
+                ResequenceRadioButtons();
+                
+                _radioButtonGrid_Deleted?.Rebind();
+                _radioButtonGrid_Active?.Rebind();
+            }
         }
 
         private void RadioButtonUpdateHandler(GridCommandEventArgs args)
         {
-            var possiblyChangedItem = (RadioChoiceModel?)args.Item;
+            var changedItem = (RadioChoiceModel?)args.Item;
 
-            if (possiblyChangedItem != null && _allRadioChoices_Active_ToEdit != null)
+            if (changedItem != null)
             {
-                for (int index = 0; index < _allRadioChoices_Active_ToEdit.Count; index++)
+                RadioChoiceModel? radioButtonToChange = _allRadioChoices_Screen?.FirstOrDefault(q => q?.RadioChoice_ID == changedItem?.RadioChoice_ID);
+
+                if (radioButtonToChange != null)
+                {
+                    // THIS WILL CHANGE THE VALUES IN THE _allRadioChoices_Screen LIST, WHICH IS WHAT THE SCREEN BINDS TO, BUT IT WON'T CHANGE THE VALUES IN THE _allRadioChoices_Original LIST, WHICH IS WHAT WE USE TO COMPARE TO KNOW WHETHER CHANGES HAVE BEEN MADE. THEN, WHEN THE USER CLICKS "SAVE CHANGES", WE CAN LOOP THROUGH THE _allRadioChoices_Screen LIST AND COMPARE TO THE _allRadioChoices_Original LIST TO SEE WHICH RADIO CHOICES HAVE CHANGES THAT NEED TO BE SENT TO THE SERVER.
+                    radioButtonToChange.RadioChoice_Text = changedItem?.RadioChoice_Text;
+                    radioButtonToChange.HasBeenChangedOnScreen = true;
+                }
+            }
+        }
+
+        private void ResequenceRadioButtons()
+        {
+            if (_allRadioChoices_Screen != null)
+            {
+                int radioChoiceSequenceShouldBe = 1;
+
+                _allRadioChoices_Screen = _allRadioChoices_Screen
+                    .OrderBy(q => q?.ReviewQuestion_ID)
+                    .ThenBy(q => q?.RadioChoice_Sequence)
+                    .ThenBy(q => q?.RadioChoice_ID)
+                    .ToList();
+
+                foreach(RadioChoiceModel? radioChoice in _allRadioChoices_Screen)
                 {
                     if
                         (
-                            _allRadioChoices_Active_ToEdit[index] != null &&
-                            _allRadioChoices_Active_ToEdit[index]!.RadioChoice_ID == possiblyChangedItem.RadioChoice_ID &&
-                            _allRadioChoices_Active_ToEdit[index]!.RadioChoice_Text != possiblyChangedItem.RadioChoice_Text
+                            radioChoice != null &&
+                            radioChoice.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID &&
+                            radioChoice.IsDeleted == false
                         )
                     {
-                        _allRadioChoices_Active_ToEdit[index]!.RadioChoice_Text = possiblyChangedItem.RadioChoice_Text;
-                        //_allRadioChoices_Active_ToEdit[index]!.Changed = true;
+                        if (radioChoice.RadioChoice_Sequence != radioChoiceSequenceShouldBe)
+                        {
+                            radioChoice.RadioChoice_Sequence = radioChoiceSequenceShouldBe;
+                            radioChoice.HasBeenChangedOnScreen = true;
+                        }
+                        radioChoiceSequenceShouldBe++;
                     }
-                    //else
-                    //_allRadioChoices_Active_ToEdit[index]!.Changed = false;
                 }
             }
         }
@@ -332,7 +426,7 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private async Task RestoreHandler(GridCommandEventArgs args) => await DeleteRestoreMainHandler(args, false);
+        private async Task RestoreQuestionHandler(GridCommandEventArgs args) => await DeleteRestoreQuestionMainHandler(args, false);
 
         private async Task ReviewYearChanged(string newValue)
         {
@@ -340,28 +434,7 @@ namespace Training.Website.Components.Pages
             {
                 _selectedReviewYear = selectedReviewYear;
                 await GetAllQuestions();
-                _allRadioChoices_Active_Original = (await _service.GetAllRadioButtonChoicesByYearAndDeletedStatus(_selectedReviewYear.Value, false, Database_OPS))?.ToList();
-                _allRadioChoices_Active = [];
-                foreach(RadioChoiceModel? originalRadioChoice in _allRadioChoices_Active_Original!)
-                {
-                    RadioChoiceModel radioChoice = new()
-                    {
-                        RadioChoice_ID = originalRadioChoice?.RadioChoice_ID,
-                        ReviewQuestion_ID = originalRadioChoice?.ReviewQuestion_ID,
-                        RadioChoice_Sequence = originalRadioChoice?.RadioChoice_Sequence,
-                        RadioChoice_Text = originalRadioChoice?.RadioChoice_Text,
-                        Selected = originalRadioChoice!.Selected
-                    };
-                    _allRadioChoices_Active.Add(radioChoice);
-                }
-                _allRadioChoices_Deleted = (await _service.GetAllRadioButtonChoicesByYearAndDeletedStatus(_selectedReviewYear.Value, true, Database_OPS))?.ToList();
-                /*
-                _selectedUser = null;
-                _headerInfo = null;
-                _answers = null;
-                _showChangeStatusReminder = false;
-                _showMustClickSubmitReviewReminder = false;
-                */
+                await GetAllRadioChoices_FromDB();
                 StateHasChanged();
             }
         }
@@ -388,7 +461,6 @@ namespace Training.Website.Components.Pages
                 {
                     if (kvp.Value == _selectedAnswerFormatDropDownValue)
                     {
-                        // TODO: ADD ANSWER FORMAT QUESTIONS - THAT WILL TAKE A WHILE
                         await _service.UpdateAnswerFormat(updatedQuestion!.Question_ID!.Value, kvp.Key, Database_OPS);
                         newAnswerFormat = kvp.Key;
                         break;
@@ -419,16 +491,10 @@ namespace Training.Website.Components.Pages
             }
         }
 
-        private async Task UpdateRadioButtonClicked(GridCommandEventArgs args)
+        private void UpdateRadioButtonClicked(GridCommandEventArgs args)
         {
-            _questionWithRadioButtonsToEdit = ConvertToModel(args);
-            _allRadioChoices_Active_ToEdit = _allRadioChoices_Active
-               ?.Where(q => q?.ReviewQuestion_ID == _questionWithRadioButtonsToEdit?.Question_ID)
-                .OrderBy(q => q?.RadioChoice_Sequence)
-                .ToList();
-
+            _questionWithRadioButtonsToEdit = ConvertToQuestionModel(args);     //TODO: MAYBE CHANGE THIS TO int _questionWithRadioButtonsToEdit_ID??
             _radioButtonScreenVisible = true;
-            await Task.Delay(1);
             StateHasChanged();
         }
     }

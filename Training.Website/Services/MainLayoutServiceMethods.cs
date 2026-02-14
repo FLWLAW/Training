@@ -16,7 +16,8 @@ namespace Training.Website.Services
                 string? loginID = authState?.User?.Identity?.Name?[(backSlash.Value + 1)..];
                 AllUsers_CMS_DB? userCMS_DB = await GetCMS_DB_UserInfo(loginID, database_CMS);
                 int? OPS_ID = await GetOPS_DB_UserID(loginID, database_OPS);
-                bool administrator = await IsPerformanceReviewAdministrator(loginID, database_OPS);
+                bool performanceReviewAdministrator = await IsPerformanceReviewAdministrator(loginID, database_OPS);
+                bool performanceReviewSuperAdministrator = await IsPerformanceReviewSuperAdministrator(loginID, database_OPS);
 
                 return new AllUsers_Authentication()
                 {
@@ -26,7 +27,8 @@ namespace Training.Website.Services
                     RoleID = userCMS_DB?.RoleID,
                     TitleID = userCMS_DB?.TitleID,
                     UserName = userCMS_DB?.UserName,
-                    IsPerformanceReviewAdministrator = administrator
+                    IsPerformanceReviewAdministrator = performanceReviewAdministrator,
+                    IsPerformanceReviewSuperAdministrator = performanceReviewSuperAdministrator
                 };
             }
             else

@@ -4,9 +4,6 @@ namespace Training.Website.Services
 {
     public class NavMenuServiceMethods
     {
-        public IEnumerable<string?>? Administrator_LoginIDs(IDatabase? database) =>
-            database!.QueryByStoredProcedure<string?>("usp_TRAINING_Questionnaire_GetAdministratorLoginIDs");
-
         public IEnumerable<int?>? Managers(IDatabase? database) =>
             database!.QueryByStatement<int?>("SELECT ManagerAppUserID FROM AppUserManager");
 
@@ -18,6 +15,11 @@ namespace Training.Website.Services
 #if DEBUG
                 "rcuyan",
 #endif
-        ];
+            ];
+
+        public IEnumerable<string?>? TrainingQuestionnaire_Administrator_LoginIDs(IDatabase? database) =>
+            database!.QueryByStoredProcedure<string?>("usp_TRAINING_Questionnaire_GetAdministratorLoginIDs");
+
+
     }
 }

@@ -31,30 +31,21 @@ namespace Training.Website.Components.Pages
         private IEnumerable<string>? _sessions = null;
         private string? _selectedSessionString = null;
         private SessionInformationModel? _selectedSession = null;
-        private bool _sessionAlreadyExistsInDueDatesTable = false;
+        private bool _sessionAlreadyExistsInDueDatesTable = false;      //TODO: THIS VARIABLE AND ITS ASSOCIATED LOGIC WILL NO LONGER BE NEEDED.
 
         private string _spanHeaderClass = "HeaderClass DisableMe";
 
         private IEnumerable<IdValue<int>?>? _roles = null;
-        //private List<string> _selectedRoles = [];
-        
         private IEnumerable<IdValue<int>?>? _titles = null;
-        //private List<string> _selectedTitles = [];
-        
-        private IEnumerable<IdValue<int>?>? _reports = null;
-        //private List<string> _selectedReports = [];
-
-        private IEnumerable<WorklistGroupsAndReportsModel?>? _worklistGroupsReports = null;
-        //private IEnumerable<string?>? _worklistGroupsBySelectedReports = [];
-        //private List<String> _selectedWorklistGroups = [];
+        //private IEnumerable<IdValue<int>?>? _reports = null;
+        //private IEnumerable<WorklistGroupsAndReportsModel?>? _worklistGroupsReports = null;
 
         private readonly DateTime _minimumDueDate = DateTime.Today.AddDays(2).AddSeconds(-1);
         private DateTime? _dueDate = null;
         private AllUsers_CMS_DB?[]? _allUsers_CMS_DB = null;
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
         private AllUsers_Display?[]? _allUsers_Display = null;
-        private IEnumerable<AllUsers_Notaries?>? _notaries = null;
-        //private IEnumerable<int>? _usersAssignedToTasksForSession = null;
+        //private IEnumerable<AllUsers_Notaries?>? _notaries = null;
         private TelerikGrid<AllUsers_Display>? _allUsers_Assignment_ExportGrid;
         #endregion
 
@@ -66,12 +57,12 @@ namespace Training.Website.Components.Pages
             {
                 _allUsers_CMS_DB = (await _service.GetAllUsers_CMS_DB(_dbCMS))?.ToArray();
                 _allUsers_OPS_DB = (await _service.GetAllUsers_OPS_DB(Database_OPS))?.ToArray();
-                _allUsers_Display = _allUsers_CMS_DB != null ? ConvertToDisplayModel(_allUsers_CMS_DB!)?.ToArray() : null;
+                //_allUsers_Display = _allUsers_CMS_DB != null ? ConvertToDisplayModel(_allUsers_CMS_DB!)?.ToArray() : null;    // SHOULD NOT HAVE BEEN HERE?
                 _roles = await _service.GetAllRoles(true, _dbCMS);
                 _titles = await _service.GetAllTitles(_dbCMS);
-                _reports = await _service.GetAllReports(_dbCMS);
-                _worklistGroupsReports = await _service.GetAllWorklistGroupsWithReports(_dbCMS);
-                _notaries = await _service.GetNotaries(_allUsers_CMS_DB, Database_OPS);
+                //_reports = await _service.GetAllReports(_dbCMS);
+                //_worklistGroupsReports = await _service.GetAllWorklistGroupsWithReports(_dbCMS);
+                //_notaries = await _service.GetNotaries(_allUsers_CMS_DB, Database_OPS);
 
                 _sessions = Globals.ConcatenateSessionInfoForDropDown(sessionsInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
@@ -119,18 +110,6 @@ namespace Training.Website.Components.Pages
                 StateHasChanged();
             }
         }
-
-        /*
-        private void ClearDropDownSelections()
-        {
-            _selectedRoles.Clear();
-            _selectedTitles.Clear();
-            _selectedReports.Clear();
-            _selectedWorklistGroups.Clear();
-            _worklistGroupsBySelectedReports = [];
-            _allUsers_Display = null;
-        }
-        */
 
         private void ClearSelectedSession()
         {
@@ -227,87 +206,7 @@ namespace Training.Website.Components.Pages
 
         private int? OPS_ID_From_Login_ID(string? loginID) =>
             _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(loginID, StringComparison.InvariantCultureIgnoreCase) == true)?.Emp_ID;
-        /*
-        private void RecompileAssignedUsers()
-        {
-            List<AllUsers_Assignment> usersToAssign_Raw = [];
 
-            usersToAssign_Raw.AddRange(UsersInSelectedRoles());
-            usersToAssign_Raw.AddRange(UsersInSelectedTitles());
-            usersToAssign_Raw.AddRange(UsersInSelectedWorklistGroupsAndReports());
-
-            List<AllUsers_Assignment?>? allUsers_Assignment = [];
-            List<int> usersAsssigned = [];
-            
-            foreach (AllUsers_Assignment userToAssign in usersToAssign_Raw)
-            {
-                int? userID = userToAssign.CMS_UserID;
-
-                if (userID != null && usersAsssigned.Contains(userID.Value) == false)
-                {
-                    allUsers_Assignment.Add(userToAssign);
-                    usersAsssigned.Add(userID.Value);
-                }
-                else
-                {
-                    // IF USER ALREADY HAS BEEN GATHERED, APPEND ROLE INFO IF THEY ARE A NOTARY
-                    AllUsers_Assignment? existingRecord = allUsers_Assignment.FirstOrDefault(q => q?.CMS_UserID == userID!.Value);
-
-                    if (existingRecord != null)
-                    {
-                        if (existingRecord.RoleDesc != Globals.Notary && userToAssign.RoleDesc == Globals.Notary)
-                            existingRecord.RoleDesc = $"{existingRecord.RoleDesc} ({Globals.Notary})";
-                        else if (existingRecord.RoleDesc == Globals.Notary && userToAssign.RoleDesc != Globals.Notary)
-                            existingRecord.RoleDesc = $"{userToAssign.RoleDesc} ({Globals.Notary})";
-                    }
-                }
-            }
-
-            // IF TITLE IS NULL/BLANK (WHICH CAN HAPPEN WHEN THE "NOTARY" ROLE IS SELECTED), FIX IT HERE
-            foreach (AllUsers_Assignment? assignedUser in allUsers_Assignment)
-            {
-                if (string.IsNullOrWhiteSpace(assignedUser?.TitleDesc) == true)
-                {
-                    int? titleID = _allUsers_CMS_DB?.FirstOrDefault(q => q?.AppUserID == assignedUser?.CMS_UserID)?.TitleID;
-
-                    if (titleID != null)
-                        assignedUser!.TitleDesc = _titles?.FirstOrDefault(q => q?.ID == titleID)?.Value;
-                }
-            }
-
-            _allUsers_Display = [..allUsers_Assignment.OrderBy(s => s?.UserName)];
-            SetSelected();
-        }
-        */
-        /*
-        private void ReportsMultiSelectChanged(List<string>? newValues)
-        {
-            _selectedReports = [];
-
-            if (newValues != null && newValues.Count > 0)
-            {
-                foreach (string newValue in newValues)
-                {
-                    IdValue<int>? report = _reports?.FirstOrDefault(q => q?.Value?.Equals(newValue, StringComparison.InvariantCultureIgnoreCase) == true);
-
-                    if (report != null && report.Value != null)
-                        _selectedReports.Add(report.Value);
-                }
-            }
-
-            _worklistGroupsBySelectedReports = WorklistGroupsBySelectedReports();
-            RecompileAssignedUsers();
-            StateHasChanged();
-        }
-        */
-        /*
-        private void RolesMultiSelectChanged(List<string>? newValues)
-        {
-            _selectedRoles = newValues ?? [];
-            RecompileAssignedUsers();
-            StateHasChanged();
-        }
-        */
         private void SendEmails()
         {
             IEnumerable<AllUsers_Display?>? recipients = _allUsers_Display?.Where(u => u != null && u.Selected == true);
@@ -394,11 +293,7 @@ namespace Training.Website.Components.Pages
             }
 
             _spanHeaderClass = "HeaderClass";
-            //ClearDropDownSelections();
             _allUsers_Display = await GetAssignedUsersWithTasksForSession();
-
-            //_usersAssignedToTasksForSession = await _service.GetAllOpsUserIDsAssignedToTasksBySessionID(_selectedSession?.Session_ID, Database_OPS!);
-
             StateHasChanged();
         }
 
@@ -406,161 +301,7 @@ namespace Training.Website.Components.Pages
 
         private void SelectAllClicked() => ChangeSelectAll(true);
 
-        /*
-        private void SetSelected()
-        {
-            if (_allUsers_Display != null && _usersAssignedToTasksForSession != null && _usersAssignedToTasksForSession.Any() == true)
-            {
-                foreach (AllUsers_Display? user in _allUsers_Display)
-                {
-                    if (user != null)
-                    {
-                        user.OPS_UserID = _allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(user.LoginID, StringComparison.InvariantCultureIgnoreCase) == true)?.Emp_ID;
-                        user.Selected = user.OPS_UserID != null && user.OPS_UserID != 0 && _usersAssignedToTasksForSession.Contains(user.OPS_UserID.Value);
-                    }
-                }
-            }
-        }
-        */
-        /*
-        private void TitlesMultiSelectChanged(List<string>? newValues)
-        {
-            _selectedTitles = newValues ?? [];
-            RecompileAssignedUsers();
-            StateHasChanged();
-        }
-        */
         private void UpsertDueDateToDB() =>
             _service.UpsertSessionDueDate(_selectedSession!.Session_ID!.Value, _dueDate!.Value, ApplicationState!.LoggedOnUser?.LoginID, _sessionAlreadyExistsInDueDatesTable, Database_OPS!);
-
-        /*
-        private List<AllUsers_Assignment> UsersInSelectedRoles()
-        {
-            List<AllUsers_Assignment> usersToAssign = [];
-
-            foreach (string? role in _selectedRoles)
-            {
-                if (role.Equals(Globals.Notary, StringComparison.InvariantCultureIgnoreCase) == false)
-                {
-                    int? roleID = (_roles?.FirstOrDefault(q => q?.Value == role)?.ID) ?? throw new NullReferenceException($"Unable to find a role description for role {role}.");
-                    IEnumerable<AllUsers_CMS_DB?>? usersInRole = _allUsers_CMS_DB?.Where(x => x?.RoleID == roleID);
-
-                    if (usersInRole != null && usersInRole.Any() == true)
-                        usersToAssign.AddRange(AddAssignedUsers(usersInRole!)!);
-                }
-                else
-                {
-                    foreach(AllUsers_Notaries? notary in _notaries!)
-                    {
-                        AllUsers_Assignment user = new()
-                        {
-                            CMS_UserID = notary.CMS_User_ID,
-                            OPS_UserID = notary.Emp_ID,
-                            EmailAddress = notary.EMail,
-                            LoginID = notary.UserName,
-                            FirstName = notary.FirstName,
-                            LastName = notary.LastName,
-                            UserName = notary.FullName,
-                            RoleDesc = Globals.Notary,
-                            TitleDesc = null
-                        };
-                        usersToAssign.Add(user);
-                    }
-                }
-            }
-
-            return usersToAssign;
-        }
-        */
-        /*
-        private List<AllUsers_Assignment> UsersInSelectedWorklistGroupsAndReports()
-        {
-            List<AllUsers_Assignment> usersToAssign = [];
-            List<string?> loginIDs = [];
-
-            if (_selectedWorklistGroups != null && _selectedWorklistGroups.Count > 0)
-            {
-                foreach (string? selectedWorklistGroup in _selectedWorklistGroups)
-                {
-                    if (selectedWorklistGroup != null)
-                    {
-                        WorklistGroupsAndReportsModel? worklistGroupAndReport = _worklistGroupsReports?.FirstOrDefault(q => q?.StageFullName?.Equals(selectedWorklistGroup) == true);
-
-                        if (worklistGroupAndReport != null)
-                        {
-                            AddToLoginIDs(loginIDs, worklistGroupAndReport);
-                            AddToUsersToAssign(usersToAssign, loginIDs);
-                        }
-                    }
-                }
-            }
-            else if (_selectedReports != null && _selectedReports.Count > 0)
-            {
-                foreach (string? selectedReport in _selectedReports)
-                {
-                    if (selectedReport != null)
-                    {
-                        IEnumerable<WorklistGroupsAndReportsModel?>? worklistGroupReports =
-                            _worklistGroupsReports?.Where(q => q?.ReportName?.Equals(selectedReport, StringComparison.InvariantCultureIgnoreCase) == true);
-
-                        if (worklistGroupReports != null)
-                        {
-                            foreach (WorklistGroupsAndReportsModel? worklistGroupAndReport in worklistGroupReports)
-                                if (worklistGroupAndReport != null)
-                                    AddToLoginIDs(loginIDs, worklistGroupAndReport);
-
-                            if (loginIDs.Count > 0)
-                                AddToUsersToAssign(usersToAssign, loginIDs);
-                        }
-                    }
-                }
-            }
-
-            return usersToAssign;
-        }
-        */
-        /*
-        private List<AllUsers_Assignment> UsersInSelectedTitles()
-        {
-            List<AllUsers_Assignment> usersToAssign = [];
-
-            foreach (string? title in _selectedTitles)
-            {
-                int? titleID = (_titles?.FirstOrDefault(q => q?.Value == title)?.ID) ?? throw new NullReferenceException($"Unable to find a title description for title {title}.");
-                IEnumerable<AllUsers_CMS_DB?>? usersInTitle = _allUsers_CMS_DB?.Where(x => x?.TitleID == titleID);
-
-                usersToAssign.AddRange(AddAssignedUsers(usersInTitle!)!);
-            }
-
-            return usersToAssign;
-        }
-        */
-        /*
-        private void WorklistGroupsMultiSelectChanged(List<string>? newValues)
-        {
-            _selectedWorklistGroups = newValues ?? [];
-            RecompileAssignedUsers();
-            StateHasChanged();
-        }
-        */
-        /*
-        private IEnumerable<string?>? WorklistGroupsBySelectedReports()
-        {
-            List<string?> results = [];
-
-            foreach (string selectedReport in _selectedReports)
-            {
-                IEnumerable<WorklistGroupsAndReportsModel?>? worklistGroups =
-                    _worklistGroupsReports?.Where(q => q?.ReportName?.Equals(selectedReport, StringComparison.InvariantCultureIgnoreCase) == true);
-
-                if (worklistGroups != null)
-                    foreach (WorklistGroupsAndReportsModel? worklistGroup in worklistGroups)
-                        if (worklistGroup != null && worklistGroup.StageFullName != null)
-                            results.Add(worklistGroup.StageFullName);
-            }
-
-            return results.Order();
-        }
-        */
     }
 }
