@@ -642,9 +642,9 @@ namespace Training.Website.Components.Pages
                         return ApplicationState!.LoggedOnUser!.IsPerformanceReviewAdministrator;
                     case Globals.ReviewStatusType.Submitted:
                         {
-                            string? currentReviewStatus_Str = Globals.ReviewStatuses[_selectedReview.Status_ID_Type];
+                            //string? currentReviewStatus_Str = Globals.ReviewStatuses[_selectedReview.Status_ID_Type];     // REMOVED BY DR 2026-02-13
                             bool enabled =
-                                string.IsNullOrWhiteSpace(_selectedNewReviewStatus_DropDown) == false &&
+                                //string.IsNullOrWhiteSpace(_selectedNewReviewStatus_DropDown) == false &&          // REMOVED BY DR 2026-02-13
                                 _selectedNewReviewStatus_DropDown != Globals.ReviewStatuses[Globals.ReviewStatusType.Submitted] &&
                                 _selectedReview!.ReviewMeetingHeldOn != null;
 
