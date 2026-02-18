@@ -17,5 +17,6 @@ namespace Training.Website.Models.Reviews
         public string? NewStatus { get; set; }
         public DateTime? WhenChanged { get; set; }
         public DateTime? ReviewMeetingHeldOn { get; set; }
+        public string? PerformanceRating { get; set; }          // NOT IN usp_Performance_Review_GetReviewStatusesAllUsersByReviewYear
     }
 }

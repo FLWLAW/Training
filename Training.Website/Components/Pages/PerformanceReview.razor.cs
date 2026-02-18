@@ -197,12 +197,16 @@ namespace Training.Website.Components.Pages
             if (results != null)
             {
                 results = await PopulateReviewees_Reviewers_Managers(results);
+                if (results != null)
+                {
+                    results = await PopulatePerformanceRatings(results);
 
-                string tabTitle = $"Employees Current Status {_selectedReviewYear}";
-                PerformanceReviewAllEmployeesStatusExcelExport export = new();
-                MemoryStream? stream = await export.Go(tabTitle, results);
+                    string tabTitle = $"Employees Current Status {_selectedReviewYear}";
+                    PerformanceReviewAllEmployeesStatusExcelExport export = new();
+                    MemoryStream? stream = await export.Go(tabTitle, results);
 
-                await SpecialExcelExportClass.ExportToBrowser(stream, $"{tabTitle}.xlsx", JS);
+                    await SpecialExcelExportClass.ExportToBrowser(stream, $"{tabTitle}.xlsx", JS);
+                }
             }
         }
 
@@ -393,6 +397,20 @@ namespace Training.Website.Components.Pages
                     throw new NoNullAllowedException("[reviewID] cannot be null in InsertAndGetReview().");
                 else
                     _selectedReview = await _service.GetReviewByReviewID(reviewID!.Value, Database_OPS);
+            }
+        }
+
+        private async Task<PerformanceReviewStatusesAllUsersByReviewYearModel?[]?> PopulatePerformanceRatings(PerformanceReviewStatusesAllUsersByReviewYearModel?[] results)
+        {
+            if (results == null)
+                return null;
+            else
+            {
+                foreach (PerformanceReviewStatusesAllUsersByReviewYearModel? result in results)
+                    if (result != null && result.Review_ID != null)
+                        result.PerformanceRating = await _service.GetPerformanceRating(result.Review_ID.Value, Database_OPS);
+                
+                return results;
             }
         }
 
@@ -725,6 +743,14 @@ namespace Training.Website.Components.Pages
                             // ASSIGN ANSWER INFORMATION TO _questions ARRAY
                             if (_answers != null && _answers.Length > 0)
                             {
+                                foreach (PerformanceReviewQuestionModel? question in _questions)
+                                {
+                                    if (question != null)
+                                    {
+                                        question.Answer = null;
+                                        question.RadioChoice_ID = null;
+                                    }
+                                }
                                 foreach (AnswersByReviewIdModel? answer in _answers)
                                 {
                                     if (answer != null)
@@ -738,6 +764,7 @@ namespace Training.Website.Components.Pages
                                         else
                                         {
                                             string? answerToUse = (string.IsNullOrWhiteSpace(answer.AdministratorAnswer) == false) ? answer.AdministratorAnswer : answer.ManagerAnswer;
+
                                             question.Answer = answerToUse;
                                             if (_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
                                                 question.RadioChoice_ID = _allRadioChoices_Active?.FirstOrDefault
