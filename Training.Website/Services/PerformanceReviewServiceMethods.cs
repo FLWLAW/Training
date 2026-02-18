@@ -116,6 +116,18 @@ namespace Training.Website.Services
         public async Task<DateTime?> GetMeetingHeldOnByReviewID(int reviewID, IDatabase? database) =>
             (await database!.QueryByStatementAsync<DateTime?>($"SELECT ReviewMeetingHeldOn FROM [PERFORMANCE Review Main Tbl] WHERE ID = {reviewID}"))?.FirstOrDefault();
 
+        public async Task<string?> GetPerformanceRating(int reviewID, IDatabase? database)
+        {
+            AnswersByReviewIdModel? answers =
+                (await database!.QueryByStoredProcedureAsync<AnswersByReviewIdModel, object?>
+                    ("usp_Performance_Review_GetAnswersForOneQuestionInOneReview", new { Review_ID = reviewID, Question_ID = 1 }))?.FirstOrDefault();   // QUESTION_ID = 1 IS THE PERFORMANCE RATING QUESTION
+
+            if (answers == null)
+                return null;
+            else
+                return answers.AdministratorAnswer ?? answers.ManagerAnswer;   // IF ADMINISTRATOR ANSWER IS NOT NULL, RETURN THAT. OTHERWISE, RETURN MANAGER ANSWER, WHICH MAY OR MAY NOT BE NULL.
+        }
+
         public async Task<IEnumerable<PerformanceReviewQuestionModel?>?> GetPerformanceReviewQuestions(int reviewYear, bool isDeleted, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<PerformanceReviewQuestionModel?, object?>
                 ("usp_Performance_Review_GetPerformanceReviewQuestionsByReviewYearAndDeletedStatus", new { ReviewYear = reviewYear, IsDeleted = isDeleted });

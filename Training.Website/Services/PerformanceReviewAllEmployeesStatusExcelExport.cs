@@ -37,6 +37,7 @@ namespace Training.Website.Services
                 SpecialExcelExportClass.SetColumnHeader(row, "Status Changed By");
                 SpecialExcelExportClass.SetColumnHeader(row, "Status Changed Date");
                 SpecialExcelExportClass.SetColumnHeader(row, "Review Meeting Held On");
+                SpecialExcelExportClass.SetColumnHeader(row, "How would you rate the performance of this individual?");
             }
         }
 
@@ -51,6 +52,7 @@ namespace Training.Website.Services
             SpecialExcelExportClass.SetColumnWidth(worksheet, 130);     // STATUS CHANGED BY
             SpecialExcelExportClass.SetColumnWidth(worksheet, 160);     // STATUS CHANGED DATE
             SpecialExcelExportClass.SetColumnWidth(worksheet, 170);     // REVIEW MEETING HELD ON
+            SpecialExcelExportClass.SetColumnWidth(worksheet, 400);     // HOW WOULD YOU RATE THE PERFORMANCE OF THIS INDIVIDUAL?
         }
 
         private void SetData(PerformanceReviewStatusesAllUsersByReviewYearModel?[]? results, IWorksheetExporter worksheet)
@@ -72,6 +74,7 @@ namespace Training.Website.Services
                             SpecialExcelExportClass.SetCellValue(row, result.FullName_StatusChangedBy);
                             SpecialExcelExportClass.SetCellValue(row, result.WhenChanged);
                             SpecialExcelExportClass.SetCellValue(row, result.ReviewMeetingHeldOn);
+                            SpecialExcelExportClass.SetCellValue(row, result.PerformanceRating);
                         }
                     }
                 }
