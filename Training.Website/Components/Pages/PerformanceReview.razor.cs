@@ -725,6 +725,14 @@ namespace Training.Website.Components.Pages
                             // ASSIGN ANSWER INFORMATION TO _questions ARRAY
                             if (_answers != null && _answers.Length > 0)
                             {
+                                foreach (PerformanceReviewQuestionModel? question in _questions)
+                                {
+                                    if (question != null)
+                                    {
+                                        question.Answer = null;
+                                        question.RadioChoice_ID = null;
+                                    }
+                                }
                                 foreach (AnswersByReviewIdModel? answer in _answers)
                                 {
                                     if (answer != null)
@@ -738,6 +746,7 @@ namespace Training.Website.Components.Pages
                                         else
                                         {
                                             string? answerToUse = (string.IsNullOrWhiteSpace(answer.AdministratorAnswer) == false) ? answer.AdministratorAnswer : answer.ManagerAnswer;
+
                                             question.Answer = answerToUse;
                                             if (_answerFormats[question.AnswerFormat.Value] == Globals.RadioButtons)
                                                 question.RadioChoice_ID = _allRadioChoices_Active?.FirstOrDefault
