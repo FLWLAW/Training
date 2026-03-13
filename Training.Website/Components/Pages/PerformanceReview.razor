@@ -170,39 +170,41 @@
         }
 
         <!-- EMPLOYEE INFORMATION HEADER -->
-        <table class="table_center">
-            <tr>
-                <td class="column134">&nbsp;&nbsp;&nbsp;</td>
-                <td class="column2">&nbsp;&nbsp;&nbsp;</td>
-                <td class="column134 borders">ADP File #:</td>
-                <td class="column134 borders">@_headerInfo?.BadgeNum</td>
-            </tr>
-            <tr>
-                <td class="column134 borders">Job Title:</td>
-                <td class="column2 borders">@_headerInfo?.JobTitleName</td>
-                <td class="column134 borders">Hire Date:</td>
-                <td class="column134 borders">@_headerInfo?.HireDate?.ToShortDateString()</td>
-            </tr>
-            <tr>
-                <td class="column134 borders">Location:</td>
-                <td class="column2 borders">@_headerInfo?.SiteName</td>
-                <td class="column134 borders">Employee Type:</td>
-                <td class="column134 borders">@_headerInfo?.EmployeeType</td>
-            </tr>
-            <tr>
-                <td class="column134 borders">Practice Group:</td>
-                <td class="column2 borders">@_headerInfo?.PracticeGroupName</td>
-                <td class="column134 borders">Shift:</td>
-                <td class="column134 borders">@_headerInfo?.Shift</td>
-            </tr>
-            <tr>
-                <td class="column134 borders">Department(s):</td>
-                <td class="column2 borders">@_headerInfo?.Departments</td>
-                <td class="column134 borders">Review Status:</td>
-                <td class="column134 borders" style="font-weight: 700;">@Globals.ReviewStatuses[_selectedReview!.Status_ID_Type]</td>
-            </tr>
-        </table>
-
+        @if (_selectedReview != null && _headerInfo != null)
+        {
+            <table class="table_center">
+                <tr>
+                    <td class="column134">&nbsp;&nbsp;&nbsp;</td>
+                    <td class="column2">&nbsp;&nbsp;&nbsp;</td>
+                    <td class="column134 borders">ADP File #:</td>
+                    <td class="column134 borders">@_headerInfo?.BadgeNum</td>
+                </tr>
+                <tr>
+                    <td class="column134 borders">Job Title:</td>
+                    <td class="column2 borders">@_headerInfo?.JobTitleName</td>
+                    <td class="column134 borders">Hire Date:</td>
+                    <td class="column134 borders">@_headerInfo?.HireDate?.ToShortDateString()</td>
+                </tr>
+                <tr>
+                    <td class="column134 borders">Location:</td>
+                    <td class="column2 borders">@_headerInfo?.SiteName</td>
+                    <td class="column134 borders">Employee Type:</td>
+                    <td class="column134 borders">@_headerInfo?.EmployeeType</td>
+                </tr>
+                <tr>
+                    <td class="column134 borders">Practice Group:</td>
+                    <td class="column2 borders">@_headerInfo?.PracticeGroupName</td>
+                    <td class="column134 borders">Shift:</td>
+                    <td class="column134 borders">@_headerInfo?.Shift</td>
+                </tr>
+                <tr>
+                    <td class="column134 borders">Department(s):</td>
+                    <td class="column2 borders">@_headerInfo?.Departments</td>
+                    <td class="column134 borders">Review Status:</td>
+                    <td class="column134 borders" style="font-weight: 700;">@Globals.ReviewStatuses[_selectedReview!.Status_ID_Type]</td>
+                </tr>
+            </table>
+        }
         @if (_selectedReview != null && _selectedReview.Status_ID != null)
         {
             <!-- "New Review Status" HEADERS DROP DOWN -->
