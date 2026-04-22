@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FLWLAW_Email.Library;
+using Microsoft.AspNetCore.Components;
+using MimeKit;
 using SqlServerDatabaseAccessLibrary;
 using System.Diagnostics.Eventing.Reader;
 using System.Text;
@@ -129,6 +131,21 @@ namespace Training.Website.Components.Pages
             }
 
             _currentSelectedAnswers_DropDown![_currentQuestionIndex]!.UserAnswer = newValue;
+        }
+
+        private List<MailboxAddress> FailedQuestionnaireRecipients()
+        {
+            List<MailboxAddress> addresses = [];
+
+#if RELEASE
+            addresses.Add(new("Compliance", "Compliance@flwlaw.com"));
+#else
+            addresses.Add(new("David Rosenblum", "drosenblum@flwlaw.com"));
+#if QA
+            addresses.Add(new("Susan Eisenman", "susan.eisenman@flwlaw.com"));
+#endif
+#endif
+            return addresses;
         }
 
         private async Task<int> GetCurrentQuestionnaireNumber()
@@ -385,6 +402,22 @@ namespace Training.Website.Components.Pages
                 }
                 _testEligibility = await GetTestEligibility();
                 _userResponses = (_score >= Globals.TestPassingThreshold) ? null : await _service.GetUserResponses(_testAttemptID!.Value, Database);
+
+                if (_score < Globals.TestPassingThreshold)
+                {
+                    string? sessionInfo = $"{_selectedSession?.Session_ID!.Value} ({_selectedSession?.DocTitle})";
+                    string? user = ApplicationState!.LoggedOnUser!.UserName;
+
+                    EMailer email = new()
+                    {
+                        BodyTextFormat = MimeKit.Text.TextFormat.Text,
+                        Subject = $"{ApplicationState!.LoggedOnUser!.UserName} failed Session ID #{sessionInfo})",
+                        Body = new StringBuilder($"{user}\r\n{sessionInfo}\r\nScore: {_score:F2}%"),
+                        To = FailedQuestionnaireRecipients()
+                    };
+
+                    email.Send();
+                }
             }
 
             StateHasChanged();
