@@ -293,7 +293,8 @@ namespace Training.Website.Components.Pages
             switch(_currentAnswerFormat)
             {
                 case Globals.MultipleChoice:
-                    _currentAnswerChoices_DropDown = await _service.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
+                    if (questionID != null)
+                        _currentAnswerChoices_DropDown = await _service.GetAnswerLettersByQuestionID(questionID!.Value, Database); // ?? [];
                     break;
                 case Globals.YesNo:
                     _currentAnswerChoices_DropDown = Globals.YesNo_Choices;
