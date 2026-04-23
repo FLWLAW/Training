@@ -40,7 +40,7 @@ namespace Training.Website.Components.Pages
         //private IEnumerable<IdValue<int>?>? _reports = null;
         //private IEnumerable<WorklistGroupsAndReportsModel?>? _worklistGroupsReports = null;
 
-        private readonly DateTime _minimumDueDate = DateTime.Today.AddDays(2).AddSeconds(-1);
+        private readonly DateTime _minimumDueDate = DateTime.Today.AddDays(8).AddSeconds(-1);
         private DateTime? _dueDate = null;
         private AllUsers_CMS_DB?[]? _allUsers_CMS_DB = null;
         private AllUsers_OPS_DB?[]? _allUsers_OPS_DB = null;
