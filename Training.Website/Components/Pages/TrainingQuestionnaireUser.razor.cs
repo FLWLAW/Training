@@ -54,6 +54,12 @@ namespace Training.Website.Components.Pages
         private TelerikAutoComplete<string?> _sessionIdAutoComplete = new();
         #endregion
 
+        private enum DisplayLocation
+        {
+            Screen,
+            EMail
+        }
+
         protected override async Task OnInitializedAsync()
         {
             _answerFormats = await _service.GetAnswerFormats_TrainingQuestionnaire(Database);
@@ -133,12 +139,40 @@ namespace Training.Website.Components.Pages
             _currentSelectedAnswers_DropDown![_currentQuestionIndex]!.UserAnswer = newValue;
         }
 
+        private StringBuilder FailureBody(string? sessionInfo, string? user)
+        {
+            StringBuilder body = new();
+
+            body.Append("<table>");
+            body.Append("<tr><td>");
+            body.Append($"{user}<br />{sessionInfo}<br />Score: {_score:F2}%<br /><br />");
+            body.Append("</td></tr>");
+
+            foreach (UserResponsesModel? response in _userResponses!)
+            {
+                SetUserResponseStatusVariables(response, out bool correctAnswer, out string statusColor, out string statusText);
+
+                body.Append("<tr>");
+                body.Append($"<td>Question #{response!.QuestionNumber}:</td>");
+                body.Append($"<td>{response!.Question}</td>");
+                body.Append($"<td>{UserAnswerText(response, DisplayLocation.EMail)}</td>");
+                body.Append($"<td style=\"color: {statusColor};\"{statusText}</td>");
+                body.Append($"<td>{CorrectAnswerText(response, correctAnswer)}</td>");
+                body.Append("</tr>");
+            }
+
+            body.Append("</table>");
+
+            return body;
+        }
+
         private List<MailboxAddress> FailedQuestionnaireRecipients()
         {
             List<MailboxAddress> addresses = [];
 
 #if RELEASE
             addresses.Add(new("Compliance", "Compliance@flwlaw.com"));
+            addresses.Add(new("Roberto Cuyan", "rcuyan@flwlaw.com"));
 #else
             addresses.Add(new("David Rosenblum", "drosenblum@flwlaw.com"));
 #if QA
@@ -373,6 +407,13 @@ namespace Training.Website.Components.Pages
             await SetCurrentAnswerDropDownItems();
         }
 
+        private void SetUserResponseStatusVariables(UserResponsesModel? response, out bool correctAnswer, out string statusColor, out string statusText)
+        {
+            correctAnswer = response!.UserAnswer == response.CorrectAnswer;
+            statusColor = (correctAnswer == true) ? "green" : "red";
+            statusText = (correctAnswer == true) ? "Correct" : "Incorrect";
+        }
+
         private async Task SubmitClicked()
         {
             if (_questions == null)
@@ -400,6 +441,7 @@ namespace Training.Website.Components.Pages
                     foreach (UserAnswersModel? userAnswer in _currentSelectedAnswers_DropDown!)
                         await _service.InsertIndividualAnswer(_testAttemptID!.Value, userAnswer, Database);
                 }
+
                 _testEligibility = await GetTestEligibility();
                 _userResponses = (_score >= Globals.TestPassingThreshold) ? null : await _service.GetUserResponses(_testAttemptID!.Value, Database);
 
@@ -410,9 +452,9 @@ namespace Training.Website.Components.Pages
 
                     EMailer email = new()
                     {
-                        BodyTextFormat = MimeKit.Text.TextFormat.Text,
-                        Subject = $"{ApplicationState!.LoggedOnUser!.UserName} failed Session ID #{sessionInfo})",
-                        Body = new StringBuilder($"{user}\r\n{sessionInfo}\r\nScore: {_score:F2}%"),
+                        BodyTextFormat = MimeKit.Text.TextFormat.Html,
+                        Subject = $"{user} failed Session ID #{sessionInfo})",
+                        Body = FailureBody(sessionInfo, user),    //new StringBuilder($"{user}\r\n{sessionInfo}\r\nScore: {_score:F2}%"),
                         To = FailedQuestionnaireRecipients()
                     };
 
@@ -425,13 +467,14 @@ namespace Training.Website.Components.Pages
 
         private bool ShowUserResponses() => _testEligibility?.NoMore == false && _userResponses != null;
 
-        private string? UserAnswerText(UserResponsesModel? response)
+        private string? UserAnswerText(UserResponsesModel? response, DisplayLocation displayLocation)
         {
             if (response == null)
                 return null;
             else
             {
-                StringBuilder responseStatusText = new($"Your Answer: {response.UserAnswer}");
+                string wordToUse = (displayLocation == DisplayLocation.Screen) ? "Your" : "User's";
+                StringBuilder responseStatusText = new($"{wordToUse} Answer: {response.UserAnswer}");
 
                 if (string.IsNullOrWhiteSpace(response.UserAnswerText) == false)
                     responseStatusText.Append($" ({response.UserAnswerText})");

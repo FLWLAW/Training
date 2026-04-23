@@ -74,14 +74,12 @@
         </tr>
         @foreach (UserResponsesModel? response in _userResponses!)
         {
-            bool correctAnswer = response!.UserAnswer == response.CorrectAnswer;
-            string statusColor = (correctAnswer == true) ? "green" : "red";
-            string statusText = (correctAnswer == true) ? "Correct" : "Incorrect";
+            SetUserResponseStatusVariables(response, out bool correctAnswer, out string statusColor, out string statusText);
 
             <tr>
                 <td class="ResponseHeader">Question #@response!.QuestionNumber:</td>
                 <td class="ResponseHeader">@response.Question</td>
-                <td class="Response">@UserAnswerText(response)</td>
+                <td class="Response">@UserAnswerText(response, DisplayLocation.Screen)</td>
                 <td class="Status" style="color: @statusColor;">@statusText</td>
                 <td class="Response">@CorrectAnswerText(response, correctAnswer)</td>
             </tr>
