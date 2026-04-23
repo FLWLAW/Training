@@ -13,7 +13,7 @@ namespace Training.Website
 {
     public class Globals
     {
-        public const int MaximumTestAttemptsPerSession = 2;
+        public const int MaximumTestAttemptsPerSession = 3; //2;
         public const int RetakeTestDeadlineDays = 3650; //5;
         public const double TestPassingThreshold = 80;
 
