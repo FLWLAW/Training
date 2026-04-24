@@ -465,7 +465,7 @@ namespace Training.Website.Components.Pages
             StateHasChanged();
         }
 
-        private bool ShowUserResponses() => _testEligibility?.NoMore == false && _userResponses != null;
+        private bool ShowUserResponses() => /*_testEligibility?.NoMore == false && */ _userResponses != null;
 
         private string? UserAnswerText(UserResponsesModel? response, DisplayLocation displayLocation)
         {
