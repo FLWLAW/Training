@@ -1,12 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
-using System.IO;
 using Telerik.Blazor.Components;
-using Telerik.SvgIcons;
-using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
 using Telerik.Windows.Documents.Flow.Model;
-using Telerik.Windows.Documents.Flow.Model.Styles;
 using Training.Website.Models;
 using Training.Website.Services;
 using Training.Website.Services.WordDocument;
@@ -48,6 +44,8 @@ namespace Training.Website.Components.Pages
         private string? _originalAnswerFormat = null;
         private string? _currentAnswerFormat = null;
         private bool _sessionHasQuestions;
+        private bool _cannotCopyQuestionaireVisible;
+        private bool _questionnaireCopiedWindowVisible;
         private List<QuestionsModel>? _questions = null;
 
         private bool _addMode = false;
@@ -154,12 +152,58 @@ namespace Training.Website.Components.Pages
             _changedMultipleChoiceAnswer = null;
         }
 
+        private async Task CopyQuestionnaireButtonClicked()
+        {
+            int sessionQuestionnaires = await _service.GetNumberOfQuestionnairesForSession(_selectedSession!.Session_ID!.Value, Database);
+
+            _cannotCopyQuestionaireVisible = (sessionQuestionnaires >= Globals.MaximumTestAttemptsPerSession);
+            if (_cannotCopyQuestionaireVisible == false)
+            {
+                if (_questions != null && _questions.Count > 0)
+                {
+                    int newQuestionnaireNumber = sessionQuestionnaires + 1;
+                    int? cmsID = ApplicationState!.LoggedOnUser?.AppUserID;
+
+                    foreach (QuestionsModel? questionOriginal in _questions)
+                    {
+                        int answerFormat = questionOriginal.AnswerFormat!.Value;
+                        int newQuestionID = 
+                            await _service.InsertQuestion
+                                (
+                                    _selectedSession.Session_ID.Value,
+                                    newQuestionnaireNumber,
+                                    questionOriginal.QuestionNumber!.Value,
+                                    questionOriginal.Question!,
+                                    answerFormat,
+                                    questionOriginal.CorrectAnswer,
+                                    cmsID!.Value,
+                                    Database
+                                );
+
+                        if (_answerFormats?[answerFormat] == Globals.MultipleChoice)
+                        {
+                            IEnumerable<AnswerChoicesModel?>? answerChoices = _service.GetAnswerChoicesByQuestionID(questionOriginal.Question_ID!.Value, Database);
+
+                            if (answerChoices != null && answerChoices.Any() == true)
+                                foreach (AnswerChoicesModel? answerChoice in answerChoices)
+                                    if (answerChoice != null)
+                                        await _service.InsertMultipleChoiceAnswer
+                                            (newQuestionID, answerChoice.AnswerLetter!.Value, answerChoice!.AnswerText!, cmsID!.Value, Database);
+                        }
+                    }
+                    _questionnaireCopiedWindowVisible = true;
+                    await CurrentQuestionnaireNumberChanged(newQuestionnaireNumber);
+                }
+            }
+        }
+
+        private bool CopyQuestionnaireButtonEnabled() => _selectedSession != null && _selectedSession.Session_ID != null;
+
         private void CorrectAnswerChanged(string newValue)
         {
             _currentSelectedCorrectAnswer = newValue;
             StateHasChanged();
         }
-
 
         private async Task CurrentQuestionnaireNumberChanged(object newValue)
         {
@@ -314,6 +358,12 @@ namespace Training.Website.Components.Pages
                 : null;
         }
 
+        private async Task QuestionnaireCopiedWindowClicked()
+        {
+            _questionnaireCopiedWindowVisible = false;
+            StateHasChanged();
+        }
+
         private async Task RefreshPageFromBeginning()
         {
             string sessionID_String = ApplicationState!.SessionID_String ?? string.Empty;   // should never be null
@@ -452,6 +502,7 @@ namespace Training.Website.Components.Pages
             if (_keypressedSessionID != _selectedSession?.Session_ID.ToString())
                 _keypressedSessionID = _selectedSession?.Session_ID.ToString();
 
+            _cannotCopyQuestionaireVisible = false;
             _changedMultipleChoiceLetter = null;
             _changedMultipleChoiceAnswer = null;
             _changedMultipleChoiceAnswers = [];
