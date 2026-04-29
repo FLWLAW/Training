@@ -29,6 +29,17 @@ namespace Training.Website.Services
             await database!.QueryByStoredProcedureAsync<string, object?>
                 ("usp_Training_Questionnaire_GetAnswerLettersByQuestionID", new { Question_ID = questionID });
 
+        public async Task<int> GetNumberOfQuestionnairesForSession(int session_ID, IDatabase? database)
+        {
+            int? count =
+                (
+                    await database!.QueryByStatementAsync<int?>
+                        ($"SELECT MAX(QuestionnaireNumber) FROM [FLW_OP].[dbo].[TRAINING Questionnaire Questions Tbl] WHERE Training_Session_ID = {session_ID}")
+                )?.FirstOrDefault();
+
+            return count ?? 0;
+        }
+
         public async Task<QuestionsModel?> GetQuestionByQuestionID(int questionID, IDatabase? database) =>
             (
                 await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
