@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SqlServerDatabaseAccessLibrary;
+using Telerik.Blazor;
 using Telerik.Blazor.Components;
 using Telerik.Windows.Documents.Flow.Model;
 using Training.Website.Models;
@@ -23,7 +24,7 @@ namespace Training.Website.Components.Pages
         private IJSRuntime? JS { get; set; }
         #endregion
 
-        #region PRIVATE FIELDS
+        #region PRIVATE FIELDS AND CONSTANTS
         private const string _windowWidth = "80%";
         private const string _windowLeft = "20%";
         private const string _topWindowTop = "15%";
@@ -46,6 +47,8 @@ namespace Training.Website.Components.Pages
         private bool _sessionHasQuestions;
         private bool _cannotCopyQuestionaireVisible;
         private bool _questionnaireCopiedWindowVisible;
+        private bool _reorderQuestionsWindowVisible;
+        private bool _questionsReordered;
         private List<QuestionsModel>? _questions = null;
 
         private bool _addMode = false;
@@ -321,6 +324,30 @@ namespace Training.Website.Components.Pages
             }
         }
 
+        private void OnRenumberingRowDropHandler(GridRowDropEventArgs<QuestionsModel> args)
+        {
+            // https://www.telerik.com/blazor-ui/documentation/components/grid/row-drag-drop#drag-and-drop-a-row-in-the-same-grid
+
+            _questions!.Remove(args.Item);
+
+            int destinationItemIndex = _questions.IndexOf(args.DestinationItem);
+
+            if (args.DropPosition == GridRowDropPosition.After)
+                destinationItemIndex++;
+
+            _questions.Insert(destinationItemIndex, args.Item);
+            for (int index = 0; index < _questions.Count; index++)
+            {
+                int questionNumberShouldBe = index + 1;
+
+                if (_questions[index].QuestionNumber != questionNumberShouldBe)
+                {
+                    _questions[index].QuestionNumber = questionNumberShouldBe;
+                    _questionsReordered = true;
+                }
+            }
+        }
+
         private async Task PopulateCorrectAnswerDropDown(int? questionID)
         {
             _currentAnswerChoices_DropDown = [];
@@ -377,12 +404,12 @@ namespace Training.Website.Components.Pages
             if (id != null)
             {
                 await _service.DeleteQuestionByQuestionID(id.Value, Database);
-                await RenumberQuestions();
+                await RenumberQuestionsViaDeletion();
                 await RefreshPageFromBeginning();
             }
         }
 
-        private async Task RenumberQuestions()
+        private async Task RenumberQuestionsViaDeletion()
         {
             IEnumerable<QuestionsModel>? questions = await GetQuestionsBySessionIDandQuestionnaireNumber_Main();
 
@@ -400,6 +427,30 @@ namespace Training.Website.Components.Pages
 
                 _questions = await GetQuestionsBySessionIDandQuestionnaireNumber_Main();
             }
+        }
+
+        private void ReorderQuestionsButtonClicked()
+        {
+            _reorderQuestionsWindowVisible = true;
+            StateHasChanged();
+        }
+
+        private async Task ReorderQuestionsWindowSaveOrCancelClicked(bool save)
+        {
+            if (save == true && _questions != null)
+            {
+                // THIS FIRST UPDATE IS DONE TO PREVENT PRIMARY KEY ERRORS.
+                foreach (QuestionsModel? question in _questions)
+                    if (question != null && question.Question_ID != null && question.QuestionNumber != null)
+                        await _service.UpdateQuestion_QuestionNumberOnly(question.Question_ID.Value, -question.QuestionNumber.Value, Database);
+
+                foreach (QuestionsModel? question in _questions)
+                    if (question != null && question.Question_ID != null && question.QuestionNumber != null)
+                        await _service.UpdateQuestion_QuestionNumberOnly(question.Question_ID.Value, question.QuestionNumber.Value, Database);
+            }
+            _reorderQuestionsWindowVisible = false;
+            _questionsReordered = false;
+            await SessionChanged(ApplicationState!.SessionID_String!);
         }
 
         private async Task SaveButtonClicked()

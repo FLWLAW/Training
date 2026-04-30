@@ -8,8 +8,5 @@
         public int? QuestionNumber { get; set; }
         public int? AnswerFormat { get; set; }
         public string? CorrectAnswer { get; set; }
-        //public bool AnythingBesidesAnswerFormatUpdated { get; set; } = false;
-        //public bool AnswerFormatUpdated { get; set; } = false;
-        //public bool Renumbered { get; set; }
     }
 }
