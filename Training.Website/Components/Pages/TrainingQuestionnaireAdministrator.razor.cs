@@ -289,19 +289,10 @@ namespace Training.Website.Components.Pages
             return questionID;
         }
 
-        private async Task MoveDownButtonClicked()
+        private async Task NextQuestionButtonClicked()
         {
             if (_currentQuestionIndex < _questions?.Count - 1)
                 _currentQuestionIndex++;
-
-            await SetQuestionsControls();
-            StateHasChanged();
-        }
-
-        private async Task MoveUpButtonClicked()
-        {
-            if (_currentQuestionIndex > 0)
-                _currentQuestionIndex--;
 
             await SetQuestionsControls();
             StateHasChanged();
@@ -356,6 +347,15 @@ namespace Training.Website.Components.Pages
             _currentSelectedCorrectAnswer = (_addMode == false)
                 ? _questions?.FirstOrDefault(q => q.Question_ID == questionID)?.CorrectAnswer
                 : null;
+        }
+
+        private async Task PreviousQuestionButtonClicked()
+        {
+            if (_currentQuestionIndex > 0)
+                _currentQuestionIndex--;
+
+            await SetQuestionsControls();
+            StateHasChanged();
         }
 
         private async Task QuestionnaireCopiedWindowClicked()

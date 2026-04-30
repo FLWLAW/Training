@@ -120,8 +120,8 @@
                         <td class="QuestionsTopHalfHeader_Right">
                             @if (AddOrEditMode() == false)
                             {
-                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await MoveUpButtonClicked() )">Move Up</TelerikButton><br />
-                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await MoveDownButtonClicked() )">Move Down</TelerikButton><br />
+                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await PreviousQuestionButtonClicked() )">Previous Question</TelerikButton><br />
+                                <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await NextQuestionButtonClicked() )">Next Question</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => AddQuestionClicked())">Add Question</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(() => EditQuestionClicked())">Edit Question</TelerikButton><br />
                                 <TelerikButton Class="UniformButton" Enabled="true" OnClick="@(async () => await RemoveQuestionClicked())">Remove Question</TelerikButton><br />
