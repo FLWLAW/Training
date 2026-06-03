@@ -172,7 +172,8 @@ namespace Training.Website.Components.Pages
 
 #if RELEASE
             addresses.Add(new("Compliance", "Compliance@flwlaw.com"));
-            addresses.Add(new("Roberto Cuyan", "rcuyan@flwlaw.com"));
+            //addresses.Add(new("Roberto Cuyan", "rcuyan@flwlaw.com"));
+            addresses.Add(new("Dena LoBianco", "DLoBianco@flwlaw.com"));
 #else
             addresses.Add(new("David Rosenblum", "drosenblum@flwlaw.com"));
 #if QA
