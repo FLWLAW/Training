@@ -3,7 +3,7 @@
     public class QuestionsModel
     {
         public int? Question_ID { get; set; }
-        public int? Training_SESSION_ID { get; set; }
+        //public int? Training_SESSION_ID { get; set; }
         public string? Question { get; set; }
         public int? QuestionNumber { get; set; }
         public int? AnswerFormat { get; set; }

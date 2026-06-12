@@ -1,13 +1,9 @@
 ﻿using Microsoft.JSInterop;
-using SqlServerDatabaseAccessLibrary;
 using System.Text;
 using Telerik.Blazor.Components;
-using Telerik.SvgIcons;
-using Telerik.Windows.Documents.Fixed.Model;
 using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
 using Telerik.Windows.Documents.Flow.Model;
 using Training.Website.Models;
-using Training.Website.Models.Reviews;
 
 namespace Training.Website
 {
@@ -17,18 +13,16 @@ namespace Training.Website
         public const int RetakeTestDeadlineDays = 3650; //5;
         public const double TestPassingThreshold = 80;
 
-        public const int FirstReviewYear = 2025;
-
         public const string YesNo = "Yes/No";
         public const string TrueFalse = "True/False";
         public const string MultipleChoice = "Multiple Choice";
         public const string RadioButtons = "Radio Buttons";
-        public const string TextArea = "Text Area";
+        //public const string TextArea = "Text Area";
         public const string CurrentAnswerFormatError = "Invalid current answer format in PopulateCorrectAnswerDropDown()";
         public static readonly string[] YesNo_Choices = ["Yes", "No"];
         public static readonly string[] TrueFalse_Choices = ["True", "False"];
 
-        public const string SelectAll_Verbiage = "-- Select All --";
+        //public const string SelectAll_Verbiage = "-- Select All --";
         public const string Notary = "Notary";
 
         public const string Failed = "Failed";
@@ -125,20 +119,6 @@ namespace Training.Website
             return filenameRefined.ToString();
         }
 
-        public static async Task ExportToAcrobatFile(RadFixedDocument document, string filename, IJSRuntime? JS)
-        {
-            Telerik.Windows.Documents.Fixed.FormatProviders.Pdf.PdfFormatProvider formatProvider = new();
-
-            using (MemoryStream ms = new())
-            {
-                formatProvider.Export(document, ms, null);
-
-                ms.Position = 0;    // VERY IMPORTANT!!!!!
-                using var streamRef = new DotNetStreamReference(stream: ms);
-                await JS!.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-            }
-        }
-
         public static async Task ExportToExcelFile<T>(TelerikGrid<T>? grid) => await grid!.SaveAsExcelFileAsync();
 
         public static async Task ExportToWordFile(RadFlowDocument document, string filename, IJSRuntime? JS)
@@ -165,8 +145,5 @@ namespace Training.Website
         */
 
         public static int OPS_UserID(AppState? appState) => appState?.LoggedOnUser?.EmpID ?? 0;
-
-        public static IEnumerable<RadioChoiceModel?>? RadioChoicesForQuestion(int? questionID, IEnumerable<RadioChoiceModel?>? allRadioChoices) =>
-            questionID != null ? allRadioChoices?.Where(q => q?.ReviewQuestion_ID == questionID).OrderBy(q => q?.RadioChoice_Sequence) : null;
     }
 }

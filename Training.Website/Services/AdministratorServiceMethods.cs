@@ -7,12 +7,6 @@ namespace Training.Website.Services
 {
     public class AdministratorServiceMethods : CommonServiceMethods
     {
-        public async Task<int> CountOfAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
-            (
-                await database!.QueryByStoredProcedureAsync<int, object?>
-                    ("usp_Training_Questionnaire_CountOfAnswerChoicesByQuestionID", new { Question_ID = questionID })
-            ).FirstOrDefault();
-
         public async Task DeleteAnswerChoicesByQuestionID(int questionID, IDatabase? database) =>
             await database!.NonQueryByStoredProcedureAsync<object?>
                 ("usp_Training_Questionnaire_DeleteAnswerChoicesByQuestionID", new { Question_ID = questionID });
@@ -114,13 +108,9 @@ namespace Training.Website.Services
             await database!.NonQueryByStoredProcedureAsync<object?>
                 ("usp_Training_Questionnaire_UpdateQuestion_QuestionNumberOnly", new { Question_ID = questionID, QuestionNumber = questionNumber });
 
-
-
         /*
         public async Task<IEnumerable<AnswerFormatsModel>?> GetAnswerFormats_TrainingQuestionnaire(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Training_Questionnaire_GetAnswerFormats");
         */
-
-
     }
 }

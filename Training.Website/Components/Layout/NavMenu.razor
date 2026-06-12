@@ -49,40 +49,6 @@
             </NavLink>
         </div>
     }
-
-    <!-- Performance Review Administrators ARE THOSE WHO ARE ABOVE MANAGERS WHO CHANGE THE REVIEW STATUSES FROM "In Review" TO "SUBMITTED." -->
-    <!-- Performance Review Super Administrators ARE THOSE WHO CAN ACCESS THE Performance Review Administrator Page. -->
-    <!-- WE REGRET THE CONFUSING TERMINOLOGY. -->
-
-    @if
-        (
-            IsTester() == true || IsManager() == true ||
-            (
-                ApplicationState != null && ApplicationState.LoggedOnUser != null &&
-                (
-                    ApplicationState.LoggedOnUser.IsPerformanceReviewAdministrator == true || ApplicationState.LoggedOnUser.IsPerformanceReviewSuperAdministrator == true
-                )
-            )
-        )
-    {
-        <div class="top-row ps-3 navbar navbar-dark" style="background-color: black">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="">Performance Review</a>
-            </div>
-        </div>
-        <NavLink class="Dashboard-nav-link" href="PerformanceReview" @onclick="SetPerformanceViewModeToTrue">
-            Performance Review
-        </NavLink>
-    }
-
-    @if (ApplicationState != null && ApplicationState.LoggedOnUser != null && ApplicationState.LoggedOnUser.IsPerformanceReviewSuperAdministrator  == true)
-    {
-        <div class="nav-item px-1">
-            <NavLink class="Dashboard-nav-link" href="PerformanceReviewAdministratorPage" @onclick="SetPerformanceViewModeToTrue">
-                Performance Review Administrator Page
-            </NavLink>
-        </div>
-    }
 </div>
 
 <style>
