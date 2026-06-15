@@ -19,7 +19,5 @@ namespace Training.Website.Services
 
         public IEnumerable<string?>? TrainingQuestionnaire_Administrator_LoginIDs(IDatabase? database) =>
             database!.QueryByStoredProcedure<string?>("usp_TRAINING_Questionnaire_GetAdministratorLoginIDs");
-
-
     }
 }

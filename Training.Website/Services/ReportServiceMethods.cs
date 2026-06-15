@@ -1,8 +1,5 @@
-﻿using Microsoft.VisualBasic;
-using SqlServerDatabaseAccessLibrary;
+﻿using SqlServerDatabaseAccessLibrary;
 using System.Data;
-using Telerik.Windows.Documents.Model.Drawing.Charts;
-using Telerik.Windows.Documents.Spreadsheet.Expressions.Functions;
 using Training.Website.Models;
 using Training.Website.Models.Users;
 

@@ -19,7 +19,7 @@
         public required int? RoleID { get; set; }
         public required int? TitleID { get; set; }
         //public string? HomeState { get; set; }
-        public required bool IsPerformanceReviewAdministrator { get; set; }
-        public required bool IsPerformanceReviewSuperAdministrator { get; set; }
+        //public required bool IsPerformanceReviewAdministrator { get; set; }
+        //public required bool IsPerformanceReviewSuperAdministrator { get; set; }
     }
 }

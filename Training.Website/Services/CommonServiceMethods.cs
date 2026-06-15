@@ -1,6 +1,5 @@
 ﻿using SqlServerDatabaseAccessLibrary;
 using Training.Website.Models;
-using Training.Website.Models.Reviews;
 using Training.Website.Models.Users;
 
 namespace Training.Website.Services
@@ -23,24 +22,6 @@ namespace Training.Website.Services
         public async Task<IEnumerable<AllUsers_CMS_DB?>?> GetAllUsers_CMS_DB(IDatabase? database) =>
             await database!.QueryByStatementAsync<AllUsers_CMS_DB?>
                 ("SELECT AppUserID, RoleID, TitleID, FirstName, LastName, EmailAddress, LoginID FROM AppUser WHERE ActiveInd <> 0 AND TeamNameInd = 0 ORDER BY (FirstName + ' ' + LastName)");
-
-        public async Task<Dictionary<int, string>?> GetAnswerFormats_PerformanceReview(IDatabase? database)
-        {
-            IEnumerable<AnswerFormatsModel>? data =
-                await database!.QueryByStoredProcedureAsync<AnswerFormatsModel>("usp_Performance_Review_GetAnswerFormats");
-
-            if (data == null)
-                return null;
-            else
-            {
-                Dictionary<int, string> answerFormats = [];
-
-                foreach (AnswerFormatsModel? row in data)
-                    answerFormats.Add(row.Format_ID, row.Name!);
-
-                return answerFormats;
-            }
-        }
 
         public async Task<Dictionary<int, string>?> GetAnswerFormats_TrainingQuestionnaire(IDatabase? database)
         {
@@ -71,12 +52,7 @@ namespace Training.Website.Services
         public async Task<SessionDueDateModel?> GetDueDateBySessionID(int? sessionID, IDatabase database) =>
             (await database!.QueryByStoredProcedureAsync<SessionDueDateModel, object?>("usp_Training_Questionnaire_GetDueDateBySessionID", new { Session_ID = sessionID }))?.FirstOrDefault();
 
-        /*
-        public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionID(int sessionID, IDatabase? database) =>
-            await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
-                ("usp_Training_Questionnaire_GetQuestionsBySessionID", new { Session_ID = sessionID });
-        */
-
+        
         public async Task<IEnumerable<AllUsers_Notaries?>?> GetNotaries(IEnumerable<AllUsers_CMS_DB?>? allUsers_CMS_DB, IDatabase? database)
         {
             AllUsers_Notaries?[]? notaries = (await database!.QueryByStoredProcedureAsync<AllUsers_Notaries?>("usp_Training_Questionnaire_GetNotaries"))?.ToArray();
@@ -106,8 +82,11 @@ namespace Training.Website.Services
         public async Task<int?> GetOPS_DB_UserID(string? loginID, IDatabase? database_OPS) =>
             (await database_OPS!.QueryByStatementAsync<int?>($"SELECT TOP 1 Emp_ID FROM [Employees Tbl] WHERE UserName = '{loginID}'"))?.FirstOrDefault();
 
-        public int? GetOPS_ID_From_Login_ID(AllUsers_OPS_DB?[]? allUsers_OPS_DB, string? loginID) =>
-            allUsers_OPS_DB?.FirstOrDefault(q => q?.UserName?.Equals(loginID, StringComparison.InvariantCultureIgnoreCase) == true)?.Emp_ID;
+        /*
+                public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionID(int sessionID, IDatabase? database) =>
+                    await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
+                        ("usp_Training_Questionnaire_GetQuestionsBySessionID", new { Session_ID = sessionID });
+        */
 
         public async Task<IEnumerable<QuestionsModel>?> GetQuestionsBySessionIDandQuestionnaireNumber(int sessionID, int questionnaireNumber, IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<QuestionsModel, object?>
@@ -119,39 +98,5 @@ namespace Training.Website.Services
 
         public async Task<IEnumerable<SessionInformationModel>?> GetSessionInformation(IDatabase? database) =>
             await database!.QueryByStoredProcedureAsync<SessionInformationModel>("usp_Training_Questionnaire_GetSessionInformation");
-
-        public async Task<bool> IsPerformanceReviewAdministrator(string? loginID, IDatabase? database_OPS)
-        {
-            if (string.IsNullOrWhiteSpace(loginID) == true)
-                throw new ArgumentNullException("'loginID' cannot be null, empty or completely white-spaced in IsPerformanceReviewAdministrator().");
-            else
-            {
-                PerformanceReviewAdministratorModel? administrator =
-                    (
-                        await database_OPS!.QueryByStoredProcedureAsync
-                            <PerformanceReviewAdministratorModel?, object?>
-                            ("usp_Performance_Review_GetAdministratorByLoginID", new { Login_ID = loginID })
-                    )?.FirstOrDefault();
-
-                return (administrator != null);
-            }
-        }
-
-        public async Task<bool> IsPerformanceReviewSuperAdministrator(string? loginID, IDatabase? database_OPS)
-        {
-            if (string.IsNullOrWhiteSpace(loginID) == true)
-                throw new ArgumentNullException("'loginID' cannot be null, empty or completely white-spaced in IsPerformanceReviewSuperAdministrator().");
-            else
-            {
-                PerformanceReviewAdministratorModel? superAdministrator =
-                    (
-                        await database_OPS!.QueryByStoredProcedureAsync
-                            <PerformanceReviewAdministratorModel?, object?>
-                            ("usp_Performance_Review_GetSuperAdministratorByLoginID", new { Login_ID = loginID })
-                    )?.FirstOrDefault();
-
-                return (superAdministrator != null);
-            }
-        }
     }
 }

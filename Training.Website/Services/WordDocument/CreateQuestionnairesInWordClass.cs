@@ -1,11 +1,7 @@
-﻿using Microsoft.JSInterop;
-using SqlServerDatabaseAccessLibrary;
-using Telerik.SvgIcons;
-using Telerik.Windows.Documents.Flow.FormatProviders.Docx;
+﻿using SqlServerDatabaseAccessLibrary;
 using Telerik.Windows.Documents.Flow.Model;
 using Telerik.Windows.Documents.Flow.Model.Styles;
 using Training.Website.Models;
-using Training.Website.Services;
 
 namespace Training.Website.Services.WordDocument
 {

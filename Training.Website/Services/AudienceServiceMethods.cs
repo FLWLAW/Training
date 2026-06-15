@@ -6,22 +6,13 @@ namespace Training.Website.Services
 {
     public class AudienceServiceMethods : CommonServiceMethods
     {
+        public async Task<IEnumerable<int>?> GetAllOpsUserIDsAssignedToTasksBySessionID(int? sessionID, IDatabase? database) =>
+            await database!.QueryByStatementAsync<int>($"SELECT DISTINCT Emp_ID FROM [TRAINING Tasks Tbl] WHERE TRAINING_ID = {sessionID} AND (IsDeleted = 0 OR IsDeleted IS NULL)");
+
         /*
         public async Task<IEnumerable<IdValue<int>?>?> GetAllReports(IDatabase? database) =>
             await database!.QueryByStoredProcedureForDropDownControlAsync<int>("usp_Report_SA", "ReportID", "ReportDesc");
         */
-
-        public async Task<IEnumerable<int>?> GetAllOpsUserIDsAssignedToTasksBySessionID(int? sessionID, IDatabase? database) =>
-            await database!.QueryByStatementAsync<int>($"SELECT DISTINCT Emp_ID FROM [TRAINING Tasks Tbl] WHERE TRAINING_ID = {sessionID} AND (IsDeleted = 0 OR IsDeleted IS NULL)");
-
-        public async Task<IEnumerable<WorklistGroupsAndReportsModel?>?> GetAllWorklistGroupsWithReports(IDatabase? database)
-        {
-            StagesReportsModel_Parameters parameters = new();   // LEAVE PROPERTIES AS NULL
-            IEnumerable<WorklistGroupsAndReportsModel?> results =
-                await database!.QueryByStoredProcedureAsync<WorklistGroupsAndReportsModel?, StagesReportsModel_Parameters?>("usp_StageList_SAByStateListReportIDList", parameters);
-
-            return results;
-        }
 
         public void UpsertEMailingRecord(AllUsers_Display? recipient, int? sessionID, string? sendingUser, IDatabase? database)
         {
