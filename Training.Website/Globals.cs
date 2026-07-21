@@ -46,6 +46,12 @@ namespace Training.Website
             { ReviewStatusType.SentToHR, "Sent to HR" }
         };
 
+        public static readonly Dictionary<bool, string> ActiveStatuses = new()
+        {
+            { true, "ACTIVE" },
+            { false, "INACTIVE" }
+        };
+
 #if DEBUG
         public const string BaseURL = "http://drosenblum-elitedesk:83";
 #elif QA
@@ -59,9 +65,9 @@ namespace Training.Website
 
         public static string? ConcatenateSessionInfo(SessionInformationModel? session) => $"{session?.Session_ID} ({session?.DocTitle})";
 
-        public static IEnumerable<string>? ConcatenateSessionInfoForDropDown(IEnumerable<SessionInformationModel>? sessionInfo)
+        public static IEnumerable<string>? ConcatenateSessionInfoForDropDown(IEnumerable<SessionInformationModel>? sessionInfo, bool showInactiveSessions = false)
         {
-            if (sessionInfo == null)
+            if (sessionInfo == null || sessionInfo.Any() == false)
                 return null;
             else
             {
@@ -69,16 +75,20 @@ namespace Training.Website
 
                 foreach (SessionInformationModel? session in sessionInfo)
                 {
-                    string? item = ConcatenateSessionInfo(session);
+                    if (session != null && (showInactiveSessions == true || session.IsActive == true))
+                    {
+                        string? item = ConcatenateSessionInfo(session);
 
-                    if (string.IsNullOrWhiteSpace(item) == false)
-                        sessions.Add(item);
+                        if (string.IsNullOrWhiteSpace(item) == false)
+                            sessions.Add(item);
+                    }
                 }
 
                 return sessions;
             }
         }
 
+        [Obsolete("Separate this into separate classes.")]
         public static SessionInformationModel? ConvertSessionStringToClass(string newValue)
         {
             SessionInformationModel? result = null;

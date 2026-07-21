@@ -33,8 +33,9 @@ namespace Training.Website.Components.Pages
 
         private Dictionary<int, string>? _answerFormats = null;
         private IEnumerable<string>? _sessions_FullText = null;
-        private IEnumerable<string?>? _sessions_IDs = null;
+        //private IEnumerable<string?>? _sessions_IDs = null;
         private string? _selectedSessionString = null;
+        private bool _showInactiveSessions = false;
         private string? _keypressedSessionID = null;
         private SessionInformationModel? _selectedSession = null;
 
@@ -66,6 +67,8 @@ namespace Training.Website.Components.Pages
 
         private readonly AdministratorServiceMethods _service = new();
 
+        private IEnumerable<SessionInformationModel>? _sessionInfo = null;
+
         private TelerikAutoComplete<string?> _sessionIdAutoComplete = new();
 
         #endregion
@@ -73,14 +76,11 @@ namespace Training.Website.Components.Pages
         protected override async Task OnInitializedAsync()
         {
             _answerFormats = await _service.GetAnswerFormats_TrainingQuestionnaire(Database);
+            _sessionInfo = await _service.GetSessionInformation(Database);
 
-            // GET ALL SESSIONS
-            IEnumerable<SessionInformationModel>? sessionInfo = await _service.GetSessionInformation(Database);
-
-            if (sessionInfo != null && sessionInfo.Any() == true)
+            if (_sessionInfo != null && _sessionInfo.Any() == true)
             {
-                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(sessionInfo);
-                _sessions_IDs = sessionInfo.Select(q => q.Session_ID.ToString());
+                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(_sessionInfo);
                 _selectedSessionString = ApplicationState!.SessionID_String;
                 if (string.IsNullOrWhiteSpace(_selectedSessionString) == false)
                     await SessionChanged(_selectedSessionString);
@@ -88,6 +88,30 @@ namespace Training.Website.Components.Pages
         }
 
         // ================================================================================================================================================================================================================================================================================================
+
+        private bool ActivateDeactiveSessionButtonEnabled() => _selectedSession != null;
+
+        private async Task ActiveInactiveSessionButtonClicked()
+        {
+            if (_selectedSession != null && _selectedSession.Session_ID != null)
+            {
+                bool newActiveStatus = !_selectedSession.IsActive;
+
+                _selectedSession.DocStatus = await _service.UpdateSessionActiveStatus(newActiveStatus, _selectedSession.Session_ID.Value, Database);
+                _sessionInfo = await _service.GetSessionInformation(Database);
+                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(_sessionInfo);
+                StateHasChanged();
+            }
+        }
+
+        private string? ActiveInactiveSessionButtonText()
+        {
+            if (_selectedSession == null)
+                return null;
+            else
+                return _selectedSession?.IsActive == true ? "Deactivate Session" : "Activate Session";
+        }
+            
 
         private bool AddOrEditMode() => _addMode == true || _editMode == true;
 
@@ -153,6 +177,27 @@ namespace Training.Website.Components.Pages
         {
             _changedMultipleChoiceLetter = newValue.ToString();
             _changedMultipleChoiceAnswer = null;
+        }
+
+        private SessionInformationModel? ConvertSessionStringToClass(string newValue)
+        {
+            SessionInformationModel? result = null;
+            int openParenthesis = newValue.IndexOf('(');
+
+            if (openParenthesis > -1)
+            {
+                int closeParenthesis = newValue.LastIndexOf(')');
+
+                if (closeParenthesis > -1 && (int.TryParse(newValue[..openParenthesis].Trim(), out int sessionId) == true))
+                    result = new SessionInformationModel()
+                    {
+                        Session_ID = sessionId,
+                        DocTitle = newValue.Substring(openParenthesis + 1, closeParenthesis - openParenthesis - 1).Trim(),
+                        DocStatus = _sessionInfo?.FirstOrDefault(q => q?.Session_ID == sessionId)?.DocStatus
+                    };
+            }
+
+            return result;
         }
 
         private async Task CopyQuestionnaireButtonClicked()
@@ -529,7 +574,7 @@ namespace Training.Website.Components.Pages
             _addMode = false;
             _editMode = false;
             _selectedSessionString = newValue;
-            _selectedSession = Globals.ConvertSessionStringToClass(newValue);
+            _selectedSession = ConvertSessionStringToClass(newValue);
             _sessionHasQuestions = false;   // THIS WILL PREVENT ERRORS IN THE NEXT STATEMENT, BECAUSE THE SCREEN WILL RENDER BEFORE THE AWAIT COMPLETES.
             _questions = await GetQuestionsBySessionIDandQuestionnaireNumber_Main();
             _sessionHasQuestions = SessionHasQuestions();
@@ -579,6 +624,17 @@ namespace Training.Website.Components.Pages
                 _currentMultipleChoiceAnswers_DB =
                     _service.GetAnswerChoicesByQuestionID(_questions![index].Question_ID!.Value, Database)?.ToArray();
             }
+        }
+
+        private async Task ShowInactiveSessionsValueChanged(bool newValue)
+        {
+            await Task.Run(() =>
+            {
+                _showInactiveSessions = newValue;
+                _sessions_FullText = Globals.ConcatenateSessionInfoForDropDown(_sessionInfo, _showInactiveSessions);
+            });
+            
+            StateHasChanged();
         }
     }
 }

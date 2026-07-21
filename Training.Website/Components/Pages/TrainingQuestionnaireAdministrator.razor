@@ -97,6 +97,21 @@
                         </DropDownListSettings>
                     </TelerikDropDownList>
                 </td>
+                <td style="text-align: center; padding-bottom: 30px;">
+                    <TelerikButton
+                        Class="UniformButton"
+                        Enabled="@ActivateDeactiveSessionButtonEnabled()"
+                        OnClick="@(async () => await ActiveInactiveSessionButtonClicked() )">
+                        @ActiveInactiveSessionButtonText()
+                    </TelerikButton>
+                </td>
+                <td style="text-align: center; padding-bottom: 30px;">
+                    <TelerikCheckBox
+                        Enabled="true"
+                        Value="@_showInactiveSessions"
+                        ValueChanged="@(async (bool newValue) => await ShowInactiveSessionsValueChanged(newValue) )" />
+                    <span>Show Inactive Sessions</span>
+                </td>
             </tr>
         </table>
         <table width="100%">
@@ -105,7 +120,7 @@
                     <label style="padding-right: 30px;">Or type in session here:</label>
                     <TelerikAutoComplete
                         @ref="@_sessionIdAutoComplete"
-                        Data="@_sessions_IDs"
+                        Data="@(_sessionInfo?.Select(q => q.Session_ID.ToString()))"
                         DebounceDelay="50"
                         MinLength="3"
                         ShowClearButton="true"
