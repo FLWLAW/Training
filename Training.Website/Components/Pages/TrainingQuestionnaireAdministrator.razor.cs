@@ -181,6 +181,8 @@ namespace Training.Website.Components.Pages
 
         private SessionInformationModel? ConvertSessionStringToClass(string newValue)
         {
+            // NOTE: THIS METHOD IS DIFFERENT FROM THE METHOD OF THE SAME NAME IN Globals. THIS METHOD ACCESSES THE DocStatus PROPERTY, WHERE AS THE OTHER METHOD IN Globals DOES NOT.
+
             SessionInformationModel? result = null;
             int openParenthesis = newValue.IndexOf('(');
 

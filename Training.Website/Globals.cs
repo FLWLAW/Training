@@ -88,7 +88,6 @@ namespace Training.Website
             }
         }
 
-        [Obsolete("Separate this into separate classes.")]
         public static SessionInformationModel? ConvertSessionStringToClass(string newValue)
         {
             SessionInformationModel? result = null;
