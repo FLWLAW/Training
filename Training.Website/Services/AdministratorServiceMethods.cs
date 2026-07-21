@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using SqlServerDatabaseAccessLibrary;
 using System.Data;
+using System.Text;
 using Training.Website.Models;
 
 namespace Training.Website.Services
@@ -107,6 +108,21 @@ namespace Training.Website.Services
         public async Task UpdateQuestion_QuestionNumberOnly(int questionID, int questionNumber, IDatabase? database) =>
             await database!.NonQueryByStoredProcedureAsync<object?>
                 ("usp_Training_Questionnaire_UpdateQuestion_QuestionNumberOnly", new { Question_ID = questionID, QuestionNumber = questionNumber });
+
+        public async Task<string> UpdateSessionActiveStatus(bool newActiveStatus, int sessionID, IDatabase? database)
+        {
+            string newActiveStatus_Verbiage = Globals.ActiveStatuses[newActiveStatus];
+            StringBuilder sql = new();
+
+            sql.AppendLine("UPDATE [TRAINING Sessions Tbl]");
+            sql.AppendLine($"SET DocStatus = '{newActiveStatus_Verbiage}'");
+            sql.AppendLine($"WHERE TRAINING_ID = {sessionID}");
+
+            await database!.NonQueryByStatementAsync(sql.ToString());
+            
+            return newActiveStatus_Verbiage;
+        }
+
 
         /*
         public async Task<IEnumerable<AnswerFormatsModel>?> GetAnswerFormats_TrainingQuestionnaire(IDatabase? database) =>

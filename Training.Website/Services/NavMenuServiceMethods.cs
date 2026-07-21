@@ -12,9 +12,7 @@ namespace Training.Website.Services
                 "drosenblum",
                 "seisenman",
                 "susan.eisenman",
-#if DEBUG
-                "rcuyan",
-#endif
+                "tluo"
             ];
 
         public IEnumerable<string?>? TrainingQuestionnaire_Administrator_LoginIDs(IDatabase? database) =>
